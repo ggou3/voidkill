@@ -1,56 +1,56 @@
-﻿[gd_scene format=3 uid=uid://b6k18p4xm9qva]
+[gd_scene format=3 uid="uid://b6k18p4xm9qva"]
 
-[ext_resource type=Script path=res://flask_projectile.gd id=1_flask_proj]
+[ext_resource type="Script" path="res://flask_projectile.gd" id="1_flask_proj"]
 
-[sub_resource type=SphereShape3D id=SphereShape3D_flask]
+[sub_resource type="SphereShape3D" id="SphereShape3D_flask"]
 radius = 0.18
 
-[sub_resource type=StandardMaterial3D id=StandardMaterial3D_glass]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_glass"]
 transparency = 1
 albedo_color = Color(0.85, 0.92, 1.0, 0.45)
 roughness = 0.1
 metallic = 0.1
 
-[sub_resource type=StandardMaterial3D id=StandardMaterial3D_blood_inner]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_blood_inner"]
 albedo_color = Color(0.85, 0.05, 0.08, 0.95)
 emission_enabled = true
 emission = Color(0.95, 0.08, 0.08, 1)
 emission_energy_multiplier = 2.0
 
-[sub_resource type=StandardMaterial3D id=StandardMaterial3D_brass]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_brass"]
 albedo_color = Color(0.78, 0.62, 0.18, 1)
 roughness = 0.3
 metallic = 0.8
 
-[node name=FlaskProjectile type=CharacterBody3D unique_id=778899001]
+[node name="FlaskProjectile" type="CharacterBody3D" unique_id=778899001]
 collision_layer = 0
 collision_mask = 1
-script = ExtResource(1_flask_proj)
+script = ExtResource("1_flask_proj")
 
-[node name=CollisionShape3D type=CollisionShape3D parent=. unique_id=778899002]
-shape = SubResource(SphereShape3D_flask)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=778899002]
+shape = SubResource("SphereShape3D_flask")
 
-[node name=GlassBody type=CSGCylinder3D parent=. unique_id=778899003]
+[node name="GlassBody" type="CSGCylinder3D" parent="." unique_id=778899003]
 radius = 0.13
 height = 0.28
 sides = 12
-material = SubResource(StandardMaterial3D_glass)
+material = SubResource("StandardMaterial3D_glass")
 
-[node name=Liquid type=CSGCylinder3D parent=GlassBody unique_id=778899004]
+[node name="Liquid" type="CSGCylinder3D" parent="GlassBody" unique_id=778899004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0)
 radius = 0.105
-height = 0.20
+height = 0.2
 sides = 12
-material = SubResource(StandardMaterial3D_blood_inner)
+material = SubResource("StandardMaterial3D_blood_inner")
 
-[node name=Cap type=CSGCylinder3D parent=GlassBody unique_id=778899005]
+[node name="Cap" type="CSGCylinder3D" parent="GlassBody" unique_id=778899005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
 radius = 0.075
 height = 0.05
 sides = 10
-material = SubResource(StandardMaterial3D_brass)
+material = SubResource("StandardMaterial3D_brass")
 
-[node name=OmniLight3D type=OmniLight3D parent=. unique_id=778899006]
+[node name="OmniLight3D" type="OmniLight3D" parent="." unique_id=778899006]
 light_color = Color(1, 0.12, 0.12, 1)
 light_energy = 1.2
 omni_range = 2.5

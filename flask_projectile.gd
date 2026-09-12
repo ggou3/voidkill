@@ -1,15 +1,15 @@
-﻿extends CharacterBody3D
+extends CharacterBody3D
 
 const GRAVITY: float = 24.0
-var flask_pool_scene = preload(res://flask_pool.tscn)
-var blood_splatter_scene = preload(res://blood_splatter.tscn)
+var flask_pool_scene = preload("res://flask_pool.tscn")
+var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 var lifetime: float = 6.0
 var has_shattered: bool = false
 
 func _ready():
 	# Игнорируем коллизии с игроком
-	var player = get_tree().get_first_node_in_group(player)
+	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player):
 		add_collision_exception_with(player)
 
@@ -39,7 +39,7 @@ func _shatter(hit_pos: Vector3, hit_normal: Vector3):
 	has_shattered = true
 	set_physics_process(false)
 	
-	AudioManager.play_sound(flask_splash)
+	AudioManager.play_sound("flask_splash")
 	
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 	if scene_root:
@@ -63,7 +63,7 @@ func _shatter(hit_pos: Vector3, hit_normal: Vector3):
 		var space_state = get_world_3d().direct_space_state
 		var query = PhysicsRayQueryParameters3D.create(hit_pos + Vector3.UP * 0.25, hit_pos + Vector3.DOWN * 25.0)
 		# Исключаем игрока и себя
-		var player = get_tree().get_first_node_in_group(player)
+		var player = get_tree().get_first_node_in_group("player")
 		var excl = [self]
 		if is_instance_valid(player):
 			excl.append(player)
