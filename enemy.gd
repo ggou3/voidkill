@@ -533,16 +533,6 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		set_state(State.DEAD)
 
 
-func die():
-	current_state = State.DEAD
-	set_physics_process(false)
-	AudioManager.play_sound("enemy_death")
-	
-	if hp_sprite:
-		hp_sprite.visible = false
-	if hp_label:
-		hp_label.visible = false
-
 func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = false):
 	if dmg_amount <= 0:
 		return
@@ -581,7 +571,17 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 	tween.tween_property(label, "global_position", target_p, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
+
+func die():
+	current_state = State.DEAD
+	set_physics_process(false)
+	AudioManager.play_sound("enemy_death")
 	
+	if hp_sprite:
+		hp_sprite.visible = false
+	if hp_label:
+		hp_label.visible = false
+		
 	if collision_shape:
 		collision_shape.set_deferred("disabled", true)
 		
