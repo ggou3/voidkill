@@ -18,6 +18,7 @@ var slide_tween: Tween
 
 @onready var revolver_model = $Camera3D/Revolver
 @onready var shotgun_model = $Camera3D/Shotgun
+@onready var injector_model = get_node_or_null("Camera3D/Injector")
 @onready var left_arm = $Camera3D/LeftArm
 
 var active_weapon: Node3D
@@ -37,6 +38,10 @@ func _ready():
 		shotgun_model.visible = false
 		shotgun_model.position = weapon_default_pos
 		shotgun_model.rotation = Vector3.ZERO
+	if injector_model:
+		injector_model.visible = false
+		injector_model.position = weapon_default_pos
+		injector_model.rotation = Vector3.ZERO
 	if revolver_model:
 		revolver_model.visible = true
 		revolver_model.position = weapon_default_pos
@@ -48,7 +53,7 @@ func _ready():
 		
 	# Инициализация дульных вспышек (star flare mesh + индивидуальные материалы)
 	var star_mesh = _create_star_flash_mesh()
-	for w in [revolver_model, shotgun_model]:
+	for w in [revolver_model, shotgun_model, injector_model]:
 		if w:
 			var m = w.get_node_or_null("Muzzle")
 			if m:
@@ -82,7 +87,16 @@ func switch_weapon_visual(index: int):
 		revolver_model.visible = (index == 0)
 	if shotgun_model:
 		shotgun_model.visible = (index == 1)
-	active_weapon = revolver_model if index == 0 else shotgun_model
+	if injector_model:
+		injector_model.visible = (index == 2)
+		
+	if index == 0:
+		active_weapon = revolver_model
+	elif index == 1:
+		active_weapon = shotgun_model
+	elif index == 2:
+		active_weapon = injector_model
+		
 	if active_weapon:
 		active_weapon.position = weapon_default_pos
 		active_weapon.rotation = Vector3.ZERO

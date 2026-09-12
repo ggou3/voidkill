@@ -1,0 +1,32 @@
+﻿[gd_scene format=3 uid=uid://c5y1j4n7pqxve]
+
+[ext_resource type=Script path=res://flask_pool.gd id=1_flask]
+
+[sub_resource type=PlaneMesh id=PlaneMesh_puddle]
+size = Vector2(6.5, 6.5)
+
+[sub_resource type=StandardMaterial3D id=StandardMaterial3D_puddle]
+transparency = 1
+albedo_color = Color(0.68, 0.02, 0.04, 0.92)
+roughness = 0.15
+metallic = 0.1
+emission_enabled = true
+emission = Color(0.85, 0.05, 0.05, 1)
+emission_energy_multiplier = 0.75
+
+[sub_resource type=CylinderShape3D id=CylinderShape3D_flask]
+height = 1.2
+radius = 3.25
+
+[node name=FlaskPool type=Area3D unique_id=987123456]
+collision_layer = 0
+collision_mask = 3
+script = ExtResource(1_flask)
+
+[node name=MeshInstance3D type=MeshInstance3D parent=. unique_id=987123457]
+mesh = SubResource(PlaneMesh_puddle)
+surface_material_override/0 = SubResource(StandardMaterial3D_puddle)
+
+[node name=CollisionShape3D type=CollisionShape3D parent=. unique_id=987123458]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource(CylinderShape3D_flask)

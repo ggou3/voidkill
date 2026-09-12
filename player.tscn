@@ -8,14 +8,6 @@
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wdtcp"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_3xd07"]
-shader = ExtResource("2_onrkg")
-shader_parameter/resolution = 700.0
-shader_parameter/noise_amount = 0.1
-
-[sub_resource type="SphereShape3D" id="SphereShape3D_3xd07"]
-radius = 0.8
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gunmetal"]
 albedo_color = Color(0.14, 0.15, 0.18, 1)
 metallic = 0.8
@@ -26,24 +18,44 @@ albedo_color = Color(0.06, 0.06, 0.07, 1)
 metallic = 0.5
 roughness = 0.5
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
-albedo_color = Color(0.24, 0.12, 0.06, 1)
-roughness = 0.8
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gold"]
 albedo_color = Color(0.85, 0.68, 0.22, 1)
 metallic = 0.9
 roughness = 0.2
 
+[sub_resource type="QuadMesh" id="QuadMesh_flash"]
+size = Vector2(0.26, 0.26)
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flash"]
 transparency = 1
 blend_mode = 1
-shading_mode = 0
 cull_mode = 2
+shading_mode = 0
 albedo_color = Color(1, 0.88, 0.45, 0)
 
-[sub_resource type="QuadMesh" id="QuadMesh_flash"]
-size = Vector2(0.26, 0.26)
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wood"]
+albedo_color = Color(0.24, 0.12, 0.06, 1)
+roughness = 0.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_blood_vial"]
+transparency = 1
+albedo_color = Color(0.85, 0.05, 0.08, 0.85)
+roughness = 0.15
+metallic = 0.1
+emission_enabled = true
+emission = Color(0.95, 0.08, 0.08, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3xd07"]
+shader = ExtResource("2_onrkg")
+shader_parameter/resolution = 1440.0
+shader_parameter/noise_amount = 0.1
+shader_parameter/player_speed = 0.0
+shader_parameter/speed_threshold = 14.5
+shader_parameter/max_speed_threshold = 19.5
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_3xd07"]
+radius = 0.8
 
 [node name="Player" type="CharacterBody3D" unique_id=1600772311 groups=["player"]]
 script = ExtResource("1_4flbx")
@@ -64,50 +76,49 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 script = ExtResource("2_i3pqv")
 
 [node name="Camera3D" type="Camera3D" parent="Head" unique_id=1354515360]
-near = 0.05
 
 [node name="Revolver" type="Node3D" parent="Head/Camera3D" unique_id=1023422202]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, -0.22, -0.46)
 
 [node name="Receiver" type="CSGBox3D" parent="Head/Camera3D/Revolver" unique_id=200101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0.02)
+cast_shadow = 0
 size = Vector3(0.065, 0.11, 0.2)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Grip" type="CSGBox3D" parent="Head/Camera3D/Revolver" unique_id=200102]
 transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.1, 0.08)
+cast_shadow = 0
 size = Vector3(0.055, 0.15, 0.07)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Cylinder" type="CSGCylinder3D" parent="Head/Camera3D/Revolver" unique_id=200103]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.02, -0.04)
+cast_shadow = 0
 radius = 0.052
 height = 0.13
 sides = 12
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="LongBarrel" type="CSGCylinder3D" parent="Head/Camera3D/Revolver" unique_id=200104]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.035, -0.32)
+cast_shadow = 0
 radius = 0.028
 height = 0.44
 sides = 12
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="UnderRib" type="CSGBox3D" parent="Head/Camera3D/Revolver" unique_id=200105]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01, -0.32)
+cast_shadow = 0
 size = Vector3(0.042, 0.042, 0.4)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="FrontSight" type="CSGBox3D" parent="Head/Camera3D/Revolver" unique_id=200106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.075, -0.51)
+cast_shadow = 0
 size = Vector3(0.014, 0.025, 0.03)
 material = SubResource("StandardMaterial3D_gold")
-cast_shadow = 0
 
 [node name="Muzzle" type="Marker3D" parent="Head/Camera3D/Revolver" unique_id=200107]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.035, -0.545)
@@ -121,110 +132,109 @@ omni_attenuation = 2.0
 
 [node name="FlashMesh" type="MeshInstance3D" parent="Head/Camera3D/Revolver/Muzzle" unique_id=200109]
 visible = false
+cast_shadow = 0
 mesh = SubResource("QuadMesh_flash")
 surface_material_override/0 = SubResource("StandardMaterial3D_flash")
-cast_shadow = 0
 
 [node name="RightArm" type="Node3D" parent="Head/Camera3D/Revolver" unique_id=200110]
 transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.1, 0.08)
 
 [node name="Palm" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200114]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.038, -0.005, 0.015)
+cast_shadow = 0
 size = Vector3(0.028, 0.11, 0.06)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="KnucklePlate" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200116]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.04, 0.01, 0.048)
+cast_shadow = 0
 size = Vector3(0.032, 0.08, 0.022)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Fingers" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200115]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.002, -0.02, -0.046)
+cast_shadow = 0
 size = Vector3(0.065, 0.09, 0.024)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Fingertips" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.034, -0.02, -0.03)
+cast_shadow = 0
 size = Vector3(0.018, 0.085, 0.032)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Thumb" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200118]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.034, 0.048, 0.01)
+cast_shadow = 0
 size = Vector3(0.02, 0.032, 0.055)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Wrist" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200119]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.042, -0.04, 0.065)
+cast_shadow = 0
 size = Vector3(0.072, 0.075, 0.075)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Forearm" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200111]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.12, 0.2)
+cast_shadow = 0
 size = Vector3(0.085, 0.085, 0.32)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="ArmArmor" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200112]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.075, 0.2)
+cast_shadow = 0
 size = Vector3(0.092, 0.015, 0.24)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="ArmTrim" type="CSGBox3D" parent="Head/Camera3D/Revolver/RightArm" unique_id=200113]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.07, 0.14)
+cast_shadow = 0
 size = Vector3(0.094, 0.02, 0.03)
 material = SubResource("StandardMaterial3D_gold")
-cast_shadow = 0
-
 
 [node name="Shotgun" type="Node3D" parent="Head/Camera3D" unique_id=1233928841]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, -0.22, -0.46)
 
 [node name="Receiver" type="CSGBox3D" parent="Head/Camera3D/Shotgun" unique_id=210101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0.03)
+cast_shadow = 0
 size = Vector3(0.14, 0.12, 0.22)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Grip" type="CSGBox3D" parent="Head/Camera3D/Shotgun" unique_id=210102]
 transform = Transform3D(1, 0, 0, 0, 0.956305, -0.292372, 0, 0.292372, 0.956305, 0, -0.11, 0.11)
+cast_shadow = 0
 size = Vector3(0.07, 0.16, 0.09)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Forend" type="CSGBox3D" parent="Head/Camera3D/Shotgun" unique_id=210103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.04, -0.17)
+cast_shadow = 0
 size = Vector3(0.15, 0.065, 0.22)
 material = SubResource("StandardMaterial3D_wood")
-cast_shadow = 0
 
 [node name="LeftBarrel" type="CSGCylinder3D" parent="Head/Camera3D/Shotgun" unique_id=210104]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, -0.04, 0.025, -0.25)
+cast_shadow = 0
 radius = 0.033
 height = 0.42
 sides = 12
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="RightBarrel" type="CSGCylinder3D" parent="Head/Camera3D/Shotgun" unique_id=210105]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0.04, 0.025, -0.25)
+cast_shadow = 0
 radius = 0.033
 height = 0.42
 sides = 12
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="TopRib" type="CSGBox3D" parent="Head/Camera3D/Shotgun" unique_id=210106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, -0.25)
+cast_shadow = 0
 size = Vector3(0.035, 0.015, 0.42)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Muzzle" type="Marker3D" parent="Head/Camera3D/Shotgun" unique_id=210107]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, -0.47)
@@ -238,106 +248,209 @@ omni_attenuation = 2.0
 
 [node name="FlashMesh" type="MeshInstance3D" parent="Head/Camera3D/Shotgun/Muzzle" unique_id=210109]
 visible = false
+cast_shadow = 0
 mesh = SubResource("QuadMesh_flash")
 surface_material_override/0 = SubResource("StandardMaterial3D_flash")
-cast_shadow = 0
 
 [node name="RightArm" type="Node3D" parent="Head/Camera3D/Shotgun" unique_id=210110]
 transform = Transform3D(1, 0, 0, 0, 0.956305, -0.292372, 0, 0.292372, 0.956305, 0, -0.11, 0.11)
 
 [node name="Palm" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210114]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.048, -0.005, 0.015)
+cast_shadow = 0
 size = Vector3(0.032, 0.12, 0.07)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="KnucklePlate" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210116]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.015, 0.055)
+cast_shadow = 0
 size = Vector3(0.034, 0.085, 0.024)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Fingers" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210115]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.002, -0.025, -0.058)
+cast_shadow = 0
 size = Vector3(0.08, 0.095, 0.028)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Fingertips" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210117]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.042, -0.025, -0.038)
+cast_shadow = 0
 size = Vector3(0.02, 0.09, 0.038)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Thumb" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210118]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.042, 0.05, 0.012)
+cast_shadow = 0
 size = Vector3(0.022, 0.036, 0.065)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Wrist" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210119]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.045, 0.08)
+cast_shadow = 0
 size = Vector3(0.076, 0.08, 0.08)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="Forearm" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210111]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.085, -0.13, 0.22)
+cast_shadow = 0
 size = Vector3(0.088, 0.088, 0.34)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
 
 [node name="ArmArmor" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210112]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.085, -0.082, 0.22)
+cast_shadow = 0
 size = Vector3(0.094, 0.015, 0.26)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="ArmTrim" type="CSGBox3D" parent="Head/Camera3D/Shotgun/RightArm" unique_id=210113]
 transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.085, -0.076, 0.15)
+cast_shadow = 0
 size = Vector3(0.096, 0.02, 0.035)
 material = SubResource("StandardMaterial3D_gold")
-cast_shadow = 0
 
+[node name="Injector" type="Node3D" parent="Head/Camera3D" unique_id=220101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, -0.22, -0.46)
+visible = false
+
+[node name="Receiver" type="CSGBox3D" parent="Head/Camera3D/Injector" unique_id=220102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0.01)
+cast_shadow = 0
+size = Vector3(0.065, 0.09, 0.22)
+material = SubResource("StandardMaterial3D_gunmetal")
+
+[node name="Grip" type="CSGBox3D" parent="Head/Camera3D/Injector" unique_id=220103]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.1, 0.08)
+cast_shadow = 0
+size = Vector3(0.055, 0.15, 0.07)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="BloodVial" type="CSGCylinder3D" parent="Head/Camera3D/Injector" unique_id=220104]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.065, -0.04)
+cast_shadow = 0
+radius = 0.042
+height = 0.18
+sides = 12
+material = SubResource("StandardMaterial3D_blood_vial")
+
+[node name="NeedleBarrel" type="CSGCylinder3D" parent="Head/Camera3D/Injector" unique_id=220105]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0.01, -0.26)
+cast_shadow = 0
+radius = 0.014
+height = 0.32
+sides = 12
+material = SubResource("StandardMaterial3D_gold")
+
+[node name="Muzzle" type="Marker3D" parent="Head/Camera3D/Injector" unique_id=220106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -0.43)
+
+[node name="MuzzleLight" type="OmniLight3D" parent="Head/Camera3D/Injector/Muzzle" unique_id=220107]
+visible = false
+light_color = Color(1, 0.2, 0.2, 1)
+light_energy = 0.0
+omni_range = 7.0
+omni_attenuation = 2.0
+
+[node name="FlashMesh" type="MeshInstance3D" parent="Head/Camera3D/Injector/Muzzle" unique_id=220108]
+visible = false
+cast_shadow = 0
+mesh = SubResource("QuadMesh_flash")
+surface_material_override/0 = SubResource("StandardMaterial3D_flash")
+
+[node name="RightArm" type="Node3D" parent="Head/Camera3D/Injector" unique_id=220109]
+transform = Transform3D(1, 0, 0, 0, 0.939693, -0.34202, 0, 0.34202, 0.939693, 0, -0.1, 0.08)
+
+[node name="Palm" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.038, -0.005, 0.015)
+cast_shadow = 0
+size = Vector3(0.028, 0.11, 0.06)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="KnucklePlate" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.04, 0.01, 0.048)
+cast_shadow = 0
+size = Vector3(0.032, 0.08, 0.022)
+material = SubResource("StandardMaterial3D_gunmetal")
+
+[node name="Fingers" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.002, -0.02, -0.046)
+cast_shadow = 0
+size = Vector3(0.065, 0.09, 0.024)
+material = SubResource("StandardMaterial3D_gunmetal")
+
+[node name="Fingertips" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220113]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.034, -0.02, -0.03)
+cast_shadow = 0
+size = Vector3(0.018, 0.085, 0.032)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="Thumb" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220114]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.034, 0.048, 0.01)
+cast_shadow = 0
+size = Vector3(0.02, 0.032, 0.055)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="Wrist" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220115]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.042, -0.04, 0.065)
+cast_shadow = 0
+size = Vector3(0.072, 0.075, 0.075)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="Forearm" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220116]
+transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.12, 0.2)
+cast_shadow = 0
+size = Vector3(0.085, 0.085, 0.34)
+material = SubResource("StandardMaterial3D_darksteel")
+
+[node name="ArmArmor" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220117]
+transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.075, 0.2)
+cast_shadow = 0
+size = Vector3(0.09, 0.015, 0.26)
+material = SubResource("StandardMaterial3D_gunmetal")
+
+[node name="ArmTrim" type="CSGBox3D" parent="Head/Camera3D/Injector/RightArm" unique_id=220118]
+transform = Transform3D(0.97, 0.08, -0.22, 0.06, 0.92, 0.38, 0.23, -0.38, 0.89, 0.075, -0.07, 0.13)
+cast_shadow = 0
+size = Vector3(0.092, 0.02, 0.035)
+material = SubResource("StandardMaterial3D_gold")
 
 [node name="RayCast3D" type="RayCast3D" parent="Head/Camera3D" unique_id=333002903]
 target_position = Vector3(0, 0, -50)
 collide_with_areas = true
 
 [node name="LeftArm" type="Node3D" parent="Head/Camera3D" unique_id=1455667788]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, -0.30, -0.24)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.36, -0.3, -0.24)
 visible = false
 
 [node name="Knuckles" type="CSGBox3D" parent="Head/Camera3D/LeftArm" unique_id=1455667791]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.02, -0.21)
+cast_shadow = 0
 size = Vector3(0.14, 0.05, 0.05)
 material = SubResource("StandardMaterial3D_gold")
-cast_shadow = 0
 
 [node name="Fist" type="CSGBox3D" parent="Head/Camera3D/LeftArm" unique_id=1455667790]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.01, 0.01, -0.13)
+cast_shadow = 0
 size = Vector3(0.13, 0.13, 0.15)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="Forearm" type="CSGBox3D" parent="Head/Camera3D/LeftArm" unique_id=1455667789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.14)
-size = Vector3(0.115, 0.115, 0.40)
-material = SubResource("StandardMaterial3D_darksteel")
 cast_shadow = 0
+size = Vector3(0.115, 0.115, 0.4)
+material = SubResource("StandardMaterial3D_darksteel")
 
 [node name="ArmArmor" type="CSGBox3D" parent="Head/Camera3D/LeftArm" unique_id=1455667792]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.065, 0.14)
+cast_shadow = 0
 size = Vector3(0.125, 0.02, 0.32)
 material = SubResource("StandardMaterial3D_gunmetal")
-cast_shadow = 0
 
 [node name="UpperArm" type="CSGBox3D" parent="Head/Camera3D/LeftArm" unique_id=1455667793]
 transform = Transform3D(0.966, 0, 0.259, 0.067, 0.966, -0.25, -0.25, 0.259, 0.933, -0.05, -0.06, 0.52)
+cast_shadow = 0
 size = Vector3(0.13, 0.13, 0.48)
 material = SubResource("StandardMaterial3D_darksteel")
-cast_shadow = 0
-
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1409434128]
 
@@ -420,6 +533,7 @@ horizontal_alignment = 1
 
 [node name="GameOverScreen" type="Control" parent="HUD" unique_id=1122334455]
 visible = false
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -427,7 +541,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="HUD/GameOverScreen" unique_id=1122334456]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -435,7 +549,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.75)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HUD/GameOverScreen" unique_id=1122334457]
-anchors_preset = 8
+layout_mode = 0
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -450,18 +564,21 @@ theme_override_constants/separation = 20
 alignment = 1
 
 [node name="GameOverLabel" type="Label" parent="HUD/GameOverScreen/VBoxContainer" unique_id=1122334458]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.15, 0.15, 1)
 theme_override_font_sizes/font_size = 64
 text = "GAME OVER"
 horizontal_alignment = 1
 
 [node name="RestartHintLabel" type="Label" parent="HUD/GameOverScreen/VBoxContainer" unique_id=1122334459]
+layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Нажмите R для перезапуска"
 horizontal_alignment = 1
 
 [node name="RestartButton" type="Button" parent="HUD/GameOverScreen/VBoxContainer" unique_id=1122334460]
 custom_minimum_size = Vector2(240, 50)
+layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Перезапуск (R)"

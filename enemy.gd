@@ -35,6 +35,13 @@ const PATH_UPDATE_INTERVAL: float = 0.35
 var debug_diag_timer: float = 0.0
 var current_target_vel: Vector3 = Vector3.ZERO
 
+var is_inflated: bool = false
+var was_killed_by_melee: bool = false
+var slow_factor: float = 1.0
+var slow_sources: int = 0
+var inflation_tween: Tween = null
+var inflation_pulse_tween: Tween = null
+
 var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
@@ -44,8 +51,10 @@ var blood_splatter_scene = preload("res://blood_splatter.tscn")
 @onready var detection_area: Area3D = get_node_or_null("DetectionArea")
 @onready var head_hitbox: Area3D = get_node_or_null("HeadHitbox")
 @onready var head_mesh: Node3D = get_node_or_null("HeadMesh")
+@onready var body_mesh: MeshInstance3D = get_node_or_null("MeshInstance3D")
 
 var eyes_material: StandardMaterial3D = null
+var body_override_mat: StandardMaterial3D = null
 
 var hp_viewport: SubViewport
 var hp_bar: ProgressBar
@@ -251,7 +260,7 @@ func _process_chase(delta):
 	
 	if move_dir.length_squared() > 0.05:
 		move_dir = move_dir.normalized()
-		current_target_vel = move_dir * move_speed
+		current_target_vel = move_dir * (move_speed * slow_factor)
 		if nav_agent.avoidance_enabled:
 			nav_agent.set_velocity(current_target_vel)
 		else:
@@ -370,10 +379,58 @@ func apply_vacuum_pull(pull_impulse: Vector3):
 	wall_slam_timer = max(wall_slam_timer, 0.25)
 	hit_reaction_timer = max(hit_reaction_timer, 0.2)
 
+func add_slow(factor: float = 0.5):
+	slow_sources += 1
+	slow_factor = factor
+
+func remove_slow():
+	slow_sources = max(0, slow_sources - 1)
+	if slow_sources == 0:
+		slow_factor = 1.0
+
+func inflate():
+	if is_inflated or current_state == State.DEAD:
+		return
+	is_inflated = true
+	
+	if inflation_tween:
+		inflation_tween.kill()
+	inflation_tween = create_tween().set_parallel(true)
+	
+	if body_mesh:
+		var orig_mat = body_mesh.get_surface_override_material(0)
+		if orig_mat:
+			body_override_mat = orig_mat.duplicate()
+		else:
+			body_override_mat = StandardMaterial3D.new()
+			body_override_mat.albedo_color = Color(0.015, 0.015, 0.015, 1)
+		body_override_mat.emission_enabled = true
+		body_override_mat.emission = Color(1.0, 0.12, 0.12)
+		body_override_mat.emission_energy_multiplier = 1.6
+		body_mesh.set_surface_override_material(0, body_override_mat)
+		inflation_tween.tween_property(body_mesh, "scale", Vector3(1.26, 1.26, 1.26), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+	if head_mesh:
+		inflation_tween.tween_property(head_mesh, "scale", Vector3(1.26, 1.26, 1.26), 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+	if eyes_material:
+		eyes_material.emission = Color(1.0, 0.1, 0.1)
+		eyes_material.emission_energy_multiplier = 3.5
+		
+	if inflation_pulse_tween:
+		inflation_pulse_tween.kill()
+	inflation_pulse_tween = create_tween().set_loops()
+	if body_override_mat:
+		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 3.2, 0.45).set_trans(Tween.TRANS_SINE)
+		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 1.2, 0.45).set_trans(Tween.TRANS_SINE)
+		
+	print("[%s] INFLATED with blood!" % name)
+
 func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false):
 	if current_state == State.DEAD:
 		return
 		
+	was_killed_by_melee = is_melee or is_shockwave or is_execute
 	health -= amount
 	_update_health_bar()
 	_spawn_damage_number(amount, hit_pos, is_headshot)
@@ -594,6 +651,10 @@ func die():
 		var det_col = detection_area.get_node_or_null("CollisionShape3D")
 		if det_col:
 			det_col.set_deferred("disabled", true)
+			
+	# Если враг был раздут шприцем — инициируем кровавую детонацию
+	if is_inflated:
+		_trigger_inflation_explosion()
 		
 	if blood_pool_scene:
 		var space_state = get_world_3d().direct_space_state
@@ -611,3 +672,90 @@ func die():
 				pool.global_position = global_position
 			
 	queue_free()
+
+func _trigger_inflation_explosion():
+	is_inflated = false
+	if inflation_pulse_tween:
+		inflation_pulse_tween.kill()
+		
+	var explosion_pos = global_position + Vector3(0, 0.9, 0)
+	var explosion_radius: float = 5.2
+	var explosion_damage: int = 85
+	
+	AudioManager.play_sound("explosion")
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if scene_root:
+		# Сочный разлёт крови во все стороны (360 градусов)
+		if blood_splatter_scene:
+			var splatter = blood_splatter_scene.instantiate()
+			splatter.amount = 135
+			splatter.scale = Vector3(2.4, 2.4, 2.4)
+			var pmat = splatter.process_material.duplicate()
+			pmat.spread = 180.0
+			pmat.initial_velocity_min = 7.0
+			pmat.initial_velocity_max = 20.0
+			pmat.scale_min = 0.28
+			pmat.scale_max = 0.65
+			splatter.process_material = pmat
+			scene_root.add_child(splatter)
+			splatter.global_position = explosion_pos
+			
+		_spawn_explosion_shockwave(scene_root, explosion_pos, explosion_radius)
+		
+	# 1. АОЕ урон по соседним врагам (запускает цепную реакцию для других раздутых врагов)
+	var all_enemies = get_tree().get_nodes_in_group("enemy")
+	for enemy in all_enemies:
+		if not is_instance_valid(enemy) or enemy == self:
+			continue
+		if ("current_state" in enemy and enemy.current_state == enemy.State.DEAD) or ("health" in enemy and enemy.health <= 0):
+			continue
+			
+		var enemy_center = enemy.global_position + Vector3(0, 0.9, 0)
+		var dist = explosion_pos.distance_to(enemy_center)
+		if dist <= explosion_radius:
+			var falloff = 1.0 - (dist / explosion_radius) * 0.35
+			var dmg = int(round(float(explosion_damage) * falloff))
+			var knock_dir = (enemy_center - explosion_pos).normalized()
+			if knock_dir.length_squared() < 0.01:
+				knock_dir = Vector3.UP
+			var knock_vec = knock_dir * 14.0 + Vector3.UP * 4.5
+			
+			print("[%s] DETONATION AOE HIT -> %s for %d dmg!" % [name, enemy.name, dmg])
+			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, true, false)
+			
+	# 2. Лечение игрока, если он в радиусе взрыва
+	var player = get_tree().get_first_node_in_group("player")
+	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
+		var player_center = player.global_position + Vector3(0, 0.9, 0)
+		var dist_to_player = explosion_pos.distance_to(player_center)
+		var heal_radius = explosion_radius + 1.8
+		if dist_to_player <= heal_radius:
+			var heal_amount = 35 if was_killed_by_melee else 15
+			if player.has_method("heal"):
+				player.heal(heal_amount, was_killed_by_melee)
+
+func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float):
+	var sphere = MeshInstance3D.new()
+	var smesh = SphereMesh.new()
+	smesh.radius = 0.4
+	smesh.height = 0.8
+	smesh.radial_segments = 16
+	smesh.rings = 8
+	sphere.mesh = smesh
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.15, 0.1, 0.8)
+	sphere.material_override = mat
+	
+	scene_root.add_child(sphere)
+	sphere.global_position = pos
+	
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(sphere, "scale", Vector3(radius * 1.6, radius * 1.6, radius * 1.6), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(sphere.queue_free)

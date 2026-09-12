@@ -169,6 +169,7 @@ func _input(event):
 	if event is InputEventKey and event.pressed:
 		if event.keycode == KEY_1: weapons.switch_weapon(0) 
 		elif event.keycode == KEY_2: weapons.switch_weapon(1) 
+		elif event.keycode == KEY_3: weapons.switch_weapon(2)
 			
 	if event.is_action_pressed("shoot"):
 		weapons.shoot(is_sliding and skills.has_blood_buff())
@@ -721,6 +722,47 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 		velocity += knockback_vector
 	if health <= 0:
 		die()
+
+func heal(amount: int, is_melee_bonus: bool = false):
+	if is_dead or amount <= 0:
+		return
+	var old_health = health
+	health = min(max_health, health + amount)
+	var gained = health - old_health
+	if health_label:
+		health_label.text = "HP: " + str(health)
+	AudioManager.play_sound("player_heal")
+	_spawn_heal_feedback(amount, is_melee_bonus)
+
+func _spawn_heal_feedback(heal_amount: int, is_melee_bonus: bool = false):
+	var label = Label3D.new()
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 6
+	label.outline_modulate = Color.BLACK
+	
+	if is_melee_bonus:
+		label.text = "+%d HP (MELEE SIPHON!)" % heal_amount
+		label.modulate = Color(0.2, 1.0, 0.4, 1.0)
+		label.font_size = 32
+	else:
+		label.text = "+%d HP" % heal_amount
+		label.modulate = Color(0.3, 0.95, 0.5, 1.0)
+		label.font_size = 26
+		
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(label)
+	
+	var start_p = global_position + Vector3(randf_range(-0.2, 0.2), 1.2, randf_range(-0.2, 0.2))
+	label.global_position = start_p
+	
+	var target_p = start_p + Vector3(0.0, 0.85, 0.0)
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(label, "global_position", target_p, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(label.queue_free)
 
 func die():
 	if is_dead:

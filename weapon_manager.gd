@@ -3,9 +3,11 @@ extends Node
 var current_weapon_index = 0
 var is_reloading = false
 var is_bursting = false
-var fire_timers = [0.0, 0.0]
-var passive_reload_timers = [0.0, 0.0]
+var fire_timers = [0.0, 0.0, 0.0]
+var passive_reload_timers = [0.0, 0.0, 0.0]
 var active_reload_timer = 0.0
+
+var flask_scene = preload("res://flask_projectile.tscn")
 
 var weapons = [
 	{
@@ -45,10 +47,27 @@ var weapons = [
 		"has_vacuum": false,
 		"vacuum_radius": 0.0,
 		"vacuum_force": 0.0
+	},
+	{
+		"name": "ИНЪЕКТОР",
+		"max_ammo": 6,
+		"damage": 25,
+		"pellets": 1,
+		"spread": 0.0,
+		"fire_rate": 0.32,
+		"reload_time": 1.4,
+		"cam_shake": 0.04,
+		"weapon_kick": 0.16,
+		"knockback": 2.5,
+		"upward_kick": 0.0,
+		"headshot_multiplier": 1.5,
+		"air_multiplier": 1.0,
+		"has_vacuum": false,
+		"is_injector": true
 	}
 ]
 
-var ammos = [4, 2]
+var ammos = [4, 2, 6]
 
 @onready var head = $"../Head"
 @onready var ammo_label = $"../HUD/AmmoLabel"
@@ -79,7 +98,7 @@ func _setup_weapon_hud():
 		weapon_hud_container.anchor_right = 1.0
 		weapon_hud_container.anchor_bottom = 1.0
 		weapon_hud_container.offset_left = -290.0
-		weapon_hud_container.offset_top = -140.0
+		weapon_hud_container.offset_top = -195.0
 		weapon_hud_container.offset_right = -20.0
 		weapon_hud_container.offset_bottom = -20.0
 		weapon_hud_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -276,20 +295,44 @@ func shoot(has_infinite_ammo: bool):
 	fire_timers[current_weapon_index] = w["fire_rate"]
 	_fire_pellets(current_weapon_index, -1.0, false)
 
-func alt_shoot(_has_infinite_ammo: bool = false):
-	# ПКМ — быстрый залп доступен для Калибр-0 (индекс 0)
-	if current_weapon_index != 0:
-		return
+func alt_shoot(has_infinite_ammo: bool = false):
 	if is_reloading or is_bursting or fire_timers[current_weapon_index] > 0:
 		return
-		
-	# Залп ВСЕГДА расходует реальные патроны из барабана, даже во время активного кровавого баффа
-	if ammos[current_weapon_index] <= 0:
+
+	if current_weapon_index == 0:
+		# Калибр-0: ПКМ быстрый залп (всегда расходует реальные патроны из барабана)
+		if ammos[0] <= 0:
+			reload()
+			return
+		var shots_to_fire = ammos[0]
+		_perform_burst(shots_to_fire)
+	elif current_weapon_index == 2:
+		# Инъектор: ПКМ колба с кровью
+		_fire_blood_flask(has_infinite_ammo)
+
+func _fire_blood_flask(has_infinite_ammo: bool):
+	if ammos[2] <= 0:
 		reload()
 		return
 		
-	var shots_to_fire = ammos[current_weapon_index]
-	_perform_burst(shots_to_fire)
+	if not has_infinite_ammo:
+		var cost = min(2, ammos[2])
+		ammos[2] -= cost
+		
+	fire_timers[2] = 0.55
+	head.add_recoil(0.06, 0.25)
+	AudioManager.play_sound("flask_throw")
+	
+	if flask_scene:
+		var flask = flask_scene.instantiate()
+		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+		if scene_root:
+			scene_root.add_child(flask)
+			var aim_dir = head.get_aim_direction()
+			var spawn_pos = head.camera.global_position + aim_dir * 0.55 + Vector3(0, -0.15, 0)
+			flask.global_position = spawn_pos
+			var throw_vel = aim_dir * 24.0 + Vector3.UP * 4.2
+			flask.launch(throw_vel)
 
 func _perform_burst(shots_count: int):
 	is_bursting = true
@@ -329,8 +372,10 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 	
 	if weapon_idx == 0:
 		AudioManager.play_sound("revolver_shot")
-	else:
+	elif weapon_idx == 1:
 		AudioManager.play_sound("shotgun_shot")
+	elif weapon_idx == 2:
+		AudioManager.play_sound("injector_shot")
 		
 	var aim_dir = head.get_aim_direction()
 	var start_pos = head.get_muzzle_position()
@@ -386,12 +431,71 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
 						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 						
+					if weapon_idx == 2 and target.has_method("inflate"):
+						target.inflate()
+						
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
 					
 		if w.get("has_vacuum", false):
 			spawn_bullet_tracer(start_pos, hit_pos)
 			if not is_alt_fire:
 				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.0)), float(w.get("vacuum_force", 16.0)), directly_hit_target)
+		elif weapon_idx == 2:
+			spawn_syringe_tracer(start_pos, hit_pos)
+
+func spawn_syringe_tracer(start_pos: Vector3, end_pos: Vector3):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.022
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.18, 0.25, 0.95)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
 
 func spawn_bullet_tracer(start_pos: Vector3, end_pos: Vector3):
 	var dir = end_pos - start_pos

@@ -14,6 +14,11 @@ var sound_buffers: Dictionary = {}
 var sound_durations: Dictionary = {
 	"revolver_shot": 0.16,
 	"shotgun_shot": 0.28,
+	"injector_shot": 0.14,
+	"flask_throw": 0.18,
+	"flask_splash": 0.32,
+	"explosion": 0.45,
+	"player_heal": 0.28,
 	"melee_hit": 0.11,
 	"melee_heavy_hit": 0.24,
 	"dash": 0.16,
@@ -219,6 +224,11 @@ func _check_single_external_file(sound_name: String) -> bool:
 func _generate_all_procedural_sounds():
 	sound_buffers["revolver_shot"] = _gen_revolver_shot()
 	sound_buffers["shotgun_shot"] = _gen_shotgun_shot()
+	sound_buffers["injector_shot"] = _gen_injector_shot()
+	sound_buffers["flask_throw"] = _gen_flask_throw()
+	sound_buffers["flask_splash"] = _gen_flask_splash()
+	sound_buffers["explosion"] = _gen_explosion()
+	sound_buffers["player_heal"] = _gen_player_heal()
 	sound_buffers["melee_hit"] = _gen_melee_hit()
 	sound_buffers["melee_heavy_hit"] = _gen_melee_heavy_hit()
 	sound_buffers["dash"] = _gen_dash()
@@ -580,4 +590,103 @@ func _gen_slide_wav() -> AudioStreamWAV:
 	wav.loop_begin = 0
 	wav.loop_end = samples
 	return wav
+
+# 12. "injector_shot" — пневматический выстрел иглы шприца (щелчок + свист)
+func _gen_injector_shot() -> PackedVector2Array:
+	var dur = sound_durations["injector_shot"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		var freq = 350.0 + 1600.0 * exp(-45.0 * t)
+		phase += TAU * freq * dt
+		var tone = sin(phase) * 0.45
+		var hiss = randf_range(-1.0, 1.0) * exp(-28.0 * t) * 0.40
+		var s = (tone + hiss) * exp(-12.0 * t) * 0.75
+		arr[i] = Vector2(s, s)
+	return arr
+
+# 13. "flask_throw" — свист рассекаемого воздуха при броске колбы
+func _gen_flask_throw() -> PackedVector2Array:
+	var dur = sound_durations["flask_throw"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		var env = sin((t / dur) * PI)
+		var noise = randf_range(-1.0, 1.0) * env * 0.45
+		arr[i] = Vector2(noise, noise)
+	return arr
+
+# 14. "flask_splash" — звон разбитого стекла + хлюпающий всплеск жидкости
+func _gen_flask_splash() -> PackedVector2Array:
+	var dur = sound_durations["flask_splash"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var glass_phase: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Звон стекла (высокая частота ~2800 Гц с быстрой реверберацией)
+		glass_phase += TAU * (2800.0 + sin(t * 120.0) * 400.0) * dt
+		var glass = sin(glass_phase) * exp(-35.0 * t) * 0.55
+		# Хлюпанье жидкости (низкочастотный шум + всплеск)
+		var splash_env = clamp((t - 0.02) * 15.0, 0.0, 1.0) * exp(-10.0 * t)
+		var splash = randf_range(-1.0, 1.0) * splash_env * 0.5
+		var s = clampf(glass + splash, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# 15. "explosion" — мощный раскатистый взрыв с глухим саб-басом и треском
+func _gen_explosion() -> PackedVector2Array:
+	var dur = sound_durations["explosion"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var sub_phase: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Глухой басовый удар (130 -> 35 Гц)
+		var freq = 35.0 + 95.0 * exp(-14.0 * t)
+		sub_phase += TAU * freq * dt
+		var bass = sin(sub_phase) * exp(-6.5 * t) * 0.8
+		# Взрывной раскат шума
+		var blast = randf_range(-1.0, 1.0) * exp(-9.0 * t) * 0.7
+		var s = clampf(bass + blast, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# 16. "player_heal" — чистый звонкий восходящий кристаллический аккорд исцеления
+func _gen_player_heal() -> PackedVector2Array:
+	var dur = sound_durations["player_heal"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p1: float = 0.0
+	var p2: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Восходящие тона (520 -> 780 Гц и 1040 Гц)
+		var f1 = 520.0 + 260.0 * (t / dur)
+		var f2 = f1 * 1.5
+		p1 += TAU * f1 * dt
+		p2 += TAU * f2 * dt
+		var env = exp(-7.0 * t)
+		var s = (sin(p1) * 0.45 + sin(p2) * 0.35) * env
+		arr[i] = Vector2(s, s)
+	return arr
+
 
