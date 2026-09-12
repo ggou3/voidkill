@@ -172,6 +172,8 @@ func _input(event):
 			
 	if event.is_action_pressed("shoot"):
 		weapons.shoot(is_sliding and skills.has_blood_buff())
+	elif event.is_action_pressed("alt_fire") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
+		weapons.alt_shoot(is_sliding and skills.has_blood_buff())
 	if event.is_action_pressed("reload"):
 		weapons.reload()
 		
