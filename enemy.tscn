@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://rkw44u1bvqo3"]
+
+[ext_resource type="Script" uid="uid://n81thag53g2p" path="res://enemy.gd" id="1_7k104"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
+radius = 0.36
+height = 1.25
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.34
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_3xd07"]
+radius = 0.36
+height = 1.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jq8tk"]
+albedo_color = Color(0.012617188, 0.012617188, 0.012617188, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.035, 0.035, 0.04, 1)
+metallic = 0.2
+roughness = 0.7
+
+[sub_resource type="BoxMesh" id="BoxMesh_3xd07"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6fhyq"]
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 25.0
+
+[node name="Enemy" type="CharacterBody3D" unique_id=948084825 groups=["enemy"]]
+script = ExtResource("1_7k104")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=804700386]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)
+shape = SubResource("CapsuleShape3D_3xd07")
+
+[node name="HeadHitbox" type="Area3D" parent="." unique_id=991122334 groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox" unique_id=991122335]
+shape = SubResource("SphereShape3D_head")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=805752143]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)
+mesh = SubResource("CapsuleMesh_3xd07")
+surface_material_override/0 = SubResource("StandardMaterial3D_jq8tk")
+
+[node name="HeadMesh" type="CSGSphere3D" parent="." unique_id=159283746]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+radius = 0.3
+radial_segments = 16
+rings = 8
+material = SubResource("StandardMaterial3D_head")
+
+[node name="Eyes" type="MeshInstance3D" parent="." unique_id=1208700357]
+transform = Transform3D(0.18, 0, 0, 0, 0.08, 0, 0, 0, 0.08, 0, 0.55, -0.28)
+mesh = SubResource("BoxMesh_3xd07")
+surface_material_override/0 = SubResource("StandardMaterial3D_6fhyq")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1412095861]
+target_desired_distance = 1.5
+path_desired_distance = 0.8
+avoidance_enabled = false
+radius = 0.3
+neighbor_distance = 3.0
+max_neighbors = 3
+time_horizon_agents = 1.5
+
+[node name="DetectionArea" type="Area3D" parent="." unique_id=314159265]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea" unique_id=271828182]
+shape = SubResource("SphereShape3D_detection")

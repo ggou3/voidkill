@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://bqi0l10uhl7lw"]
+
+[ext_resource type="Script" uid="uid://dfl340l5yigqc" path="res://blood_splatter.gd" id="1_nd4dr"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_jq8tk"]
+direction = Vector3(0, 0, 1)
+spread = 30.0
+initial_velocity_min = 4.0
+initial_velocity_max = 8.0
+scale_min = 0.099999994
+scale_max = 0.29999998
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h83rl"]
+albedo_color = Color(0.77226824, 0, 0.021207564, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_dwbtc"]
+material = SubResource("StandardMaterial3D_h83rl")
+
+[node name="BloodSplatter" type="GPUParticles3D" unique_id=370756337]
+emitting = false
+amount = 30
+lifetime = 2.11
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_jq8tk")
+draw_pass_1 = SubResource("SphereMesh_dwbtc")
+script = ExtResource("1_nd4dr")

@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://0bd00q6imegi"]
+
+[ext_resource type="Script" uid="uid://hosq2a5ebky0" path="res://blood_pool.gd" id="1_4ykup"]
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_jq8tk"]
+size = Vector2(3.5, 3.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6fhyq"]
+albedo_color = Color(0.5215736, 1.4499388e-06, 3.3691526e-07, 1)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_3xd07"]
+height = 1.0
+radius = 1.7
+
+[node name="BloodPool" type="Area3D" unique_id=707339482]
+collision_layer = 0
+script = ExtResource("1_4ykup")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1845557086]
+mesh = SubResource("PlaneMesh_jq8tk")
+surface_material_override/0 = SubResource("StandardMaterial3D_6fhyq")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=449558541]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("CylinderShape3D_3xd07")
