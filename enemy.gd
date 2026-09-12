@@ -47,6 +47,11 @@ var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 var eyes_material: StandardMaterial3D = null
 
+var hp_viewport: SubViewport
+var hp_bar: ProgressBar
+var hp_sprite: Sprite3D
+var hp_label: Label3D
+
 func _ready():
 	health = max_health
 	floor_snap_length = 0.4
@@ -69,9 +74,67 @@ func _ready():
 		nav_agent.avoidance_enabled = avoidance_enabled
 		nav_agent.velocity_computed.connect(_on_velocity_computed)
 		
+	_setup_health_bar()
+
 	# NavigationServer3D sync delay before using navigation agent
 	set_physics_process(false)
 	call_deferred("_setup_navigation")
+
+func _setup_health_bar():
+	# 1. SubViewport для отрисовки текстуры ProgressBar
+	hp_viewport = SubViewport.new()
+	hp_viewport.size = Vector2i(130, 20)
+	hp_viewport.transparent_bg = true
+	hp_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+
+	hp_bar = ProgressBar.new()
+	hp_bar.size = Vector2(130, 20)
+	hp_bar.max_value = max_health
+	hp_bar.value = health
+	hp_bar.show_percentage = false
+
+	var bg_box = StyleBoxFlat.new()
+	bg_box.bg_color = Color(0.08, 0.08, 0.08, 0.85)
+	bg_box.border_color = Color(0.35, 0.35, 0.35, 0.9)
+	bg_box.set_border_width_all(2)
+	bg_box.set_corner_radius_all(3)
+
+	var fg_box = StyleBoxFlat.new()
+	fg_box.bg_color = Color(0.95, 0.15, 0.15, 1.0)
+	fg_box.set_corner_radius_all(2)
+
+	hp_bar.add_theme_stylebox_override("background", bg_box)
+	hp_bar.add_theme_stylebox_override("fill", fg_box)
+
+	hp_viewport.add_child(hp_bar)
+	add_child(hp_viewport)
+
+	# 2. Sprite3D билборд полоски здоровья над головой врага
+	hp_sprite = Sprite3D.new()
+	hp_sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hp_sprite.no_depth_test = true
+	hp_sprite.position = Vector3(0, 1.15, 0)
+	hp_sprite.texture = hp_viewport.get_texture()
+	hp_sprite.pixel_size = 0.007
+	add_child(hp_sprite)
+
+	# 3. Текстовое числовое значение HP над полоской
+	hp_label = Label3D.new()
+	hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	hp_label.no_depth_test = true
+	hp_label.position = Vector3(0, 1.32, 0)
+	hp_label.font_size = 18
+	hp_label.outline_size = 4
+	hp_label.outline_modulate = Color.BLACK
+	hp_label.modulate = Color(1.0, 0.9, 0.9)
+	hp_label.text = "%d / %d" % [health, max_health]
+	add_child(hp_label)
+
+func _update_health_bar():
+	if hp_bar:
+		hp_bar.value = max(0, health)
+	if hp_label:
+		hp_label.text = "%d / %d" % [max(0, health), max_health]
 
 func _setup_navigation():
 	await get_tree().physics_frame
@@ -312,6 +375,8 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		return
 		
 	health -= amount
+	_update_health_bar()
+	_spawn_damage_number(amount, hit_pos, is_headshot)
 	AudioManager.play_sound("enemy_hit")
 	
 	if is_headshot:
@@ -458,6 +523,8 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	velocity = velocity.slide(col.get_normal()) * 0.2
 	
 	health -= wall_damage
+	_update_health_bar()
+	_spawn_damage_number(wall_damage, col.get_position(), false)
 	if health <= 0:
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player) and "skills" in player and player.skills:
@@ -470,6 +537,50 @@ func die():
 	current_state = State.DEAD
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
+	
+	if hp_sprite:
+		hp_sprite.visible = false
+	if hp_label:
+		hp_label.visible = false
+
+func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = false):
+	if dmg_amount <= 0:
+		return
+	var label = Label3D.new()
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 6
+	label.outline_modulate = Color(0, 0, 0, 1)
+	
+	if is_crit:
+		label.text = "-%d CRIT!" % dmg_amount
+		label.modulate = Color(1.0, 0.2, 0.1, 1.0)
+		label.font_size = 32
+	elif dmg_amount >= 140:
+		label.text = "-%d AIR!" % dmg_amount
+		label.modulate = Color(0.2, 0.85, 1.0, 1.0)
+		label.font_size = 28
+	else:
+		label.text = "-%d" % dmg_amount
+		label.modulate = Color(1.0, 0.92, 0.25, 1.0)
+		label.font_size = 24
+		
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(label)
+	
+	var base_p = spawn_pos if spawn_pos.length_squared() > 0.01 else global_position + Vector3(0, 0.8, 0)
+	var offset = Vector3(randf_range(-0.15, 0.15), randf_range(0.05, 0.2), randf_range(-0.15, 0.15))
+	var start_p = base_p + offset
+	label.global_position = start_p
+	
+	var target_p = start_p + Vector3(0.0, 0.75, 0.0)
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "global_position", target_p, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(label.queue_free)
 	
 	if collision_shape:
 		collision_shape.set_deferred("disabled", true)

@@ -22,7 +22,7 @@ var weapons = [
 		"upward_kick": 0.0, # Не подбрасывает вверх
 		"headshot_multiplier": 2.2, # Хедшот: 70 * 2.2 = 154 урона (ваншот)
 		"air_multiplier": 2.0,      # Бонус x2 по воздушным целям (стакается с хедшотом)
-		"alt_burst_interval": 0.065, # Интервал между выстрелами ПКМ залпа (0.05-0.08с)
+		"alt_burst_interval": 0.12, # Увеличенный интервал между выстрелами ПКМ залпа (различимая очередь)
 		"alt_spread": 0.06,         # Разброс пуль в залпе ПКМ
 		"has_vacuum": true,
 		"vacuum_radius": 2.0,
@@ -52,6 +52,109 @@ var ammos = [4, 2]
 
 @onready var head = $"../Head"
 @onready var ammo_label = $"../HUD/AmmoLabel"
+@onready var hud = $"../HUD"
+
+var weapon_hud_container: VBoxContainer
+var weapon_ui_slots: Array = []
+
+func _ready():
+	_setup_weapon_hud()
+
+func _setup_weapon_hud():
+	if not hud:
+		return
+		
+	# Скрываем старый простой текстовый AmmoLabel
+	if ammo_label:
+		ammo_label.visible = false
+		
+	if hud.has_node("WeaponHUDList"):
+		weapon_hud_container = hud.get_node("WeaponHUDList")
+	else:
+		weapon_hud_container = VBoxContainer.new()
+		weapon_hud_container.name = "WeaponHUDList"
+		weapon_hud_container.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+		weapon_hud_container.anchor_left = 1.0
+		weapon_hud_container.anchor_top = 1.0
+		weapon_hud_container.anchor_right = 1.0
+		weapon_hud_container.anchor_bottom = 1.0
+		weapon_hud_container.offset_left = -290.0
+		weapon_hud_container.offset_top = -140.0
+		weapon_hud_container.offset_right = -20.0
+		weapon_hud_container.offset_bottom = -20.0
+		weapon_hud_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		weapon_hud_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
+		weapon_hud_container.add_theme_constant_override("separation", 8)
+		hud.add_child(weapon_hud_container)
+		
+	_rebuild_weapon_slots()
+
+func _rebuild_weapon_slots():
+	if not weapon_hud_container:
+		return
+	for child in weapon_hud_container.get_children():
+		child.queue_free()
+	weapon_ui_slots.clear()
+	
+	for i in range(weapons.size()):
+		var w = weapons[i]
+		
+		var panel = PanelContainer.new()
+		panel.custom_minimum_size = Vector2(270, 48)
+		
+		var margin = MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 12)
+		margin.add_theme_constant_override("margin_right", 12)
+		margin.add_theme_constant_override("margin_top", 5)
+		margin.add_theme_constant_override("margin_bottom", 5)
+		panel.add_child(margin)
+		
+		var vbox = VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 3)
+		margin.add_child(vbox)
+		
+		var hbox = HBoxContainer.new()
+		vbox.add_child(hbox)
+		
+		var name_label = Label.new()
+		name_label.text = "[%d] %s" % [i + 1, w["name"]]
+		name_label.add_theme_font_size_override("font_size", 15)
+		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hbox.add_child(name_label)
+		
+		var ammo_text = Label.new()
+		ammo_text.text = "%d / %d" % [ammos[i], w["max_ammo"]]
+		ammo_text.add_theme_font_size_override("font_size", 16)
+		ammo_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		hbox.add_child(ammo_text)
+		
+		var pbar = ProgressBar.new()
+		pbar.custom_minimum_size = Vector2(0, 4)
+		pbar.show_percentage = false
+		pbar.max_value = 100.0
+		pbar.value = 100.0
+		
+		var pbar_bg = StyleBoxFlat.new()
+		pbar_bg.bg_color = Color(0.1, 0.12, 0.14, 0.7)
+		pbar_bg.set_corner_radius_all(2)
+		pbar.add_theme_stylebox_override("background", pbar_bg)
+		
+		var pbar_fg = StyleBoxFlat.new()
+		pbar_fg.bg_color = Color(0.2, 0.75, 1.0, 1.0)
+		pbar_fg.set_corner_radius_all(2)
+		pbar.add_theme_stylebox_override("fill", pbar_fg)
+		
+		vbox.add_child(pbar)
+		
+		weapon_hud_container.add_child(panel)
+		
+		weapon_ui_slots.append({
+			"panel": panel,
+			"name_label": name_label,
+			"ammo_text": ammo_text,
+			"pbar": pbar,
+			"pbar_fg": pbar_fg
+		})
 
 func _process(delta):
 	# Кулдауны скорострельности
@@ -89,13 +192,74 @@ func switch_weapon(index: int):
 	head.switch_weapon_visual(index)
 
 func update_hud(has_infinite_ammo: bool):
-	var w = weapons[current_weapon_index]
-	if is_reloading:
-		ammo_label.text = "RELOADING " + w["name"] + "..."
-	elif has_infinite_ammo:
-		ammo_label.text = w["name"] + ": INF (BLOOD BUFF)"
-	else:
-		ammo_label.text = w["name"] + ": " + str(ammos[current_weapon_index]) + " / " + str(w["max_ammo"])
+	if not weapon_hud_container:
+		_setup_weapon_hud()
+	if weapon_ui_slots.size() != weapons.size():
+		_rebuild_weapon_slots()
+		
+	for i in range(weapons.size()):
+		if i >= weapon_ui_slots.size():
+			continue
+		var w = weapons[i]
+		var slot = weapon_ui_slots[i]
+		var is_active = (i == current_weapon_index)
+		
+		var sb = StyleBoxFlat.new()
+		if is_active:
+			# Активное оружие: CS:GO стиль — янтарная плашка слева, яркий текст
+			sb.bg_color = Color(0.12, 0.14, 0.18, 0.9)
+			sb.border_color = Color(0.95, 0.72, 0.20, 1.0)
+			sb.set_border_width_all(1)
+			sb.border_width_left = 5
+			sb.set_corner_radius_all(3)
+			slot["panel"].add_theme_stylebox_override("panel", sb)
+			
+			slot["name_label"].text = "[%d] %s" % [i + 1, w["name"]]
+			slot["name_label"].add_theme_color_override("font_color", Color(1.0, 0.88, 0.35, 1.0))
+			
+			if is_reloading:
+				var progress = clamp((float(w["reload_time"]) - active_reload_timer) / float(w["reload_time"]), 0.0, 1.0)
+				slot["ammo_text"].text = "RELOAD %d%%" % int(progress * 100.0)
+				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.6, 0.1, 1.0))
+				slot["pbar"].visible = true
+				slot["pbar"].value = progress * 100.0
+				slot["pbar_fg"].bg_color = Color(0.95, 0.65, 0.15, 1.0) # Amber
+			elif is_bursting:
+				slot["ammo_text"].text = "%d / %d (BURST)" % [ammos[i], w["max_ammo"]]
+				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.3, 0.3, 1.0))
+				slot["pbar"].visible = false
+			elif has_infinite_ammo:
+				slot["ammo_text"].text = "INF (BLOOD)"
+				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
+				slot["pbar"].visible = false
+			else:
+				slot["ammo_text"].text = "%d / %d" % [ammos[i], w["max_ammo"]]
+				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
+				slot["pbar"].visible = false
+		else:
+			# Неактивное оружие: приглушенный полупрозрачный слот
+			sb.bg_color = Color(0.06, 0.07, 0.08, 0.55)
+			sb.border_color = Color(0.25, 0.28, 0.32, 0.35)
+			sb.set_border_width_all(1)
+			sb.border_width_left = 2
+			sb.set_corner_radius_all(3)
+			slot["panel"].add_theme_stylebox_override("panel", sb)
+			
+			slot["name_label"].text = "[%d] %s" % [i + 1, w["name"]]
+			slot["name_label"].add_theme_color_override("font_color", Color(0.65, 0.68, 0.72, 0.8))
+			
+			# Индикатор прогресса пассивной перезарядки спрятанного оружия
+			if ammos[i] < w["max_ammo"]:
+				var p_progress = clamp(passive_reload_timers[i] / float(w["reload_time"]), 0.0, 1.0)
+				slot["ammo_text"].text = "%d / %d (%d%%)" % [ammos[i], w["max_ammo"], int(p_progress * 100.0)]
+				slot["ammo_text"].add_theme_color_override("font_color", Color(0.3, 0.8, 1.0, 0.9)) # Cyan
+				slot["pbar"].visible = true
+				slot["pbar"].value = p_progress * 100.0
+				slot["pbar_fg"].bg_color = Color(0.2, 0.75, 1.0, 0.9)
+			else:
+				slot["ammo_text"].text = "%d / %d" % [ammos[i], w["max_ammo"]]
+				slot["ammo_text"].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 0.7))
+				slot["pbar"].visible = false
 
 func shoot(has_infinite_ammo: bool):
 	if is_reloading or is_bursting or fire_timers[current_weapon_index] > 0:
@@ -112,30 +276,26 @@ func shoot(has_infinite_ammo: bool):
 	fire_timers[current_weapon_index] = w["fire_rate"]
 	_fire_pellets(current_weapon_index, -1.0, false)
 
-func alt_shoot(has_infinite_ammo: bool):
+func alt_shoot(_has_infinite_ammo: bool = false):
 	# ПКМ — быстрый залп доступен для Калибр-0 (индекс 0)
 	if current_weapon_index != 0:
 		return
 	if is_reloading or is_bursting or fire_timers[current_weapon_index] > 0:
 		return
 		
+	# Залп ВСЕГДА расходует реальные патроны из барабана, даже во время активного кровавого баффа
 	if ammos[current_weapon_index] <= 0:
 		reload()
 		return
 		
-	var w = weapons[current_weapon_index]
-	var shots_to_fire = int(w["max_ammo"]) if has_infinite_ammo else ammos[current_weapon_index]
-	if shots_to_fire <= 0:
-		reload()
-		return
-		
-	_perform_burst(shots_to_fire, has_infinite_ammo)
+	var shots_to_fire = ammos[current_weapon_index]
+	_perform_burst(shots_to_fire)
 
-func _perform_burst(shots_count: int, has_infinite_ammo: bool):
+func _perform_burst(shots_count: int):
 	is_bursting = true
 	var w = weapons[0]
 	var burst_spread = float(w.get("alt_spread", 0.06))
-	var burst_interval = float(w.get("alt_burst_interval", 0.065))
+	var burst_interval = float(w.get("alt_burst_interval", 0.12))
 	
 	for i in range(shots_count):
 		if not is_instance_valid(self) or not is_inside_tree():
@@ -144,21 +304,15 @@ func _perform_burst(shots_count: int, has_infinite_ammo: bool):
 		if current_weapon_index != 0:
 			break
 			
-		if not has_infinite_ammo:
-			ammos[0] = max(0, ammos[0] - 1)
-			
+		ammos[0] = max(0, ammos[0] - 1)
 		_fire_pellets(0, burst_spread, true)
 		
 		if i < shots_count - 1:
 			await get_tree().create_timer(burst_interval).timeout
 			
 	is_bursting = false
-	
-	if not has_infinite_ammo:
-		ammos[0] = 0
-		reload()
-	else:
-		fire_timers[0] = 0.8
+	ammos[0] = 0
+	reload()
 
 func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: bool = false):
 	var w = weapons[weapon_idx]
@@ -353,4 +507,3 @@ func reload():
 	is_reloading = true
 	active_reload_timer = float(w["reload_time"])
 	AudioManager.play_sound("reload")
-
