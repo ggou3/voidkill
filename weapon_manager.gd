@@ -497,12 +497,12 @@ func _fire_anvil_piston():
 				push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
 				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
 			else:
-				# Горизонтальный отброс от игрока в упор (38-45 м/с -> 42.0 м/с)
+				# Полный 3D-вектор толчка от игрока с учетом вертикального угла камеры (aim_dir.y):
+				# Если игрок целится сверху вниз, толчок направляет врага в пол для срабатывания wall_slam
 				var push_speed = 42.0
 				var push_dir = aim_dir.normalized()
 				push_vec = push_dir * push_speed
-				push_vec.y = clamp(push_vec.y, 3.0, 7.0)
-				print("[ANVIL PISTON] HORIZONTAL SLAM PUSH -> %s (rel_height: %.2f, speed: %.1f)" % [target.name, rel_height, push_speed])
+				print("[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, speed: %.1f, push_vec: %s)" % [target.name, rel_height, push_speed, push_vec])
 				
 			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
 			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
@@ -510,7 +510,7 @@ func _fire_anvil_piston():
 		spawn_piston_tracer(start_pos, primary_hit_pos, false)
 		return
 		
-	# 2. Врагов нет — проверяем попадание конуса в статичную геометрию (стена, пол, потолок)
+	# 2. Прямого попадания во врагов нет — проверяем попадание конуса в статичную геометрию (стена, пол, потолок)
 	var hit_geom: bool = false
 	var geom_hit_pos: Vector3 = from_pos + aim_dir * PISTON_RANGE
 	var geom_hit_normal: Vector3 = Vector3.UP
@@ -554,7 +554,65 @@ func _fire_anvil_piston():
 					geom_hit_normal = sub_res.normal
 					
 	if hit_geom:
-		# Self-launch при упоре в любую статичную геометрию (стена, пол, потолок)
+		# Проверяем: есть ли враги, стоящие на поверхности в радиусе ~1.8-2.0м от точки попадания (выстрел в пол под удалённым врагом)
+		const FLOOR_SPLASH_RADIUS: float = 2.0
+		var splash_enemies: Array = []
+		
+		for e in all_enemies:
+			if not is_instance_valid(e):
+				continue
+			if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
+				continue
+				
+			var e_pos = e.global_position
+			var e_feet_y = e_pos.y - 1.0 # Уровень земли/ступней врага
+			var h_dist = Vector2(e_pos.x - geom_hit_pos.x, e_pos.z - geom_hit_pos.z).length()
+			var v_diff = abs(geom_hit_pos.y - e_feet_y)
+			
+			# Враг должен стоять на этой поверхности (в радиусе до 2.0м и по высоте рядом)
+			if h_dist <= FLOOR_SPLASH_RADIUS and v_diff <= 1.4:
+				# Проверка видимости от точки удара в пол к ногам врага (не сквозь сплошную стену)
+				var splash_occ = PhysicsRayQueryParameters3D.create(geom_hit_pos + geom_hit_normal * 0.1, e_pos + Vector3(0, -0.4, 0))
+				if is_instance_valid(player_node):
+					splash_occ.exclude = [player_node]
+				splash_occ.collide_with_areas = false
+				splash_occ.collide_with_bodies = true
+				var splash_res = space_state.intersect_ray(splash_occ)
+				if not splash_res.is_empty():
+					var occ_col = splash_res.collider
+					if occ_col != e and not occ_col.is_in_group("enemy") and not (occ_col.get_parent() and occ_col.get_parent().is_in_group("enemy")):
+						continue # Перекрыто препятствием
+						
+				splash_enemies.append({
+					"enemy": e,
+					"dist": h_dist
+				})
+				
+		if splash_enemies.size() > 0:
+			# НАЙДЕН ВРАГ НА ПОВЕРХНОСТИ: применяем вертикальный импульс подброса (выстрел в пол под ногами врага)
+			anvil_alt_timer = anvil_alt_cooldown
+			head.add_recoil(0.12, 0.40)
+			head.trigger_muzzle_flash(true)
+			AudioManager.play_sound("shotgun_shot")
+			
+			splash_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
+			
+			for idx in range(splash_enemies.size()):
+				var target = splash_enemies[idx]["enemy"]
+				var chain_depth = idx
+				var upward_impulse = 21.0
+				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
+				var push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
+				print("[ANVIL PISTON] FLOOR SPLASH LAUNCH -> %s (h_dist: %.2f, impulse: %.1f)" % [target.name, splash_enemies[idx]["dist"], upward_impulse])
+				
+				var hit_pos = target.global_position + Vector3(0, -0.6, 0)
+				target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
+				
+			spawn_piston_tracer(start_pos, geom_hit_pos, false)
+			return
+			
+		# Врагов рядом с точкой попадания нет — это чистая пустая геометрия:
+		# Выполняем self-launch игрока (в пределах дальности PISTON_RANGE)
 		_perform_self_launch(aim_dir, geom_hit_pos, geom_hit_normal)
 	else:
 		# Выстрел в пустое пространство (> 5 метров)

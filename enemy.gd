@@ -512,8 +512,8 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		velocity.x = knockback_vector.x
 		velocity.z = knockback_vector.z
 	
-	# Если оружие подкидывает, задаем вертикальную скорость
-	if knockback_vector.y > 0.0:
+	# Если оружие задает вертикальную скорость (вверх или вниз)
+	if knockback_vector.y != 0.0:
 		velocity.y = knockback_vector.y
 		
 	# Агримся на игрока при получении урона
@@ -601,12 +601,11 @@ func _check_wall_slam(delta: float):
 	for i in range(get_slide_collision_count()):
 		var col = get_slide_collision(i)
 		var n = col.get_normal()
-		# Стены имеют нормаль, перпендикулярную полу (|n.y| < 0.4)
-		if abs(n.y) < 0.4:
-			var impact_speed = -pre_move_velocity.dot(n)
-			if impact_speed >= wall_slam_threshold:
-				trigger_wall_slam(impact_speed, col)
-				break
+		# Стены или пол/препятствия при сильном соударении (impact_speed >= threshold)
+		var impact_speed = -pre_move_velocity.dot(n)
+		if impact_speed >= wall_slam_threshold:
+			trigger_wall_slam(impact_speed, col)
+			break
 
 func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	wall_slam_timer = 0.0 # Предотвращаем повторное срабатывание в течение одного отброса
