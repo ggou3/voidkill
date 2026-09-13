@@ -560,41 +560,24 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, surface_no
 	var base_impulse: float = 19.5
 	var final_impulse: float = base_impulse * mult
 	
-	# Выстрел считается выстрелом в пол / под ноги, если:
-	# 1) Нормаль поверхности направлена вверх (пол или наклонная рампа: dot(UP) >= 0.55), ИЛИ
-	# 2) Игрок целится под ноги (aim_dir.y < -0.45 — наклон камеры вниз более ~27 градусов)
-	var is_aiming_down: bool = aim_dir.y < -0.45
-	var is_floor_surface: bool = surface_normal.dot(Vector3.UP) >= 0.55
-	var is_floor_launch: bool = is_floor_surface or is_aiming_down
+	# 1. Единый вектор импульса: строго в направлении, противоположном направлению взгляда камеры (-aim_dir),
+	# независимо от того, куда именно попал выстрел (пол, стена, потолок, угол).
+	var push_dir: Vector3 = -aim_dir.normalized()
+	var impulse_vec: Vector3 = push_dir * final_impulse
 	
-	if is_floor_launch:
-		# ПОЛ / ВЫСТРЕЛ ПОД НОГИ:
-		# Импульс влияет ТОЛЬКО на вертикальную составляющую скорости (velocity.y).
-		# Горизонтальные velocity.x и velocity.z сохраняются БЕЗ изменений (игрок сохраняет текущее движение).
-		# Результирующая скорость не должна превышать задуманный лимит final_impulse,
-		# даже если игрок нажал прыжок (Space) перед выстрелом.
-		if player_node.velocity.y < 0.0:
-			player_node.velocity.y = final_impulse
-		else:
-			player_node.velocity.y = max(player_node.velocity.y, final_impulse)
-	else:
-		# СТЕНА / ПОТОЛОК: импульс в направлении -aim_dir, ДОБАВЛЯЕТСЯ к текущей скорости
-		var push_dir = -aim_dir.normalized()
-		var impulse_vec = push_dir * final_impulse
-		player_node.velocity.x += impulse_vec.x
-		player_node.velocity.z += impulse_vec.z
+	# 2. Импульс аддитивно ДОБАВЛЯЕТСЯ к текущей velocity игрока целиком (все три компонента x, y, z)
+	player_node.velocity += impulse_vec
+	
+	# 3. Защита от чрезмерного подброса: ограничиваем ТОЛЬКО результирующую вертикальную компоненту (velocity.y).
+	# Верхний предел: 22.0 при 100% силы, с учётом anti-spam модификатора (mult: 1.0 -> 0.6 -> 0.35).
+	# Горизонтальные компоненты velocity.x и velocity.z не ограничиваются — они обеспечивают направленный rocket-jump.
+	var max_vertical: float = 22.0 * mult
+	if player_node.velocity.y > max_vertical:
+		player_node.velocity.y = max_vertical
 		
-		if impulse_vec.y > 0.0:
-			if player_node.velocity.y < 0.0:
-				player_node.velocity.y = max(0.0, player_node.velocity.y) + impulse_vec.y
-			else:
-				player_node.velocity.y = min(player_node.velocity.y + impulse_vec.y, final_impulse)
-		else:
-			player_node.velocity.y += impulse_vec.y
-			
-		# Если отталкиваемся от стены стоя на полу — даем стартовый отрыв от земли против трения
-		if impulse_vec.y >= 0.0 and player_node.is_on_floor():
-			player_node.velocity.y = max(player_node.velocity.y, 4.5)
+	# Если стоим на полу и стреляем строго горизонтально в стену — даем легкий стартовый отрыв от земли
+	if impulse_vec.y >= 0.0 and player_node.is_on_floor() and player_node.velocity.y < 3.5:
+		player_node.velocity.y = max(player_node.velocity.y, 3.5 * mult)
 		
 	if "has_jumped" in player_node:
 		player_node.has_jumped = true
@@ -616,8 +599,8 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, surface_no
 	var start_pos = head.get_muzzle_position()
 	spawn_piston_tracer(start_pos, surface_hit_pos, true)
 	
-	print("[ANVIL PISTON] SELF-LAUNCH! Floor: %s (aim_down=%s, norm_up=%.2f) | Chain: %d | Mult: %.2f | Impulse: %.1f | Vel: %s" % [
-		is_floor_launch, is_aiming_down, surface_normal.dot(Vector3.UP), anvil_self_launch_chain, mult, final_impulse, player_node.velocity
+	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | PushDir: %s | Vel: %s" % [
+		anvil_self_launch_chain, mult, final_impulse, push_dir, player_node.velocity
 	])
 
 func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: bool = false):
