@@ -590,11 +590,6 @@ func _fire_anvil_piston():
 				
 		if splash_enemies.size() > 0:
 			# НАЙДЕН ВРАГ НА ПОВЕРХНОСТИ: применяем вертикальный импульс подброса (выстрел в пол под ногами врага)
-			anvil_alt_timer = anvil_alt_cooldown
-			head.add_recoil(0.12, 0.40)
-			head.trigger_muzzle_flash(true)
-			AudioManager.play_sound("shotgun_shot")
-			
 			splash_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
 			
 			for idx in range(splash_enemies.size()):
@@ -608,11 +603,8 @@ func _fire_anvil_piston():
 				var hit_pos = target.global_position + Vector3(0, -0.6, 0)
 				target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
 				
-			spawn_piston_tracer(start_pos, geom_hit_pos, false)
-			return
-			
-		# Врагов рядом с точкой попадания нет — это чистая пустая геометрия:
-		# Выполняем self-launch игрока (в пределах дальности PISTON_RANGE)
+		# Выполняем self-launch игрока (в пределах дальности PISTON_RANGE при упоре в любую статичную геометрию).
+		# Срабатывает ОДНОВРЕМЕННО с подбросом врагов, если выстрел был в пол рядом с ними.
 		_perform_self_launch(aim_dir, geom_hit_pos, geom_hit_normal)
 	else:
 		# Выстрел в пустое пространство (> 5 метров)
@@ -680,6 +672,7 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, surface_no
 		player_node.is_sliding = false
 		
 	head.add_recoil(0.14, 0.45)
+	head.trigger_muzzle_flash(true)
 	head.landing_shake_trauma = max(head.landing_shake_trauma, 0.5 * mult)
 	AudioManager.play_sound("shotgun_shot")
 	
