@@ -1,0 +1,152 @@
+[gd_scene format=3 uid="uid://cb5k2x4v8m1op"]
+
+[ext_resource type="PackedScene" uid="uid://ba6hrp5v4fg0f" path="res://player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://rkw44u1bvqo3" path="res://enemy.tscn" id="2_enemy"]
+[ext_resource type="PackedScene" uid="uid://0bd00q6imegi" path="res://blood_pool.tscn" id="3_blood_pool"]
+[ext_resource type="NavigationMesh" uid="uid://doycivm2rgwyn" path="res://navmesh.tres" id="4_navmesh"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_arena"]
+
+[sub_resource type="Sky" id="Sky_arena"]
+sky_material = SubResource("ProceduralSkyMaterial_arena")
+
+[sub_resource type="Environment" id="Environment_arena"]
+background_mode = 2
+sky = SubResource("Sky_arena")
+
+[node name="TestArena" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_arena")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.919416, 0.148242, -0.364277, 0, 0.926241, 0.376932, 0.393285, -0.346558, 0.851601, 0, 15, 0)
+shadow_enabled = true
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+navigation_mesh = ExtResource("4_navmesh")
+
+[node name="Floor" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+use_collision = true
+size = Vector3(44, 1, 44)
+
+[node name="BoundaryWalls" type="Node3D" parent="."]
+
+[node name="WallNorth" type="CSGBox3D" parent="BoundaryWalls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -21.5)
+use_collision = true
+size = Vector3(44, 11, 1)
+
+[node name="WallSouth" type="CSGBox3D" parent="BoundaryWalls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 21.5)
+use_collision = true
+size = Vector3(44, 11, 1)
+
+[node name="WallWest" type="CSGBox3D" parent="BoundaryWalls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 5, 0)
+use_collision = true
+size = Vector3(1, 11, 44)
+
+[node name="WallEast" type="CSGBox3D" parent="BoundaryWalls"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.5, 5, 0)
+use_collision = true
+size = Vector3(1, 11, 44)
+
+[node name="WallrunGeometry" type="Node3D" parent="."]
+
+[node name="WallrunWestLong" type="CSGBox3D" parent="WallrunGeometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.5, 0)
+use_collision = true
+size = Vector3(1, 9, 22)
+
+[node name="WallrunNorthHigh" type="CSGBox3D" parent="WallrunGeometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 7.5, -9)
+use_collision = true
+size = Vector3(16, 7, 1)
+
+[node name="WallrunEast" type="CSGBox3D" parent="WallrunGeometry"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 4.5, 4)
+use_collision = true
+size = Vector3(1, 9, 14)
+
+[node name="Platforms" type="Node3D" parent="."]
+
+[node name="PlatformTier1" type="CSGBox3D" parent="Platforms"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1, 11)
+use_collision = true
+size = Vector3(5, 2, 5)
+
+[node name="PlatformTier2" type="CSGBox3D" parent="Platforms"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2, 11)
+use_collision = true
+size = Vector3(5, 4, 5)
+
+[node name="PlatformTier3" type="CSGBox3D" parent="Platforms"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 3.5, 11)
+use_collision = true
+size = Vector3(5, 7, 5)
+
+[node name="PlatformNorthBridge" type="CSGBox3D" parent="Platforms"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.5, -15)
+use_collision = true
+size = Vector3(16, 5, 5)
+
+[node name="PlatformMidStaging" type="CSGBox3D" parent="Platforms"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.5, -10)
+use_collision = true
+size = Vector3(5, 3, 5)
+
+[node name="TightSpaces" type="Node3D" parent="."]
+
+[node name="CorridorWallA" type="CSGBox3D" parent="TightSpaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 3, 8)
+use_collision = true
+size = Vector3(9, 6, 1)
+
+[node name="CorridorWallB" type="CSGBox3D" parent="TightSpaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, 13.5)
+use_collision = true
+size = Vector3(1, 6, 10)
+
+[node name="AlcoveWall" type="CSGBox3D" parent="TightSpaces"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -15)
+use_collision = true
+size = Vector3(1, 6, 5)
+
+[node name="BloodPools" type="Node3D" parent="."]
+
+[node name="BloodPoolCentral" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
+
+[node name="BloodPoolPlatformApproach" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.05, 6)
+
+[node name="BloodPoolCorridor" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.05, 13)
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 15)
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="EnemyCentralMid" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 3)
+
+[node name="EnemyCentralDist" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5, -4)
+
+[node name="EnemyCorridorSlam1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 1.5, 12)
+
+[node name="EnemyCorridorSlam2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.5, 15)
+
+[node name="EnemyHighPlatform" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 7.5, 11)
+
+[node name="EnemyNorthBridge" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 5.5, -15)
+
+[node name="EnemyWallrunFlank" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1.5, 3)
