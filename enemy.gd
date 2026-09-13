@@ -37,8 +37,13 @@ var current_target_vel: Vector3 = Vector3.ZERO
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
+var explosion_chain_depth: int = 0
 var slow_factor: float = 1.0
 var slow_sources: int = 0
+var poison_dot_duration: float = 0.0
+var poison_tick_interval: float = 0.5
+var poison_tick_timer: float = 0.0
+var poison_damage_per_tick: int = 3
 var inflation_tween: Tween = null
 var inflation_pulse_tween: Tween = null
 
@@ -165,6 +170,14 @@ func _physics_process(delta):
 		attack_timer -= delta
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
+		
+	# Обработка урона по времени (Poison DoT)
+	if poison_dot_duration > 0.0:
+		poison_dot_duration -= delta
+		poison_tick_timer -= delta
+		if poison_tick_timer <= 0.0:
+			poison_tick_timer = poison_tick_interval
+			_apply_poison_tick()
 		
 	match current_state:
 		State.IDLE:
@@ -388,6 +401,31 @@ func remove_slow():
 	if slow_sources == 0:
 		slow_factor = 1.0
 
+func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5):
+	if current_state == State.DEAD:
+		return
+	poison_damage_per_tick = damage_per_tick
+	poison_tick_interval = interval
+	# Обновляем длительность без стакания урона в тик
+	poison_dot_duration = duration
+	if poison_tick_timer <= 0.0:
+		poison_tick_timer = interval
+
+func _apply_poison_tick():
+	if current_state == State.DEAD:
+		return
+	health -= poison_damage_per_tick
+	_update_health_bar()
+	var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
+	_spawn_damage_number(poison_damage_per_tick, hit_pos, false, true)
+	if current_state == State.IDLE:
+		var player = get_tree().get_first_node_in_group("player")
+		if is_instance_valid(player):
+			start_chase(player)
+	if health <= 0:
+		explosion_chain_depth = 0
+		set_state(State.DEAD)
+
 func inflate():
 	if is_inflated or current_state == State.DEAD:
 		return
@@ -424,11 +462,24 @@ func inflate():
 		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 3.2, 0.45).set_trans(Tween.TRANS_SINE)
 		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 1.2, 0.45).set_trans(Tween.TRANS_SINE)
 		
+	if current_state == State.IDLE:
+		var player = get_tree().get_first_node_in_group("player")
+		if is_instance_valid(player):
+			start_chase(player)
+
 	print("[%s] INFLATED with blood!" % name)
 
-func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1):
 	if current_state == State.DEAD:
 		return
+		
+	if source_chain_depth >= 0:
+		explosion_chain_depth = source_chain_depth + 1
+		# Жёсткий предел: если смертельный урон получен от взрыва с глубиной >= 3 — цепная детонация блокируется
+		if source_chain_depth >= 3 and (health - amount <= 0):
+			is_inflated = false
+	else:
+		explosion_chain_depth = 0
 		
 	was_killed_by_melee = is_melee or is_shockwave or is_execute
 	health -= amount
@@ -583,6 +634,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	_update_health_bar()
 	_spawn_damage_number(wall_damage, col.get_position(), false)
 	if health <= 0:
+		explosion_chain_depth = 0
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()
@@ -590,7 +642,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		set_state(State.DEAD)
 
 
-func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = false):
+func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = false, is_poison: bool = false):
 	if dmg_amount <= 0:
 		return
 	var label = Label3D.new()
@@ -599,7 +651,11 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 	label.outline_size = 6
 	label.outline_modulate = Color(0, 0, 0, 1)
 	
-	if is_crit:
+	if is_poison:
+		label.text = "-%d" % dmg_amount
+		label.modulate = Color(0.25, 0.95, 0.35, 1.0) # Токсичный ядовито-зеленый цвет
+		label.font_size = 20
+	elif is_crit:
 		label.text = "-%d CRIT!" % dmg_amount
 		label.modulate = Color(1.0, 0.2, 0.1, 1.0)
 		label.font_size = 32
@@ -632,6 +688,7 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 func die():
 	current_state = State.DEAD
 	set_physics_process(false)
+	poison_dot_duration = 0.0
 	AudioManager.play_sound("enemy_death")
 	
 	if hp_sprite:
@@ -652,9 +709,12 @@ func die():
 		if det_col:
 			det_col.set_deferred("disabled", true)
 			
-	# Если враг был раздут шприцем — инициируем кровавую детонацию
+	# Если враг был раздут шприцем — инициируем кровавую детонацию с учётом глубины цепи
 	if is_inflated:
-		_trigger_inflation_explosion()
+		if explosion_chain_depth > 3:
+			is_inflated = false
+		else:
+			_trigger_inflation_explosion(explosion_chain_depth)
 		
 	if blood_pool_scene:
 		var space_state = get_world_3d().direct_space_state
@@ -673,30 +733,49 @@ func die():
 			
 	queue_free()
 
-func _trigger_inflation_explosion():
+func _trigger_inflation_explosion(depth: int = 0):
 	is_inflated = false
 	if inflation_pulse_tween:
 		inflation_pulse_tween.kill()
 		
 	var explosion_pos = global_position + Vector3(0, 0.9, 0)
-	var explosion_radius: float = 5.2
-	var explosion_damage: int = 85
+	
+	# Расчёт затухания силы взрыва в зависимости от глубины цепи (chain_depth)
+	# глубина 0 = 100%, глубина 1 = 70%, глубина 2 = 49%, глубина 3+ = 20%
+	var mult: float = 1.0
+	if depth >= 3:
+		mult = 0.20
+	else:
+		mult = pow(0.7, depth)
+		
+	var base_radius: float = 5.2
+	var base_damage: int = 85
+	var explosion_radius: float = base_radius * mult
+	var explosion_damage: int = max(1, int(round(float(base_damage) * mult)))
+	
+	var base_heal: int = 35 if was_killed_by_melee else 15
+	var heal_amount: int = max(1, int(round(float(base_heal) * mult)))
+	
+	print("[%s] DETONATION! chain_depth: %d | mult: %.2f | dmg: %d | radius: %.2fm | heal: %d%s" % [
+		name, depth, mult, explosion_damage, explosion_radius, heal_amount,
+		" (CHAIN LIMIT: NO FURTHER CHAIN DETONATIONS)" if depth >= 3 else ""
+	])
 	
 	AudioManager.play_sound("explosion")
 	
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 	if scene_root:
-		# Сочный разлёт крови во все стороны (360 градусов)
+		# Сочный разлёт крови во все стороны (360 градусов), масштабируемый от силы взрыва
 		if blood_splatter_scene:
 			var splatter = blood_splatter_scene.instantiate()
-			splatter.amount = 135
-			splatter.scale = Vector3(2.4, 2.4, 2.4)
+			splatter.amount = max(20, int(round(135.0 * mult)))
+			splatter.scale = Vector3(2.4, 2.4, 2.4) * max(0.5, mult)
 			var pmat = splatter.process_material.duplicate()
 			pmat.spread = 180.0
-			pmat.initial_velocity_min = 7.0
-			pmat.initial_velocity_max = 20.0
-			pmat.scale_min = 0.28
-			pmat.scale_max = 0.65
+			pmat.initial_velocity_min = 7.0 * max(0.5, mult)
+			pmat.initial_velocity_max = 20.0 * max(0.5, mult)
+			pmat.scale_min = 0.28 * max(0.6, mult)
+			pmat.scale_max = 0.65 * max(0.6, mult)
 			splatter.process_material = pmat
 			scene_root.add_child(splatter)
 			splatter.global_position = explosion_pos
@@ -715,23 +794,22 @@ func _trigger_inflation_explosion():
 		var dist = explosion_pos.distance_to(enemy_center)
 		if dist <= explosion_radius:
 			var falloff = 1.0 - (dist / explosion_radius) * 0.35
-			var dmg = int(round(float(explosion_damage) * falloff))
+			var dmg = max(1, int(round(float(explosion_damage) * falloff)))
 			var knock_dir = (enemy_center - explosion_pos).normalized()
 			if knock_dir.length_squared() < 0.01:
 				knock_dir = Vector3.UP
-			var knock_vec = knock_dir * 14.0 + Vector3.UP * 4.5
+			var knock_vec = knock_dir * (14.0 * mult) + Vector3.UP * (4.5 * mult)
 			
-			print("[%s] DETONATION AOE HIT -> %s for %d dmg!" % [name, enemy.name, dmg])
-			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, true, false)
+			print("[%s] DETONATION AOE HIT (chain %d -> %d) -> %s for %d dmg!" % [name, depth, depth + 1, enemy.name, dmg])
+			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, depth)
 			
 	# 2. Лечение игрока, если он в радиусе взрыва
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
 		var player_center = player.global_position + Vector3(0, 0.9, 0)
 		var dist_to_player = explosion_pos.distance_to(player_center)
-		var heal_radius = explosion_radius + 1.8
+		var heal_radius = (5.2 + 1.8) * mult
 		if dist_to_player <= heal_radius:
-			var heal_amount = 35 if was_killed_by_melee else 15
 			if player.has_method("heal"):
 				player.heal(heal_amount, was_killed_by_melee)
 

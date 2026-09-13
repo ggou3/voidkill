@@ -7,7 +7,8 @@ var fire_timers = [0.0, 0.0, 0.0]
 var passive_reload_timers = [0.0, 0.0, 0.0]
 var active_reload_timer = 0.0
 
-var flask_scene = preload("res://flask_projectile.tscn")
+var injector_alt_cooldown: float = 2.8
+var injector_alt_timer: float = 0.0
 
 var weapons = [
 	{
@@ -51,7 +52,7 @@ var weapons = [
 	{
 		"name": "ИНЪЕКТОР",
 		"max_ammo": 6,
-		"damage": 25,
+		"damage": 18,
 		"pellets": 1,
 		"spread": 0.0,
 		"fire_rate": 0.32,
@@ -181,6 +182,9 @@ func _process(delta):
 		if fire_timers[i] > 0:
 			fire_timers[i] -= delta
 
+	if injector_alt_timer > 0.0:
+		injector_alt_timer -= delta
+
 	# Активная перезарядка удерживаемого оружия
 	if is_reloading:
 		active_reload_timer -= delta
@@ -248,11 +252,13 @@ func update_hud(has_infinite_ammo: bool):
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.3, 0.3, 1.0))
 				slot["pbar"].visible = false
 			elif has_infinite_ammo:
-				slot["ammo_text"].text = "INF (BLOOD)"
+				var alt_suffix = " (RMB %.1fs)" % injector_alt_timer if (i == 2 and injector_alt_timer > 0.0) else ""
+				slot["ammo_text"].text = "INF (BLOOD)" + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
 				slot["pbar"].visible = false
 			else:
-				slot["ammo_text"].text = "%d / %d" % [ammos[i], w["max_ammo"]]
+				var alt_suffix = " (RMB %.1fs)" % injector_alt_timer if (i == 2 and injector_alt_timer > 0.0) else ""
+				slot["ammo_text"].text = ("%d / %d" % [ammos[i], w["max_ammo"]]) + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 				slot["pbar"].visible = false
 		else:
@@ -296,10 +302,12 @@ func shoot(has_infinite_ammo: bool):
 	_fire_pellets(current_weapon_index, -1.0, false)
 
 func alt_shoot(has_infinite_ammo: bool = false):
-	if is_reloading or is_bursting or fire_timers[current_weapon_index] > 0:
+	if is_bursting:
 		return
 
 	if current_weapon_index == 0:
+		if is_reloading or fire_timers[0] > 0:
+			return
 		# Калибр-0: ПКМ быстрый залп (всегда расходует реальные патроны из барабана)
 		if ammos[0] <= 0:
 			reload()
@@ -307,32 +315,96 @@ func alt_shoot(has_infinite_ammo: bool = false):
 		var shots_to_fire = ammos[0]
 		_perform_burst(shots_to_fire)
 	elif current_weapon_index == 2:
-		# Инъектор: ПКМ колба с кровью
-		_fire_blood_flask(has_infinite_ammo)
+		# Инъектор: ПКМ раздутие (независимый кулдаун, не зависит от магазина ЛКМ)
+		_fire_injector_inflate()
 
-func _fire_blood_flask(has_infinite_ammo: bool):
-	if ammos[2] <= 0:
-		reload()
+func _fire_injector_inflate():
+	if injector_alt_timer > 0.0:
 		return
 		
-	if not has_infinite_ammo:
-		var cost = min(2, ammos[2])
-		ammos[2] -= cost
-		
-	fire_timers[2] = 0.55
-	head.add_recoil(0.06, 0.25)
-	AudioManager.play_sound("flask_throw")
+	injector_alt_timer = injector_alt_cooldown
+	head.add_recoil(0.07, 0.26)
+	head.trigger_muzzle_flash(false)
+	AudioManager.play_sound("injector_shot")
 	
-	if flask_scene:
-		var flask = flask_scene.instantiate()
-		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-		if scene_root:
-			scene_root.add_child(flask)
-			var aim_dir = head.get_aim_direction()
-			var spawn_pos = head.camera.global_position + aim_dir * 0.55 + Vector3(0, -0.15, 0)
-			flask.global_position = spawn_pos
-			var throw_vel = aim_dir * 24.0 + Vector3.UP * 4.2
-			flask.launch(throw_vel)
+	var aim_dir = head.get_aim_direction()
+	var start_pos = head.get_muzzle_position()
+	var ray = head.get_aim_raycast(0.0)
+	var hit_pos = ray.to_global(ray.target_position)
+	
+	if ray.is_colliding():
+		hit_pos = ray.get_collision_point()
+		var hit = ray.get_collider()
+		if hit != null:
+			var target: Node = null
+			if hit.is_in_group("enemy_head") or hit.name == "HeadHitbox":
+				if hit.has_meta("enemy"):
+					target = hit.get_meta("enemy")
+				elif hit.get_parent():
+					target = hit.get_parent()
+			elif hit.has_method("take_damage"):
+				target = hit
+			elif hit.get_parent() and hit.get_parent().has_method("take_damage"):
+				target = hit.get_parent()
+				
+			if target != null and target.has_method("inflate"):
+				target.inflate()
+				
+	spawn_inflate_tracer(start_pos, hit_pos)
+
+func spawn_inflate_tracer(start_pos: Vector3, end_pos: Vector3):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.038
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.12, 0.18, 0.95)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
 
 func _perform_burst(shots_count: int):
 	is_bursting = true
@@ -431,8 +503,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
 						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 						
-					if weapon_idx == 2 and target.has_method("inflate"):
-						target.inflate()
+					if weapon_idx == 2 and target.has_method("apply_poison_dot"):
+						target.apply_poison_dot(3.0, 3, 0.5)
 						
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
 					
@@ -484,7 +556,7 @@ func spawn_syringe_tracer(start_pos: Vector3, end_pos: Vector3):
 	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.18, 0.25, 0.95)
+	mat.albedo_color = Color(0.25, 1.0, 0.4, 0.95)
 	mesh_inst.material_override = mat
 	
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
