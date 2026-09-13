@@ -1438,7 +1438,7 @@ func die():
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
 	
-	# Начисление BPM игроку (+12 за убийство ударной волной, +8 за обычное убийство, +3 за смену оружия)
+	# Начисление BPM игроку (+8.0 за убийство ударной волной, +5.5 за обычное убийство, +2.0 за смену оружия)
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and "skills" in player and is_instance_valid(player.skills):
 		var weapon_used = last_damage_weapon
@@ -1460,7 +1460,7 @@ func die():
 		if player.skills.has_method("record_kill_bpm"):
 			player.skills.record_kill_bpm(weapon_used, was_killed_by_shockwave)
 		else:
-			player.skills.add_bpm(12.0 if was_killed_by_shockwave else 8.0)
+			player.skills.add_bpm(8.0 if was_killed_by_shockwave else 5.5)
 	
 	if hp_sprite:
 		hp_sprite.visible = false

@@ -71,9 +71,9 @@ func _process(delta):
 			
 	if slam_timer > 0: slam_timer -= delta
 	
-	# BPM: активный кровавый сёрф (слайд по луже крови): +3 BPM/сек
+	# BPM: активный кровавый сёрф (слайд по луже крови): +2 BPM/сек
 	if is_instance_valid(player) and player.is_sliding and player.is_on_blood:
-		add_bpm(3.0 * delta)
+		add_bpm(2.0 * delta)
 	else:
 		time_since_bpm_gain += delta
 		
@@ -106,13 +106,13 @@ func add_bpm(amount: float):
 	time_since_bpm_gain = 0.0
 
 func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
-	var base_bpm: float = 12.0 if is_shockwave else 8.0
+	var base_bpm: float = 8.0 if is_shockwave else 5.5
 	var bonus_bpm: float = 0.0
 	
-	# Бонус за разнообразие (+3 BPM), если оружие отличается от предыдущего убийства
+	# Бонус за разнообразие (+2 BPM), если оружие отличается от предыдущего убийства
 	if last_kill_weapon != "" and weapon_type != "" and weapon_type != last_kill_weapon:
-		bonus_bpm = 3.0
-		print("[BPM VARIETY BONUS] +3.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
+		bonus_bpm = 2.0
+		print("[BPM VARIETY BONUS] +2.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
 			weapon_type, last_kill_weapon, base_bpm + bonus_bpm
 		])
 		_show_combo_popup(bonus_bpm)

@@ -511,7 +511,7 @@ theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 22
-text = "★ VARIETY +3 ★"
+text = "★ VARIETY +2 ★"
 
 [node name="BPMLabel" type="Label" parent="HUD" unique_id=773412599]
 offset_left = 34.0
