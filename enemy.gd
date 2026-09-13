@@ -609,6 +609,20 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	var wall_damage = int(round(impact_speed * wall_slam_damage_multiplier))
 	print("[%s] Wall slam! Impact speed: %.1f, damage: %d" % [name, impact_speed, wall_damage])
 	
+	# Если столкновение произошло с другим врагом — наносим урон от столкновения обоим
+	var other = col.get_collider()
+	if is_instance_valid(other) and other != self:
+		var target: Node = null
+		if other.is_in_group("enemy_head") or other.name == "HeadHitbox":
+			target = other.get_meta("enemy") if other.has_meta("enemy") else other.get_parent()
+		elif other.has_method("take_damage"):
+			target = other
+		elif other.get_parent() and other.get_parent().has_method("take_damage"):
+			target = other.get_parent()
+		if target and target != self and target.has_method("take_damage"):
+			print("[%s] Collision hit other enemy: %s for %d damage!" % [name, target.name, wall_damage])
+			target.take_damage(wall_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), false, false, true, false)
+	
 	# Сочный разлёт крови на стену в точке удара
 	if blood_splatter_scene:
 		var splatter = blood_splatter_scene.instantiate()

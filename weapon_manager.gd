@@ -7,6 +7,10 @@ var fire_timers = [0.0, 0.0, 0.0]
 var passive_reload_timers = [0.0, 0.0, 0.0]
 var active_reload_timer = 0.0
 
+var anvil_alt_cooldown: float = 1.2
+var anvil_alt_timer: float = 0.0
+var anvil_self_launch_chain: int = 0
+
 var injector_alt_cooldown: float = 2.8
 var injector_alt_timer: float = 0.0
 
@@ -32,11 +36,11 @@ var weapons = [
 		"vacuum_force": 16.0
 	},
 	{
-		"name": "SHOTGUN",
+		"name": "КРОВАВАЯ НАКОВАЛЬНЯ",
 		"max_ammo": 2,
 		"damage": 12,
 		"pellets": 8,
-		"spread": 0.08,
+		"spread": 0.085, # Конус разброса ~8-10 градусов
 		"fire_rate": 0.5,
 		"reload_time": 1.5,
 		"cam_shake": 0.12,
@@ -98,7 +102,7 @@ func _setup_weapon_hud():
 		weapon_hud_container.anchor_top = 1.0
 		weapon_hud_container.anchor_right = 1.0
 		weapon_hud_container.anchor_bottom = 1.0
-		weapon_hud_container.offset_left = -290.0
+		weapon_hud_container.offset_left = -320.0
 		weapon_hud_container.offset_top = -195.0
 		weapon_hud_container.offset_right = -20.0
 		weapon_hud_container.offset_bottom = -20.0
@@ -182,8 +186,15 @@ func _process(delta):
 		if fire_timers[i] > 0:
 			fire_timers[i] -= delta
 
+	if anvil_alt_timer > 0.0:
+		anvil_alt_timer -= delta
+
 	if injector_alt_timer > 0.0:
 		injector_alt_timer -= delta
+
+	var player_node = get_parent()
+	if is_instance_valid(player_node) and player_node.is_on_floor() and player_node.velocity.y <= 0.0:
+		anvil_self_launch_chain = 0
 
 	# Активная перезарядка удерживаемого оружия
 	if is_reloading:
@@ -252,12 +263,20 @@ func update_hud(has_infinite_ammo: bool):
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.3, 0.3, 1.0))
 				slot["pbar"].visible = false
 			elif has_infinite_ammo:
-				var alt_suffix = " (RMB %.1fs)" % injector_alt_timer if (i == 2 and injector_alt_timer > 0.0) else ""
+				var alt_suffix = ""
+				if i == 1 and anvil_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
+				elif i == 2 and injector_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
 				slot["ammo_text"].text = "INF (BLOOD)" + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
 				slot["pbar"].visible = false
 			else:
-				var alt_suffix = " (RMB %.1fs)" % injector_alt_timer if (i == 2 and injector_alt_timer > 0.0) else ""
+				var alt_suffix = ""
+				if i == 1 and anvil_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
+				elif i == 2 and injector_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
 				slot["ammo_text"].text = ("%d / %d" % [ammos[i], w["max_ammo"]]) + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 				slot["pbar"].visible = false
@@ -314,9 +333,219 @@ func alt_shoot(has_infinite_ammo: bool = false):
 			return
 		var shots_to_fire = ammos[0]
 		_perform_burst(shots_to_fire)
+	elif current_weapon_index == 1:
+		# Кровавая наковальня: ПКМ поршень (толчок врага / self-launch)
+		_fire_anvil_piston()
 	elif current_weapon_index == 2:
 		# Инъектор: ПКМ раздутие (независимый кулдаун, не зависит от магазина ЛКМ)
 		_fire_injector_inflate()
+
+func _fire_anvil_piston():
+	if anvil_alt_timer > 0.0:
+		return
+		
+	var aim_dir = head.get_aim_direction()
+	# Если прицел направлен вниз, под ноги самого игрока (в пределах небольшого угла от строго вниз)
+	if aim_dir.y < -0.80:
+		_perform_self_launch(aim_dir)
+	else:
+		_perform_enemy_piston_push(aim_dir)
+
+func _perform_self_launch(aim_dir: Vector3):
+	var player_node = get_parent()
+	if not is_instance_valid(player_node):
+		return
+		
+	anvil_alt_timer = anvil_alt_cooldown
+	
+	# Защита от спама: если self-launch применяется повторно БЕЗ касания земли:
+	# 1-е применение = 100%, 2-е = 60%, 3-е и далее = 35%
+	if player_node.is_on_floor():
+		anvil_self_launch_chain = 0
+		
+	var mult: float = 1.0
+	if anvil_self_launch_chain == 0:
+		mult = 1.0
+	elif anvil_self_launch_chain == 1:
+		mult = 0.60
+	else:
+		mult = 0.35
+	anvil_self_launch_chain += 1
+	
+	# Сила импульса: в 1.5-2.0x сильнее JUMP_VELOCITY (11.0) -> 19.5 (диапазон 16.5-22.0)
+	var base_impulse: float = 19.5
+	var final_impulse: float = base_impulse * mult
+	
+	player_node.velocity.y = final_impulse
+	if "has_jumped" in player_node:
+		player_node.has_jumped = true
+	if "time_on_ground" in player_node:
+		player_node.time_on_ground = 0.0
+	if "air_time" in player_node:
+		player_node.air_time = 0.1
+		
+	head.add_recoil(0.14, 0.45)
+	head.landing_shake_trauma = max(head.landing_shake_trauma, 0.5 * mult)
+	AudioManager.play_sound("shotgun_shot")
+	
+	var start_pos = head.get_muzzle_position()
+	var hit_pos = player_node.global_position + Vector3(0, -0.2, 0)
+	spawn_piston_tracer(start_pos, hit_pos, true)
+	
+	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | Vel.y: %.1f" % [
+		anvil_self_launch_chain, mult, final_impulse, player_node.velocity.y
+	])
+
+func _perform_enemy_piston_push(aim_dir: Vector3):
+	anvil_alt_timer = anvil_alt_cooldown
+	head.add_recoil(0.10, 0.35)
+	head.trigger_muzzle_flash(true)
+	AudioManager.play_sound("shotgun_shot")
+	
+	var start_pos = head.get_muzzle_position()
+	var max_range = 22.0
+	var space_state = head.camera.get_world_3d().direct_space_state
+	var from_pos = head.camera.global_position
+	var to_pos = from_pos + aim_dir * max_range
+	
+	var hit_target: Node = null
+	var hit_pos: Vector3 = to_pos
+	var player_node = get_parent()
+	
+	# 1. Прямой луч через RayCast
+	var ray_query = PhysicsRayQueryParameters3D.create(from_pos, to_pos)
+	if is_instance_valid(player_node):
+		ray_query.exclude = [player_node]
+	ray_query.collide_with_areas = true
+	ray_query.collide_with_bodies = true
+	var ray_res = space_state.intersect_ray(ray_query)
+	
+	if not ray_res.is_empty():
+		hit_pos = ray_res.position
+		var col = ray_res.collider
+		if col:
+			if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
+				hit_target = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
+			elif col.has_method("take_damage"):
+				hit_target = col
+			elif col.get_parent() and col.get_parent().has_method("take_damage"):
+				hit_target = col.get_parent()
+				
+	# 2. Если луч слегка промахнулся — конический SphereCast для надежности попадания поршнем
+	if not hit_target:
+		var sphere = SphereShape3D.new()
+		sphere.radius = 0.85
+		var shape_query = PhysicsShapeQueryParameters3D.new()
+		shape_query.shape = sphere
+		shape_query.transform = Transform3D(Basis(), from_pos + aim_dir * (max_range * 0.45))
+		if is_instance_valid(player_node):
+			shape_query.exclude = [player_node]
+		shape_query.collide_with_areas = true
+		shape_query.collide_with_bodies = true
+		var results = space_state.intersect_shape(shape_query, 8)
+		for r in results:
+			var col = r.collider
+			if col and col != player_node:
+				var candidate: Node = null
+				if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
+					candidate = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
+				elif col.has_method("take_damage"):
+					candidate = col
+				elif col.get_parent() and col.get_parent().has_method("take_damage"):
+					candidate = col.get_parent()
+				if candidate and candidate.has_method("take_damage"):
+					hit_target = candidate
+					hit_pos = candidate.global_position + Vector3(0, 0.9, 0)
+					break
+					
+	if hit_target and hit_target.has_method("take_damage"):
+		var push_speed = 26.0 # Превышает порог wall_slam_threshold (16.0)
+		var push_dir = aim_dir.normalized()
+		var push_vec = push_dir * push_speed
+		if push_vec.y < 2.5:
+			push_vec.y = max(push_vec.y, 3.0)
+			
+		var direct_dmg = 20
+		print("[ANVIL PISTON] PUSH -> %s with speed %.1f (dir: %s)" % [hit_target.name, push_speed, push_dir])
+		# is_shockwave = true включает отслеживание столкновения со стеной/врагами
+		hit_target.take_damage(direct_dmg, push_vec, hit_pos, false, false, true, false)
+		
+	spawn_piston_tracer(start_pos, hit_pos, false)
+
+func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: bool = false):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.07 if is_self_launch else 0.055
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.65, 0.25, 0.9) if is_self_launch else Color(0.85, 0.95, 1.0, 0.9)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
+	
+	if is_self_launch:
+		var sphere = MeshInstance3D.new()
+		var smesh = SphereMesh.new()
+		smesh.radius = 0.3
+		smesh.height = 0.6
+		sphere.mesh = smesh
+		var smat = StandardMaterial3D.new()
+		smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		smat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		smat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		smat.albedo_color = Color(1.0, 0.75, 0.3, 0.8)
+		sphere.material_override = smat
+		scene_root.add_child(sphere)
+		sphere.global_position = end_pos
+		
+		var stween = create_tween().set_parallel(true)
+		stween.tween_property(sphere, "scale", Vector3(2.5, 0.4, 2.5), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		stween.tween_property(smat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		stween.chain().tween_callback(sphere.queue_free)
 
 func _fire_injector_inflate():
 	if injector_alt_timer > 0.0:
@@ -512,8 +741,64 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 			spawn_bullet_tracer(start_pos, hit_pos)
 			if not is_alt_fire:
 				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.0)), float(w.get("vacuum_force", 16.0)), directly_hit_target)
+		elif weapon_idx == 1:
+			spawn_shotgun_pellet_tracer(start_pos, hit_pos)
 		elif weapon_idx == 2:
 			spawn_syringe_tracer(start_pos, hit_pos)
+
+func spawn_shotgun_pellet_tracer(start_pos: Vector3, end_pos: Vector3):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.016
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.72, 0.25, 0.85)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
 
 func spawn_syringe_tracer(start_pos: Vector3, end_pos: Vector3):
 	var dir = end_pos - start_pos
