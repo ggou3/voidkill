@@ -19,6 +19,7 @@ enum State {
 @export var avoidance_deadzone: float = 0.5
 @export var wall_slam_threshold: float = 16.0
 @export var wall_slam_damage_multiplier: float = 3.5
+@export var wall_slam_max_damage: float = 55.0
 @export var reaction_delay: float = 0.4
 
 var current_state: State = State.IDLE
@@ -609,7 +610,11 @@ func _check_wall_slam(delta: float):
 
 func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	wall_slam_timer = 0.0 # Предотвращаем повторное срабатывание в течение одного отброса
-	var base_wall_damage = int(round(impact_speed * wall_slam_damage_multiplier))
+	var raw_wall_damage = impact_speed * wall_slam_damage_multiplier
+	# Формула с насыщением: урон продолжает расти со скоростью столкновения,
+	# но асимптотически приближается к потолку wall_slam_max_damage (55 HP) и никогда не превышает его.
+	var saturated_damage = wall_slam_max_damage * (1.0 - exp(-raw_wall_damage / wall_slam_max_damage))
+	var base_wall_damage = mini(int(round(saturated_damage)), int(wall_slam_max_damage))
 	
 	# Затухание урона от столкновений по цепочке (100% -> 60% -> 35% -> 20%)
 	var my_mult: float = 1.0
