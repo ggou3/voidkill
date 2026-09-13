@@ -5,6 +5,7 @@ enum State {
 	CHASE,
 	ATTACK,
 	LUNGE,
+	FLEE,
 	DEAD
 }
 
@@ -59,6 +60,9 @@ var lunge_phase: int = 0
 var lunge_has_hit: bool = false
 var lunge_start_pos: Vector3 = Vector3.ZERO
 var lunge_target_distance: float = 5.5
+
+var fear_check_timer: float = 0.0
+var flee_timer: float = 0.0
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
@@ -118,6 +122,7 @@ func _ready():
 		
 	_setup_health_bar()
 	lunge_cooldown_timer = randf_range(0.5, 2.5)
+	fear_check_timer = randf_range(0.5, 2.5)
 
 	# NavigationServer3D sync delay before using navigation agent
 	set_physics_process(false)
@@ -252,6 +257,7 @@ func _physics_process(delta):
 				name, is_on_floor(), velocity.y, jump_timeout <= 0.0
 			])
 	else:
+		_process_fear_chain_check(delta)
 		match current_state:
 			State.IDLE:
 				_process_idle(delta)
@@ -261,6 +267,8 @@ func _physics_process(delta):
 				_process_attack(delta)
 			State.LUNGE:
 				_process_lunge(delta)
+			State.FLEE:
+				_process_flee(delta)
 			
 	pre_move_velocity = velocity
 	move_and_slide()
@@ -294,6 +302,10 @@ func set_state(new_state: State):
 			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
 		State.LUNGE:
 			is_jumping_link = false
+		State.FLEE:
+			is_jumping_link = false
+			path_update_timer = 0.0
+			attack_timer = 1.0
 		State.DEAD:
 			is_jumping_link = false
 			die()
@@ -545,6 +557,22 @@ func _calculate_lunge_vector_and_distance() -> Dictionary:
 		"dist": target_dist
 	}
 
+func _has_line_of_sight_to(target: Node3D) -> bool:
+	if not is_instance_valid(target):
+		return false
+	var space_state = get_world_3d().direct_space_state
+	if not space_state:
+		return true
+	var from_pos = global_position + Vector3(0.0, 0.6, 0.0)
+	var to_pos = target.global_position + Vector3(0.0, 0.6, 0.0)
+	var query = PhysicsRayQueryParameters3D.create(from_pos, to_pos)
+	query.exclude = [get_rid()]
+	var result = space_state.intersect_ray(query)
+	if result.is_empty():
+		return true
+	var col_obj = result.get("collider")
+	return is_instance_valid(col_obj) and (col_obj == target or col_obj.is_in_group("player"))
+
 func _can_lunge_to_player() -> bool:
 	if not is_instance_valid(target_player):
 		return false
@@ -555,18 +583,8 @@ func _can_lunge_to_player() -> bool:
 		return false
 		
 	# 1. Проверка прямой видимости (Line of Sight)
-	var space_state = get_world_3d().direct_space_state
-	if not space_state:
-		return true
-	var from_pos = global_position + Vector3(0.0, 0.6, 0.0)
-	var to_pos = target_player.global_position + Vector3(0.0, 0.6, 0.0)
-	var query = PhysicsRayQueryParameters3D.create(from_pos, to_pos)
-	query.exclude = [get_rid()]
-	var result = space_state.intersect_ray(query)
-	if not result.is_empty():
-		var col_obj = result.get("collider")
-		if is_instance_valid(col_obj) and col_obj != target_player and not col_obj.is_in_group("player"):
-			return false # Препятствие между врагом и игроком (стена, колонна)
+	if not _has_line_of_sight_to(target_player):
+		return false # Препятствие между врагом и игроком (стена, колонна)
 			
 	# 2. Предварительная проверка наличия пола в направлении рывка с учётом 3D-вектора
 	var lunge_data = _calculate_lunge_vector_and_distance()
@@ -786,6 +804,129 @@ func _reset_lunge_visuals():
 			body_mesh.scale = Vector3.ONE
 			if head_mesh:
 				head_mesh.scale = Vector3.ONE
+# --- FEAR CHAIN (Паника на тире OVERDRIVE) ---
+
+func _process_fear_chain_check(delta: float):
+	if current_state != State.IDLE and current_state != State.CHASE:
+		return
+	if is_jumping_link:
+		return
+		
+	fear_check_timer -= delta
+	if fear_check_timer > 0.0:
+		return
+	fear_check_timer = 3.0 # Проверка каждые 3 секунды
+	
+	var player = target_player
+	if not is_instance_valid(player):
+		player = get_tree().get_first_node_in_group("player")
+	if not is_instance_valid(player) or ("is_dead" in player and player.is_dead):
+		return
+		
+	# Проверяем тир OVERDRIVE игрока (BPM >= 180.0)
+	var player_bpm: float = 0.0
+	if "skills" in player and is_instance_valid(player.skills) and "bpm" in player.skills:
+		player_bpm = player.skills.bpm
+	if player_bpm < 180.0:
+		return
+		
+	# Проверяем нахождение в зоне видимости / детекции и прямую видимость (LOS)
+	var dist = global_position.distance_to(player.global_position)
+	if dist > detection_range:
+		return
+	if not _has_line_of_sight_to(player):
+		return
+		
+	# 40% шанс паники
+	if randf() <= 0.40:
+		target_player = player
+		flee_timer = randf_range(4.0, 5.0)
+		print("[%s] FEAR CHAIN: Overdrive panic triggered (BPM: %.1f)! FLEE for %.2fs" % [name, player_bpm, flee_timer])
+		set_state(State.FLEE)
+
+func _process_flee(delta: float):
+	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
+		set_state(State.IDLE)
+		return
+		
+	# Прерывание FLEE при падении BPM ниже 180 (игрок вышел из OVERDRIVE)
+	var player_bpm: float = 0.0
+	if "skills" in target_player and is_instance_valid(target_player.skills) and "bpm" in target_player.skills:
+		player_bpm = target_player.skills.bpm
+	if player_bpm < 180.0:
+		print("[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
+		_resume_from_flee()
+		return
+		
+	# Отсчет таймера паники (4-5 сек)
+	flee_timer -= delta
+	if flee_timer <= 0.0:
+		print("[%s] FLEE expired. Resuming normal behavior." % name)
+		_resume_from_flee()
+		return
+		
+	# Обновление целевой точки бегства прочь от игрока
+	path_update_timer -= delta
+	if path_update_timer <= 0.0:
+		path_update_timer = PATH_UPDATE_INTERVAL
+		var base_away = (global_position - target_player.global_position)
+		base_away.y = 0.0
+		if base_away.length_squared() > 0.01:
+			base_away = base_away.normalized()
+		else:
+			base_away = -transform.basis.z.normalized()
+			
+		var best_flee_target = global_position + base_away * 12.0
+		var nav_map = nav_agent.get_navigation_map()
+		if nav_map.is_valid():
+			var max_player_dist = -1.0
+			var candidate_angles = [0.0, 0.785, -0.785, 1.57, -1.57]
+			for angle_offset in candidate_angles:
+				var candidate_dir = base_away.rotated(Vector3.UP, angle_offset)
+				var candidate_pos = global_position + candidate_dir * 12.0
+				var nav_pt = NavigationServer3D.map_get_closest_point(nav_map, candidate_pos)
+				var d_player = nav_pt.distance_squared_to(target_player.global_position)
+				if d_player > max_player_dist:
+					max_player_dist = d_player
+					best_flee_target = nav_pt
+			nav_agent.target_position = best_flee_target
+		else:
+			nav_agent.target_position = best_flee_target
+			
+	var next_path_pos = nav_agent.get_next_path_position()
+	var move_dir = next_path_pos - global_position
+	move_dir.y = 0.0
+	
+	# Фолбэк: если nav_agent вернул текущую позицию, жмёмся прямо прочь от игрока
+	if move_dir.length_squared() <= 0.01:
+		var direct_away = global_position - target_player.global_position
+		direct_away.y = 0.0
+		if direct_away.length_squared() > 0.01:
+			move_dir = direct_away
+			
+	if move_dir.length_squared() > 0.05:
+		move_dir = move_dir.normalized()
+		current_target_vel = move_dir * (move_speed * slow_factor)
+		if nav_agent.avoidance_enabled:
+			nav_agent.set_velocity(current_target_vel)
+		else:
+			_apply_movement(current_target_vel, delta)
+	else:
+		current_target_vel = Vector3.ZERO
+		if nav_agent.avoidance_enabled:
+			nav_agent.set_velocity(Vector3.ZERO)
+		else:
+			_apply_movement(Vector3.ZERO, delta)
+
+func _resume_from_flee():
+	flee_timer = 0.0
+	if is_instance_valid(target_player) and not ("is_dead" in target_player and target_player.is_dead):
+		var dist = global_position.distance_to(target_player.global_position)
+		if dist <= detection_range:
+			repath_cooldown_timer = 0.0
+			start_chase(target_player)
+			return
+	set_state(State.IDLE)
 
 func start_chase(player: Node3D):
 	if repath_cooldown_timer > 0.0:

@@ -53,6 +53,7 @@ shader_parameter/noise_amount = 0.1
 shader_parameter/player_speed = 0.0
 shader_parameter/speed_threshold = 14.5
 shader_parameter/max_speed_threshold = 19.5
+shader_parameter/overdrive_factor = 0.0
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_3xd07"]
 radius = 0.8

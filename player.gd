@@ -231,6 +231,10 @@ func _process(_delta):
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
+		var current_bpm: float = skills.bpm if is_instance_valid(skills) else 50.0
+		# Интерполяция внутри тира OVERDRIVE: от 0.0 при bpm <= 180.0 до 1.0 при bpm = 200.0
+		var overdrive_factor: float = clampf((current_bpm - 180.0) / 20.0, 0.0, 1.0)
+		post_process_rect.material.set_shader_parameter("overdrive_factor", overdrive_factor)
 
 func _physics_process(delta):
 	if is_dead:
