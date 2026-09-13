@@ -1460,7 +1460,8 @@ func die():
 		if player.skills.has_method("record_kill_bpm"):
 			player.skills.record_kill_bpm(weapon_used, was_killed_by_shockwave)
 		else:
-			player.skills.add_bpm(8.0 if was_killed_by_shockwave else 5.5)
+			var mult: float = player.skills.combat_momentum if "combat_momentum" in player.skills else 1.0
+			player.skills.add_bpm((8.0 if was_killed_by_shockwave else 5.5) * mult)
 	
 	if hp_sprite:
 		hp_sprite.visible = false

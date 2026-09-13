@@ -139,7 +139,11 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	if weapon_type != "":
 		last_kill_weapon = weapon_type
 		
-	var total_bpm = base_bpm + bonus_bpm
+	var total_bpm = (base_bpm + bonus_bpm) * combat_momentum
+	if combat_momentum > 1.0:
+		print("[COMBAT MOMENTUM] x%.2f applied: +%.1f -> +%.1f BPM" % [
+			combat_momentum, base_bpm + bonus_bpm, total_bpm
+		])
 	add_bpm(total_bpm)
 	return total_bpm
 

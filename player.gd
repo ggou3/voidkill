@@ -228,7 +228,7 @@ func _process(_delta):
 		var blood_surf = is_sliding and is_on_blood
 		blood_buff_label.visible = blood_surf
 		if blood_surf:
-			blood_buff_label.text = "★ BLOOD SURF (+2 BPM/s) ★"
+			blood_buff_label.text = "★ BLOOD SURF (MOMENTUM +5%) ★"
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
