@@ -57,14 +57,14 @@ var weapons = [
 	{
 		"name": "ИНЪЕКТОР",
 		"max_ammo": 6,
-		"damage": 24, # Прямой урон увеличен с 18 до 24 HP (суммарно с DoT: 24 + 18 = 42 HP)
+		"damage": 10, # Прямой урон одного дротика 10 HP (очередь из 3 дротиков = 30 HP суммарно)
 		"pellets": 1,
-		"spread": 0.0,
-		"fire_rate": 0.20, # Ускорено в 1.6x (0.20с между выстрелами вместо 0.32с, 5 выстр/сек)
+		"spread": 0.045, # Конусный разброс ~4-5 градусов
+		"fire_rate": 0.28, # Кулдаун между очередями
 		"reload_time": 1.4,
-		"cam_shake": 0.04,
-		"weapon_kick": 0.16,
-		"knockback": 2.5,
+		"cam_shake": 0.025,
+		"weapon_kick": 0.08,
+		"knockback": 1.5,
 		"upward_kick": 0.0,
 		"headshot_multiplier": 1.5,
 		"air_multiplier": 1.0,
@@ -369,7 +369,22 @@ func shoot(has_infinite_ammo: bool):
 		ammos[current_weapon_index] -= 1
 		
 	fire_timers[current_weapon_index] = w["fire_rate"]
-	_fire_pellets(current_weapon_index, -1.0, false)
+	if current_weapon_index == 2:
+		_fire_injector_burst()
+	else:
+		_fire_pellets(current_weapon_index, -1.0, false)
+
+func _fire_injector_burst():
+	is_bursting = true
+	const BURST_COUNT: int = 3
+	const BURST_INTERVAL: float = 0.07
+	for i in range(BURST_COUNT):
+		if current_weapon_index != 2 or not is_inside_tree():
+			break
+		_fire_pellets(2, 0.045, false)
+		if i < BURST_COUNT - 1:
+			await get_tree().create_timer(BURST_INTERVAL).timeout
+	is_bursting = false
 
 func alt_shoot(has_infinite_ammo: bool = false):
 	if is_bursting:

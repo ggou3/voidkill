@@ -51,10 +51,8 @@ var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
 var slow_factor: float = 1.0
 var slow_sources: int = 0
-var poison_dot_duration: float = 0.0
-var poison_tick_interval: float = 0.5
-var poison_tick_timer: float = 0.0
-var poison_damage_per_tick: int = 3
+const MAX_POISON_STACKS: int = 5
+var poison_stacks: Array[Dictionary] = []
 var needle_count: int = 0
 var needle_timers: Array[float] = []
 var inflation_tween: Tween = null
@@ -185,13 +183,23 @@ func _physics_process(delta):
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
 		
-	# Обработка урона по времени (Poison DoT)
-	if poison_dot_duration > 0.0:
-		poison_dot_duration -= delta
-		poison_tick_timer -= delta
-		if poison_tick_timer <= 0.0:
-			poison_tick_timer = poison_tick_interval
-			_apply_poison_tick()
+	# Обработка стаков яда (Poison DoT)
+	if not poison_stacks.is_empty():
+		var write_idx = 0
+		for i in range(poison_stacks.size()):
+			var stack = poison_stacks[i]
+			stack["duration"] -= delta
+			stack["tick_timer"] -= delta
+			if stack["tick_timer"] <= 0.0:
+				stack["tick_timer"] = float(stack["interval"])
+				_apply_poison_tick(int(stack["damage"]))
+				if current_state == State.DEAD:
+					break
+			if stack["duration"] > 0.0 and current_state != State.DEAD:
+				poison_stacks[write_idx] = stack
+				write_idx += 1
+		if current_state != State.DEAD:
+			poison_stacks.resize(write_idx)
 			
 	# Обработка застрявших игл: независимый таймер 6.0с на каждую иглу
 	if not needle_timers.is_empty():
@@ -544,23 +552,35 @@ func remove_slow():
 	if slow_sources == 0:
 		slow_factor = 1.0
 
-func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5):
+func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5, chain_depth: int = 0):
 	if current_state == State.DEAD:
 		return
-	poison_damage_per_tick = damage_per_tick
-	poison_tick_interval = interval
-	# Обновляем длительность без стакания урона в тик
-	poison_dot_duration = duration
-	if poison_tick_timer <= 0.0:
-		poison_tick_timer = interval
+	if poison_stacks.size() < MAX_POISON_STACKS:
+		poison_stacks.append({
+			"duration": duration,
+			"tick_timer": interval,
+			"damage": damage_per_tick,
+			"interval": interval,
+			"chain_depth": chain_depth
+		})
+	else:
+		# При максимуме 5 стаков обновляем стак с наименьшим оставшимся временем
+		var min_idx = 0
+		var min_dur = float(poison_stacks[0]["duration"])
+		for i in range(1, poison_stacks.size()):
+			if float(poison_stacks[i]["duration"]) < min_dur:
+				min_dur = float(poison_stacks[i]["duration"])
+				min_idx = i
+		poison_stacks[min_idx]["duration"] = max(float(poison_stacks[min_idx]["duration"]), duration)
+		poison_stacks[min_idx]["chain_depth"] = min(int(poison_stacks[min_idx]["chain_depth"]), chain_depth)
 
-func _apply_poison_tick():
+func _apply_poison_tick(damage: int):
 	if current_state == State.DEAD:
 		return
-	health -= poison_damage_per_tick
+	health -= damage
 	_update_health_bar()
 	var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
-	_spawn_damage_number(poison_damage_per_tick, hit_pos, false, true)
+	_spawn_damage_number(damage, hit_pos, false, true)
 	if current_state == State.IDLE:
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player):
@@ -917,7 +937,6 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 func die():
 	current_state = State.DEAD
 	set_physics_process(false)
-	poison_dot_duration = 0.0
 	AudioManager.play_sound("enemy_death")
 	
 	# Начисление BPM игроку (+12 за убийство ударной волной, +8 за обычное убийство)
@@ -951,6 +970,16 @@ func die():
 	var chain_depth = explosion_chain_depth
 	if needle_count > 0:
 		_trigger_needle_burst(was_inflated, chain_depth)
+
+	# Заражение при смерти: если враг отравлен, выпускает облако яда (радиус 2.5м, максимум 3 поколения цепи)
+	if not poison_stacks.is_empty():
+		var min_depth = 999
+		for stack in poison_stacks:
+			var d = int(stack.get("chain_depth", 0))
+			if d < min_depth:
+				min_depth = d
+		if min_depth < 3:
+			_trigger_poison_contagion(min_depth)
 
 	# Если враг был раздут шприцем — инициируем кровавую детонацию с учётом глубины цепи
 	if is_inflated:
@@ -1080,6 +1109,69 @@ func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float):
 	tween.tween_property(sphere, "scale", Vector3(radius * 1.6, radius * 1.6, radius * 1.6), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(sphere.queue_free)
+
+func _trigger_poison_contagion(depth: int = 0):
+	const CONTAGION_RADIUS: float = 2.5
+	var cloud_pos = global_position + Vector3(0, 0.8, 0)
+	
+	print("[%s] POISON CONTAGION! depth: %d, radius: %.1fm" % [name, depth, CONTAGION_RADIUS])
+	AudioManager.play_sound("flask_splash")
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if scene_root:
+		_spawn_poison_cloud_visual(scene_root, cloud_pos, CONTAGION_RADIUS)
+		
+	var space_state = get_world_3d().direct_space_state
+	var all_enemies = get_tree().get_nodes_in_group("enemy")
+	for enemy in all_enemies:
+		if not is_instance_valid(enemy) or enemy == self:
+			continue
+		if ("current_state" in enemy and enemy.current_state == enemy.State.DEAD) or ("health" in enemy and enemy.health <= 0):
+			continue
+			
+		var enemy_center = enemy.global_position + Vector3(0, 0.8, 0)
+		var dist = cloud_pos.distance_to(enemy_center)
+		if dist <= CONTAGION_RADIUS:
+			if space_state:
+				var ray_query = PhysicsRayQueryParameters3D.create(cloud_pos, enemy_center)
+				ray_query.exclude = [self, enemy]
+				ray_query.collide_with_areas = false
+				ray_query.collide_with_bodies = true
+				var hit_res = space_state.intersect_ray(ray_query)
+				if not hit_res.is_empty():
+					var col = hit_res.collider
+					if col and not (col.is_in_group("enemy") or col.is_in_group("enemy_head")):
+						continue
+						
+			if enemy.has_method("apply_poison_dot"):
+				enemy.apply_poison_dot(3.0, 3, 0.5, depth + 1)
+				print("[%s] CONTAGION INFECTED %s! Stack applied at depth %d" % [name, enemy.name, depth + 1])
+
+func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float):
+	var mesh_inst = MeshInstance3D.new()
+	var smesh = SphereMesh.new()
+	smesh.radius = 0.4
+	smesh.height = 0.8
+	smesh.radial_segments = 16
+	smesh.rings = 8
+	mesh_inst.mesh = smesh
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(0.25, 0.95, 0.35, 0.6) # Токсично-зеленый цвет яда
+	mesh_inst.material_override = mat
+	
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_position = cloud_pos
+	
+	var target_scale = Vector3.ONE * (cloud_radius / 0.4)
+	var tween = mesh_inst.create_tween().set_parallel(true)
+	tween.tween_property(mesh_inst, "scale", target_scale, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(mesh_inst.queue_free)
 
 func _trigger_needle_burst(was_inflated: bool, depth: int):
 	var burst_radius: float = 6.0 if was_inflated else 4.0
