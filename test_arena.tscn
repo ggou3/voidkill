@@ -13,6 +13,8 @@ sky_material = SubResource("ProceduralSkyMaterial_arena")
 [sub_resource type="Environment" id="Environment_arena"]
 background_mode = 2
 sky = SubResource("Sky_arena")
+ambient_light_source = 3
+ambient_light_energy = 0.55
 
 [node name="TestArena" type="Node3D"]
 
@@ -20,133 +22,353 @@ sky = SubResource("Sky_arena")
 environment = SubResource("Environment_arena")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.919416, 0.148242, -0.364277, 0, 0.926241, 0.376932, 0.393285, -0.346558, 0.851601, 0, 15, 0)
+transform = Transform3D(0.919416, 0.148242, -0.364277, 0, 0.926241, 0.376932, 0.393285, -0.346558, 0.851601, 0, 35, -60)
 shadow_enabled = true
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = ExtResource("4_navmesh")
 
-[node name="Floor" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+# ==============================================================================
+# ZONE 1: START & RUNWAY ACCELERATION (Z: +45 to +15, length 30m)
+# ==============================================================================
+[node name="Zone1_Runway" type="Node3D" parent="."]
+
+[node name="Z1_Floor" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 30)
 use_collision = true
-size = Vector3(44, 1, 44)
+size = Vector3(16, 1, 30)
 
-[node name="BoundaryWalls" type="Node3D" parent="."]
-
-[node name="WallNorth" type="CSGBox3D" parent="BoundaryWalls"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -21.5)
+[node name="Z1_SouthWall" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 45.5)
 use_collision = true
-size = Vector3(44, 11, 1)
+size = Vector3(16, 11, 1)
 
-[node name="WallSouth" type="CSGBox3D" parent="BoundaryWalls"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 21.5)
+[node name="Z1_WestWall" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 5, 30)
 use_collision = true
-size = Vector3(44, 11, 1)
+size = Vector3(1, 11, 30)
 
-[node name="WallWest" type="CSGBox3D" parent="BoundaryWalls"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.5, 5, 0)
+[node name="Z1_EastWall" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5, 30)
 use_collision = true
-size = Vector3(1, 11, 44)
+size = Vector3(1, 11, 30)
 
-[node name="WallEast" type="CSGBox3D" parent="BoundaryWalls"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.5, 5, 0)
+[node name="Z1_TransitionWest" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 5, 15)
 use_collision = true
-size = Vector3(1, 11, 44)
+size = Vector3(3, 11, 1)
 
-[node name="WallrunGeometry" type="Node3D" parent="."]
-
-[node name="WallrunWestLong" type="CSGBox3D" parent="WallrunGeometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.5, 0)
+[node name="Z1_TransitionEast" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 5, 15)
 use_collision = true
-size = Vector3(1, 9, 22)
+size = Vector3(3, 11, 1)
 
-[node name="WallrunNorthHigh" type="CSGBox3D" parent="WallrunGeometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 7.5, -9)
+[node name="Z1_SpeedRamp" type="CSGBox3D" parent="Zone1_Runway"]
+transform = Transform3D(1, 0, 0, 0, 0.996195, 0.0871557, 0, -0.0871557, 0.996195, 0, 0.3, 34)
 use_collision = true
-size = Vector3(16, 7, 1)
+size = Vector3(8, 0.6, 6)
 
-[node name="WallrunEast" type="CSGBox3D" parent="WallrunGeometry"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 4.5, 4)
+# ==============================================================================
+# ZONE 2: HIGH-SPEED WALLRUN TRANSIT CORRIDOR (Z: +15 to -25, length 40m, width 10m)
+# ==============================================================================
+[node name="Zone2_WallrunCorridor" type="Node3D" parent="."]
+
+[node name="Z2_Floor" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -5)
 use_collision = true
-size = Vector3(1, 9, 14)
+size = Vector3(10, 1, 40)
 
-[node name="Platforms" type="Node3D" parent="."]
-
-[node name="PlatformTier1" type="CSGBox3D" parent="Platforms"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 1, 11)
+[node name="Z2_WallrunWest" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 5, -5)
 use_collision = true
-size = Vector3(5, 2, 5)
+size = Vector3(1, 11, 40)
 
-[node name="PlatformTier2" type="CSGBox3D" parent="Platforms"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 2, 11)
+[node name="Z2_WallrunEast" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 5, -5)
 use_collision = true
-size = Vector3(5, 4, 5)
+size = Vector3(1, 11, 40)
 
-[node name="PlatformTier3" type="CSGBox3D" parent="Platforms"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 3.5, 11)
+[node name="Z2_WallrunRailWest" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 3.5, -5)
 use_collision = true
-size = Vector3(5, 7, 5)
+size = Vector3(1.6, 0.5, 24)
 
-[node name="PlatformNorthBridge" type="CSGBox3D" parent="Platforms"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.5, -15)
+[node name="Z2_CrossBeamPerch" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -18)
 use_collision = true
-size = Vector3(16, 5, 5)
+size = Vector3(10, 0.8, 3)
 
-[node name="PlatformMidStaging" type="CSGBox3D" parent="Platforms"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.5, -10)
+# ==============================================================================
+# ZONE 3: GRAND COMBAT ARENA (Z: -25 to -75, length 50m, width 40m)
+# ==============================================================================
+[node name="Zone3_GrandArena" type="Node3D" parent="."]
+
+[node name="Z3_Floor" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -50)
 use_collision = true
-size = Vector3(5, 3, 5)
+size = Vector3(40, 1, 50)
 
-[node name="TightSpaces" type="Node3D" parent="."]
-
-[node name="CorridorWallA" type="CSGBox3D" parent="TightSpaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 3, 8)
+[node name="Z3_SouthPortalWest" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 5.5, -25)
 use_collision = true
-size = Vector3(9, 6, 1)
+size = Vector3(15, 11, 1)
 
-[node name="CorridorWallB" type="CSGBox3D" parent="TightSpaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, 13.5)
+[node name="Z3_SouthPortalEast" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 5.5, -25)
 use_collision = true
-size = Vector3(1, 6, 10)
+size = Vector3(15, 11, 1)
 
-[node name="AlcoveWall" type="CSGBox3D" parent="TightSpaces"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -15)
+[node name="Z3_WestWall" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 5.5, -50)
 use_collision = true
-size = Vector3(1, 6, 5)
+size = Vector3(1, 11, 50)
 
+[node name="Z3_EastWall" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -50)
+use_collision = true
+size = Vector3(1, 11, 50)
+
+[node name="Z3_PillarWest" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
+use_collision = true
+size = Vector3(4, 8, 4)
+
+[node name="Z3_PillarEast" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
+use_collision = true
+size = Vector3(4, 8, 4)
+
+[node name="Z3_WallrunFlank" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.5, -58)
+use_collision = true
+size = Vector3(1, 9, 16)
+
+[node name="Z3_SniperNest" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2.5, -55)
+use_collision = true
+size = Vector3(8, 5, 8)
+
+[node name="Z3_NorthPortalWest" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 5.5, -75)
+use_collision = true
+size = Vector3(13, 11, 1)
+
+[node name="Z3_NorthPortalEast" type="CSGBox3D" parent="Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 5.5, -75)
+use_collision = true
+size = Vector3(13, 11, 1)
+
+# ==============================================================================
+# ZONE 4: VERTICAL SHAFT & TIERED PLATFORMING SECTOR (Z: -75 to -125, length 50m, width 26m)
+# ==============================================================================
+[node name="Zone4_VerticalSector" type="Node3D" parent="."]
+
+[node name="Z4_Floor" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -100)
+use_collision = true
+size = Vector3(26, 1, 50)
+
+[node name="Z4_WestWallHigh" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 9, -100)
+use_collision = true
+size = Vector3(1, 18, 50)
+
+[node name="Z4_EastWallHigh" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 9, -100)
+use_collision = true
+size = Vector3(1, 18, 50)
+
+[node name="Z4_Tier1" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -84)
+use_collision = true
+size = Vector3(6, 3, 6)
+
+[node name="Z4_Tier2" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -94)
+use_collision = true
+size = Vector3(6, 7, 6)
+
+[node name="Z4_Tier3" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.5, -105)
+use_collision = true
+size = Vector3(6, 11, 6)
+
+[node name="Z4_HighOverlookBridge" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -116)
+use_collision = true
+size = Vector3(14, 15, 6)
+
+[node name="Z4_WallrunPanelWest" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -94)
+use_collision = true
+size = Vector3(1, 10, 12)
+
+[node name="Z4_WallrunPanelEast" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 10, -105)
+use_collision = true
+size = Vector3(1, 10, 12)
+
+[node name="Z4_PortalWest" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 6, -125)
+use_collision = true
+size = Vector3(6, 12, 1)
+
+[node name="Z4_PortalEast" type="CSGBox3D" parent="Zone4_VerticalSector"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 6, -125)
+use_collision = true
+size = Vector3(6, 12, 1)
+
+# ==============================================================================
+# ZONE 5: CQC BUNKER / LABYRINTH KILLBOX (Z: -125 to -175, length 50m, width 24m)
+# ==============================================================================
+[node name="Zone5_CQCBunker" type="Node3D" parent="."]
+
+[node name="Z5_Floor" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -150)
+use_collision = true
+size = Vector3(24, 1, 50)
+
+[node name="Z5_WestWall" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 4, -150)
+use_collision = true
+size = Vector3(1, 8, 50)
+
+[node name="Z5_EastWall" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 4, -150)
+use_collision = true
+size = Vector3(1, 8, 50)
+
+[node name="Z5_NorthEndWall" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -175.5)
+use_collision = true
+size = Vector3(24, 8, 1)
+
+[node name="Z5_BaffleWall1" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -135)
+use_collision = true
+size = Vector3(14, 8, 1)
+
+[node name="Z5_BaffleWall2" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, -145)
+use_collision = true
+size = Vector3(14, 8, 1)
+
+[node name="Z5_LaneDivider" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -155)
+use_collision = true
+size = Vector3(1, 8, 12)
+
+[node name="Z5_FinalPortalWall" type="CSGBox3D" parent="Zone5_CQCBunker"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -163)
+use_collision = true
+size = Vector3(16, 8, 1)
+
+# ==============================================================================
+# BLOOD POOLS (8 pools distributed across all 5 zones)
+# ==============================================================================
 [node name="BloodPools" type="Node3D" parent="."]
 
-[node name="BloodPoolCentral" parent="BloodPools" instance=ExtResource("3_blood_pool")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -1)
+# Zone 1: Runway start blood pool
+[node name="Pool_Z1_Start" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 27)
 
-[node name="BloodPoolPlatformApproach" parent="BloodPools" instance=ExtResource("3_blood_pool")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.05, 6)
+# Zone 2: Wallrun corridor mid blood pool
+[node name="Pool_Z2_Corridor" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -5)
 
-[node name="BloodPoolCorridor" parent="BloodPools" instance=ExtResource("3_blood_pool")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 0.05, 13)
+# Zone 3: Grand arena open center
+[node name="Pool_Z3_Center" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -45)
 
+# Zone 3: Grand arena west flank
+[node name="Pool_Z3_Flank" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -60)
+
+# Zone 4: Vertical sector base approach
+[node name="Pool_Z4_Base" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -78)
+
+# Zone 5: CQC bunker first bend
+[node name="Pool_Z5_Bend1" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.05, -140)
+
+# Zone 5: CQC bunker second choke
+[node name="Pool_Z5_Bend2" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.05, -152)
+
+# Zone 5: Final killbox chamber
+[node name="Pool_Z5_End" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -170)
+
+# ==============================================================================
+# PLAYER SPAWN (Zone 1 Runway)
+# ==============================================================================
 [node name="Player" parent="." instance=ExtResource("1_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 15)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 40)
 
+# ==============================================================================
+# ENEMIES (19 enemies distributed across all 5 zones)
+# ==============================================================================
 [node name="Enemies" type="Node3D" parent="."]
 
-[node name="EnemyCentralMid" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 3)
+# Zone 1: Runway intro enemies (2)
+[node name="Enemy_Z1_1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 22)
 
-[node name="EnemyCentralDist" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5, -4)
+[node name="Enemy_Z1_2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, 18)
 
-[node name="EnemyCorridorSlam1" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.5, 1.5, 12)
+# Zone 2: Wallrun corridor enemies (3)
+[node name="Enemy_Z2_Entrance" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 10)
 
-[node name="EnemyCorridorSlam2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1.5, 15)
+[node name="Enemy_Z2_Mid" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.5, -8)
 
-[node name="EnemyHighPlatform" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 7.5, 11)
+[node name="Enemy_Z2_Perch" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -18)
 
-[node name="EnemyNorthBridge" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 5.5, -15)
+# Zone 3: Grand arena enemies (5)
+[node name="Enemy_Z3_Center1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -38)
 
-[node name="EnemyWallrunFlank" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1.5, 3)
+[node name="Enemy_Z3_Center2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5, -48)
+
+[node name="Enemy_Z3_PillarAmbush" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1.5, -42)
+
+[node name="Enemy_Z3_EastFlank" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.5, -58)
+
+[node name="Enemy_Z3_Sniper" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 5.5, -55)
+
+# Zone 4: Vertical platforming sector enemies (4)
+[node name="Enemy_Z4_Tier1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
+
+[node name="Enemy_Z4_Tier2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.5, -94)
+
+[node name="Enemy_Z4_Tier3" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.5, -105)
+
+[node name="Enemy_Z4_Apex" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -116)
+
+# Zone 5: CQC bunker & killbox enemies (5)
+[node name="Enemy_Z5_Bend1Ambush" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -138)
+
+[node name="Enemy_Z5_Choke1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.5, -148)
+
+[node name="Enemy_Z5_Choke2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, -152)
+
+[node name="Enemy_Z5_FinalBoss1" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 1.5, -170)
+
+[node name="Enemy_Z5_FinalBoss2" parent="Enemies" instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.5, -170)
