@@ -28,16 +28,35 @@ var is_slamming = false
 var slam_timer = 0.0
 var blood_timer = 0.0
 
+# --- BPM SYSTEM (Сердцебиение) ---
+const MIN_BPM: float = 50.0
+const MAX_BPM: float = 200.0
+var bpm: float = MIN_BPM
+var time_since_bpm_gain: float = 0.0
+
 @onready var player = $".."
 @onready var head = $"../Head"
 @onready var slam_ray = $"../SlamRay"
 @onready var dash_label = $"../HUD/DashLabel"
+@onready var bpm_label = get_node_or_null("../HUD/BPMLabel")
 
 func _ready():
 	dashes = MAX_DASH
 	dash_timer_cd = 0.0
 	dash_interval_timer = 0.0
 	dash_current_speed = dash_target_speed
+	
+	if not bpm_label:
+		var hud = get_node_or_null("../HUD")
+		if hud:
+			bpm_label = Label.new()
+			bpm_label.name = "BPMLabel"
+			bpm_label.offset_left = 34.0
+			bpm_label.offset_top = 484.0
+			bpm_label.offset_right = 350.0
+			bpm_label.offset_bottom = 529.0
+			bpm_label.add_theme_font_size_override("font_size", 28)
+			hud.add_child(bpm_label)
 
 func _process(delta):
 	# Восстановление зарядов дэша
@@ -54,6 +73,20 @@ func _process(delta):
 	if slam_timer > 0: slam_timer -= delta
 	if blood_timer > 0: blood_timer -= delta
 	
+	# BPM: активный кровавый сёрф (слайд по луже крови): +3 BPM/сек
+	if is_instance_valid(player) and player.is_sliding and player.is_on_blood:
+		add_bpm(3.0 * delta)
+	else:
+		time_since_bpm_gain += delta
+		
+	# BPM: пассивный спад к 50.0 при отсутствии событий роста за последние 2 секунды: -4 BPM/сек
+	if time_since_bpm_gain >= 2.0 and bpm > MIN_BPM:
+		bpm = max(MIN_BPM, bpm - 4.0 * delta)
+		
+	# Индикация BPM в HUD
+	if bpm_label:
+		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm)), get_bpm_tier()]
+	
 	# Индикация состояния зарядов и остывания
 	if dash_label:
 		if dashes == 0:
@@ -65,6 +98,30 @@ func _process(delta):
 			dash_label.text = "DASH: " + str(dashes) + " (READY, +" + str(snapped(dash_timer_cd, 0.1)) + "s)"
 		else:
 			dash_label.text = "DASH: " + str(MAX_DASH) + " (READY)"
+
+# --- BPM API ---
+
+func add_bpm(amount: float):
+	if amount <= 0.0:
+		return
+	bpm = clamp(bpm + amount, MIN_BPM, MAX_BPM)
+	time_since_bpm_gain = 0.0
+
+func drop_bpm_on_damage():
+	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
+	var drop = bpm * 0.25
+	bpm = max(MIN_BPM, bpm - drop)
+	print("[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, get_bpm_tier()])
+
+func get_bpm_tier() -> String:
+	if bpm < 90.0:
+		return "CALM"
+	elif bpm < 140.0:
+		return "PUMPING"
+	elif bpm < 180.0:
+		return "SURGING"
+	else:
+		return "OVERDRIVE"
 
 func activate_blood_buff():
 	blood_timer = blood_buff_duration

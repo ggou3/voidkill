@@ -445,6 +445,8 @@ func handle_jump() -> bool:
 				head.add_recoil(0.045 if is_blood_active() else 0.035, 0.0)
 				time_on_ground = 0.0
 				prev_air_time = 0.0
+				if skills and skills.has_method("add_bpm"):
+					skills.add_bpm(5.0)
 				
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
@@ -716,6 +718,8 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 	if is_dead:
 		return
 	health = max(0, health - amount)
+	if skills and skills.has_method("drop_bpm_on_damage"):
+		skills.drop_bpm_on_damage()
 	if head:
 		head.add_recoil(0.25, 0.0)
 	if knockback_vector != Vector3.ZERO:

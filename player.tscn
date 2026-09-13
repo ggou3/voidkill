@@ -497,6 +497,14 @@ offset_bottom = 621.0
 theme_override_font_sizes/font_size = 32
 text = "DASH: 3/3"
 
+[node name="BPMLabel" type="Label" parent="HUD" unique_id=773412599]
+offset_left = 34.0
+offset_top = 484.0
+offset_right = 350.0
+offset_bottom = 529.0
+theme_override_font_sizes/font_size = 28
+text = "BPM: 50 (CALM)"
+
 [node name="HealthLabel" type="Label" parent="HUD" unique_id=773412589]
 offset_left = 34.0
 offset_top = 530.0

@@ -38,6 +38,7 @@ var current_target_vel: Vector3 = Vector3.ZERO
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
+var was_killed_by_shockwave: bool = false
 var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
 var slow_factor: float = 1.0
@@ -485,6 +486,9 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		
 	if is_shockwave:
 		slam_chain_depth = max(0, source_chain_depth)
+		was_killed_by_shockwave = true
+	elif amount > 0:
+		was_killed_by_shockwave = false
 		
 	was_killed_by_melee = is_melee or is_shockwave or is_execute
 	health -= amount
@@ -737,6 +741,14 @@ func die():
 	set_physics_process(false)
 	poison_dot_duration = 0.0
 	AudioManager.play_sound("enemy_death")
+	
+	# Начисление BPM игроку (+12 за убийство ударной волной, +8 за обычное убийство)
+	var player = get_tree().get_first_node_in_group("player")
+	if is_instance_valid(player) and "skills" in player and is_instance_valid(player.skills):
+		if was_killed_by_shockwave:
+			player.skills.add_bpm(12.0)
+		else:
+			player.skills.add_bpm(8.0)
 	
 	if hp_sprite:
 		hp_sprite.visible = false
