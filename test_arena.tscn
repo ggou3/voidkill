@@ -114,10 +114,20 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 5.5, -50)
 use_collision = true
 size = Vector3(1, 11, 50)
 
-[node name="Z3_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -50)
+[node name="Z3_EastWallNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -64)
 use_collision = true
-size = Vector3(1, 11, 50)
+size = Vector3(1, 11, 22)
+
+[node name="Z3_EastWallSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -36)
+use_collision = true
+size = Vector3(1, 11, 22)
+
+[node name="Z3_EastBalconyRailing" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0.6, -50)
+use_collision = true
+size = Vector3(1, 1.2, 6)
 
 [node name="Z3_PillarWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
@@ -301,6 +311,38 @@ size = Vector3(16, 1, 16)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 7, -85)
 use_collision = true
 size = Vector3(1, 15, 220)
+
+[node name="NavigationLinks" type="Node3D" parent="NavigationRegion3D"]
+
+[node name="NavLink_Z4_Ground_To_Tier1" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -78)
+end_position = Vector3(0, 3, -5)
+bidirectional = true
+
+[node name="NavLink_Z4_Tier1_To_Tier2" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, -85)
+end_position = Vector3(-5, 4, -7)
+bidirectional = true
+
+[node name="NavLink_Z4_Tier2_To_Tier3" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.4, -95.5)
+end_position = Vector3(9, 4, -7.5)
+bidirectional = true
+
+[node name="NavLink_Z4_Tier3_To_Apex" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.4, -106.5)
+end_position = Vector3(-4, 4, -8)
+bidirectional = true
+
+[node name="NavLink_Z3_Ground_To_Sniper" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.4, -55)
+end_position = Vector3(3, 5, 0)
+bidirectional = true
+
+[node name="NavLink_Z3_To_Z7_Balcony" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0.4, -50)
+end_position = Vector3(4, 4, 0)
+bidirectional = true
 
 [node name="BloodPools" type="Node3D" parent="."]
 

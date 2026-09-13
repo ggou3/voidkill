@@ -36,9 +36,13 @@ const PATH_UPDATE_INTERVAL: float = 0.35
 var debug_diag_timer: float = 0.0
 var current_target_vel: Vector3 = Vector3.ZERO
 var unreachable_timer: float = 0.0
-const UNREACHABLE_TIMEOUT: float = 2.0
+const UNREACHABLE_TIMEOUT: float = 3.5
 var repath_cooldown_timer: float = 0.0
 const REPATH_COOLDOWN: float = 2.0
+
+var is_jumping_link: bool = false
+var jump_grace_timer: float = 0.0
+var jump_timeout: float = 0.0
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
@@ -96,6 +100,7 @@ func _ready():
 	if nav_agent:
 		nav_agent.avoidance_enabled = avoidance_enabled
 		nav_agent.velocity_computed.connect(_on_velocity_computed)
+		nav_agent.link_reached.connect(_on_link_reached)
 		
 	_setup_health_bar()
 
@@ -204,13 +209,29 @@ func _physics_process(delta):
 			needle_count = write_idx
 			_update_needle_visuals()
 		
-	match current_state:
-		State.IDLE:
-			_process_idle(delta)
-		State.CHASE:
-			_process_chase(delta)
-		State.ATTACK:
-			_process_attack(delta)
+	if is_jumping_link:
+		jump_grace_timer -= delta
+		jump_timeout -= delta
+		# Приземление: после выхода из grace-таймера при касании пола или по таймауту
+		if jump_grace_timer <= 0.0 and ((is_on_floor() and velocity.y <= 0.5) or jump_timeout <= 0.0):
+			is_jumping_link = false
+			velocity.x = 0.0
+			velocity.z = 0.0
+			path_update_timer = 0.0
+			unreachable_timer = 0.0
+			if nav_agent:
+				nav_agent.set_velocity(Vector3.ZERO)
+			print("[%s] NavigationLink3D LANDED (floor: %s, vel.y: %.2f, timeout: %s)" % [
+				name, is_on_floor(), velocity.y, jump_timeout <= 0.0
+			])
+	else:
+		match current_state:
+			State.IDLE:
+				_process_idle(delta)
+			State.CHASE:
+				_process_chase(delta)
+			State.ATTACK:
+				_process_attack(delta)
 			
 	pre_move_velocity = velocity
 	move_and_slide()
@@ -227,15 +248,18 @@ func set_state(new_state: State):
 	match current_state:
 		State.IDLE:
 			target_player = null
+			is_jumping_link = false
 		State.CHASE:
 			path_update_timer = 0.0
 		State.ATTACK:
 			velocity.x = 0.0
 			velocity.z = 0.0
+			is_jumping_link = false
 			# На первый контакт (вход в зону атаки) обязательная задержка перед ударом
 			attack_timer = max(attack_timer, reaction_delay)
 			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
 		State.DEAD:
+			is_jumping_link = false
 			die()
 
 func _process_idle(delta):
@@ -330,6 +354,8 @@ func _process_chase(delta):
 			_apply_movement(Vector3.ZERO, delta)
 
 func _on_velocity_computed(safe_velocity: Vector3):
+	if is_jumping_link:
+		return
 	var final_target = safe_velocity
 	# Мёртвая зона avoidance: если вектор уклонения незначительно отличается от прямого пути
 	# (< avoidance_deadzone), игнорируем микро-поправку avoidance.
@@ -416,6 +442,74 @@ func start_chase(player: Node3D):
 	set_state(State.CHASE)
 	if is_instance_valid(nav_agent):
 		nav_agent.target_position = target_player.global_position
+
+func _on_link_reached(details: Dictionary):
+	if is_jumping_link or current_state == State.DEAD:
+		return
+		
+	var exit_pos: Vector3 = details.get("link_exit_position", Vector3.ZERO)
+	
+	# Фолбэк на owner (NavigationLink3D), если exit_pos не передан напрямую
+	if exit_pos == Vector3.ZERO:
+		var link_node = details.get("owner") as NavigationLink3D
+		if link_node:
+			var p_start = link_node.global_transform * link_node.start_position
+			var p_end = link_node.global_transform * link_node.end_position
+			if global_position.distance_squared_to(p_start) < global_position.distance_squared_to(p_end):
+				exit_pos = p_end
+			else:
+				exit_pos = p_start
+				
+	if exit_pos == Vector3.ZERO:
+		return
+		
+	_start_link_jump(exit_pos)
+
+func _start_link_jump(target_pos: Vector3):
+	var delta_pos = target_pos - global_position
+	var delta_h = Vector3(delta_pos.x, 0.0, delta_pos.z)
+	var dist_h = delta_h.length()
+	var delta_y = delta_pos.y
+	
+	# Эффективная гравитация врага: gravity * 2.0 (как в _physics_process)
+	var eff_gravity: float = gravity * 2.0
+	if eff_gravity <= 0.1:
+		eff_gravity = 19.6
+		
+	# Расчёт высоты апекса траектории над текущей точкой
+	var h_apex: float
+	if delta_y >= 0.0:
+		# Прыжок вверх: апекс выше целевой площадки на 1.5м (минимум 2.5м над стартом)
+		h_apex = max(delta_y + 1.5, 2.5)
+	else:
+		# Прыжок вниз: мягкий перескок вверх на 1.2м над стартовой точкой
+		h_apex = 1.2
+		
+	var v_y: float = sqrt(2.0 * eff_gravity * h_apex)
+	var t_up: float = v_y / eff_gravity
+	var fall_height: float = max(0.01, h_apex - delta_y)
+	var t_down: float = sqrt(2.0 * fall_height / eff_gravity)
+	var t_total: float = t_up + t_down
+	
+	var horiz_vel: Vector3 = Vector3.ZERO
+	if t_total > 0.01:
+		horiz_vel = delta_h / t_total
+	elif dist_h > 0.01:
+		horiz_vel = delta_h.normalized() * move_speed
+		
+	velocity = Vector3(horiz_vel.x, v_y, horiz_vel.z)
+	is_jumping_link = true
+	jump_grace_timer = 0.25
+	jump_timeout = t_total + 1.2
+	unreachable_timer = 0.0
+	
+	# Поворачиваемся в сторону прыжка
+	if dist_h > 0.01:
+		rotation.y = atan2(-delta_h.x, -delta_h.z)
+		
+	print("[%s] NavigationLink3D JUMP -> target %s, dy=%.2f, dh=%.2f, v=(%.1f, %.1f, %.1f), t_flight=%.2fs" % [
+		name, target_pos, delta_y, dist_h, velocity.x, velocity.y, velocity.z, t_total
+	])
 
 func _on_detection_area_body_entered(body: Node3D):
 	if body.is_in_group("player") and current_state == State.IDLE:
@@ -588,6 +682,8 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	
 	# Разделяем входящий импульс
 	knockback_velocity = Vector3(knockback_vector.x, 0, knockback_vector.z)
+	if is_shockwave or is_execute or is_melee or knockback_vector.length_squared() > 10.0:
+		is_jumping_link = false
 	
 	# При melee-ударе активируем окно отслеживания удара об стену только для мощной ударной волны или добивания
 	if is_shockwave or is_execute:
