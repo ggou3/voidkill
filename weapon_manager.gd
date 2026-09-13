@@ -344,14 +344,191 @@ func _fire_anvil_piston():
 	if anvil_alt_timer > 0.0:
 		return
 		
-	var aim_dir = head.get_aim_direction()
-	# Если прицел направлен вниз, под ноги самого игрока (в пределах небольшого угла от строго вниз)
-	if aim_dir.y < -0.80:
-		_perform_self_launch(aim_dir)
+	var aim_dir = head.get_aim_direction().normalized()
+	var from_pos = head.camera.global_position
+	var start_pos = head.get_muzzle_position()
+	var space_state = head.camera.get_world_3d().direct_space_state
+	var player_node = get_parent()
+	
+	const PISTON_RANGE: float = 5.0 # Короткий конус ближнего действия (4-5 метров)
+	const CONE_ANGLE_DEG: float = 20.0 # Угол конуса ~15-20 градусов
+	var half_angle_rad: float = deg_to_rad(CONE_ANGLE_DEG * 0.5)
+	var min_cos: float = cos(half_angle_rad) # cos(10 deg) ~ 0.9848
+	
+	# 1. Поиск врагов в ближнем конусе действия
+	var enemies_in_cone: Array = []
+	var all_enemies = get_tree().get_nodes_in_group("enemy")
+	
+	# Проверяем прямой луч по прицелу
+	var direct_ray = PhysicsRayQueryParameters3D.create(from_pos, from_pos + aim_dir * PISTON_RANGE)
+	if is_instance_valid(player_node):
+		direct_ray.exclude = [player_node]
+	direct_ray.collide_with_areas = true
+	direct_ray.collide_with_bodies = true
+	var direct_res = space_state.intersect_ray(direct_ray)
+	var direct_target: Node = null
+	var direct_hit_pos: Vector3 = from_pos + aim_dir * PISTON_RANGE
+	
+	if not direct_res.is_empty():
+		direct_hit_pos = direct_res.position
+		var col = direct_res.collider
+		if col:
+			if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
+				direct_target = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
+			elif col.has_method("take_damage"):
+				direct_target = col
+			elif col.get_parent() and col.get_parent().has_method("take_damage"):
+				direct_target = col.get_parent()
+				
+	if direct_target and is_instance_valid(direct_target) and not ("current_state" in direct_target and direct_target.current_state == direct_target.State.DEAD):
+		enemies_in_cone.append({
+			"enemy": direct_target,
+			"hit_pos": direct_hit_pos,
+			"dist": from_pos.distance_to(direct_hit_pos)
+		})
+		
+	# Сканируем остальных врагов в конусе перед игроком
+	for e in all_enemies:
+		if not is_instance_valid(e):
+			continue
+		if "current_state" in e and e.current_state == e.State.DEAD:
+			continue
+		if "health" in e and e.health <= 0:
+			continue
+		if direct_target and e == direct_target:
+			continue
+			
+		var e_center = e.global_position + Vector3(0, 0.9, 0)
+		var to_e = e_center - from_pos
+		var dist = to_e.length()
+		if dist > PISTON_RANGE:
+			continue
+			
+		var dir_to_e = to_e / max(0.001, dist)
+		var dot = aim_dir.dot(dir_to_e)
+		
+		# В упор (до 1.8м) захватываем более широкий сектор, на дистанции — в пределах угла конуса
+		var threshold = 0.86 if dist <= 1.8 else min_cos
+		if dot < threshold:
+			continue
+			
+		# Проверка видимости (не сквозь сплошную геометрию стен)
+		var occ_ray = PhysicsRayQueryParameters3D.create(from_pos, e_center)
+		if is_instance_valid(player_node):
+			occ_ray.exclude = [player_node]
+		var occ_res = space_state.intersect_ray(occ_ray)
+		if not occ_res.is_empty():
+			var occ_col = occ_res.collider
+			if occ_col != e and not occ_col.is_in_group("enemy") and not (occ_col.get_parent() and occ_col.get_parent().is_in_group("enemy")):
+				continue
+				
+		enemies_in_cone.append({
+			"enemy": e,
+			"hit_pos": e_center,
+			"dist": dist
+		})
+		
+	# Если обнаружен хотя бы один враг в конусе — бьем врагов (self-launch не срабатывает)
+	if enemies_in_cone.size() > 0:
+		anvil_alt_timer = anvil_alt_cooldown
+		head.add_recoil(0.12, 0.40)
+		head.trigger_muzzle_flash(true)
+		AudioManager.play_sound("shotgun_shot")
+		
+		var primary_hit_pos = enemies_in_cone[0]["hit_pos"]
+		
+		for data in enemies_in_cone:
+			var target = data["enemy"]
+			var hit_pos = data["hit_pos"]
+			
+			var enemy_feet_y = target.global_position.y
+			var enemy_center = target.global_position + Vector3(0, 0.9, 0)
+			var to_enemy_center = (enemy_center - from_pos).normalized()
+			
+			# Вычисляем высоту точки прицеливания на дистанции врага
+			var forward_dist = (enemy_center - from_pos).dot(aim_dir)
+			var aim_point_at_enemy = from_pos + aim_dir * max(0.5, forward_dist)
+			var aim_height_rel_to_feet = aim_point_at_enemy.y - enemy_feet_y
+			var aim_pitch_diff = aim_dir.y - to_enemy_center.y
+			
+			# Условие подброса: прицел направлен на нижнюю часть модели врага (уровень ног <= 0.65м)
+			# при крутом угле взгляда вниз относительно центра модели цели
+			var is_aiming_at_legs = (aim_height_rel_to_feet <= 0.65) and (aim_dir.y < -0.15 or aim_pitch_diff < -0.10)
+			
+			var push_vec: Vector3 = Vector3.ZERO
+			if is_aiming_at_legs:
+				# Вертикальный подброс врага вверх (аналог self-launch)
+				var upward_impulse = 21.0
+				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
+				push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
+				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (impulse: %.1f)" % [target.name, upward_impulse])
+			else:
+				# Горизонтальный отброс от игрока в упор (38-45 м/с -> 42.0 м/с)
+				var push_speed = 42.0
+				var push_dir = aim_dir.normalized()
+				push_vec = push_dir * push_speed
+				push_vec.y = clamp(push_vec.y, 3.0, 7.0)
+				print("[ANVIL PISTON] HORIZONTAL SLAM PUSH -> %s with speed %.1f" % [target.name, push_speed])
+				
+			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam
+			target.take_damage(0, push_vec, hit_pos, false, false, true, false)
+			
+		spawn_piston_tracer(start_pos, primary_hit_pos, false)
+		return
+		
+	# 2. Врагов нет — проверяем попадание конуса в статичную геометрию (стена, пол, потолок)
+	var hit_geom: bool = false
+	var geom_hit_pos: Vector3 = from_pos + aim_dir * PISTON_RANGE
+	var geom_hit_dist: float = PISTON_RANGE
+	
+	var geom_ray = PhysicsRayQueryParameters3D.create(from_pos, from_pos + aim_dir * PISTON_RANGE)
+	if is_instance_valid(player_node):
+		geom_ray.exclude = [player_node]
+	geom_ray.collide_with_areas = false
+	geom_ray.collide_with_bodies = true
+	var geom_res = space_state.intersect_ray(geom_ray)
+	
+	if not geom_res.is_empty():
+		hit_geom = true
+		geom_hit_pos = geom_res.position
+		geom_hit_dist = from_pos.distance_to(geom_hit_pos)
 	else:
-		_perform_enemy_piston_push(aim_dir)
+		# Проверяем лучи по периметру конуса (~18 градусов)
+		var cam_basis = head.camera.global_transform.basis
+		var cone_offsets = [
+			Vector3.UP * 0.16,
+			Vector3.DOWN * 0.16,
+			Vector3.LEFT * 0.16,
+			Vector3.RIGHT * 0.16
+		]
+		for offset in cone_offsets:
+			var test_dir = (aim_dir + cam_basis * offset).normalized()
+			var sub_query = PhysicsRayQueryParameters3D.create(from_pos, from_pos + test_dir * PISTON_RANGE)
+			if is_instance_valid(player_node):
+				sub_query.exclude = [player_node]
+			sub_query.collide_with_areas = false
+			sub_query.collide_with_bodies = true
+			var sub_res = space_state.intersect_ray(sub_query)
+			if not sub_res.is_empty():
+				var d = from_pos.distance_to(sub_res.position)
+				if d < geom_hit_dist:
+					hit_geom = true
+					geom_hit_dist = d
+					geom_hit_pos = sub_res.position
+					
+	if hit_geom:
+		# Self-launch при упоре в любую статичную геометрию (стена, пол, потолок)
+		_perform_self_launch(aim_dir, geom_hit_pos)
+	else:
+		# Выстрел в пустое пространство (> 5 метров)
+		anvil_alt_timer = anvil_alt_cooldown
+		head.add_recoil(0.08, 0.25)
+		head.trigger_muzzle_flash(true)
+		AudioManager.play_sound("shotgun_shot")
+		spawn_piston_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, false)
+		print("[ANVIL PISTON] Air blast (no surface or enemy in range)")
 
-func _perform_self_launch(aim_dir: Vector3):
+func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3):
 	var player_node = get_parent()
 	if not is_instance_valid(player_node):
 		return
@@ -372,11 +549,17 @@ func _perform_self_launch(aim_dir: Vector3):
 		mult = 0.35
 	anvil_self_launch_chain += 1
 	
-	# Сила импульса: в 1.5-2.0x сильнее JUMP_VELOCITY (11.0) -> 19.5 (диапазон 16.5-22.0)
+	# Импульс ВСЕГДА направлен строго противоположно направлению взгляда камеры ("толкает назад от того, куда целится")
+	var launch_dir = -aim_dir.normalized()
 	var base_impulse: float = 19.5
 	var final_impulse: float = base_impulse * mult
+	var impulse_vec = launch_dir * final_impulse
 	
-	player_node.velocity.y = final_impulse
+	player_node.velocity = impulse_vec
+	# Если отталкиваемся от стены стоя на полу — даем стартовый отрыв от земли против трения
+	if launch_dir.y >= 0.0 and player_node.is_on_floor():
+		player_node.velocity.y = max(impulse_vec.y, 4.5)
+		
 	if "has_jumped" in player_node:
 		player_node.has_jumped = true
 	if "time_on_ground" in player_node:
@@ -389,88 +572,11 @@ func _perform_self_launch(aim_dir: Vector3):
 	AudioManager.play_sound("shotgun_shot")
 	
 	var start_pos = head.get_muzzle_position()
-	var hit_pos = player_node.global_position + Vector3(0, -0.2, 0)
-	spawn_piston_tracer(start_pos, hit_pos, true)
+	spawn_piston_tracer(start_pos, surface_hit_pos, true)
 	
-	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | Vel.y: %.1f" % [
-		anvil_self_launch_chain, mult, final_impulse, player_node.velocity.y
+	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Dir: %s | Impulse: %.1f | Vel: %s" % [
+		anvil_self_launch_chain, mult, launch_dir, final_impulse, player_node.velocity
 	])
-
-func _perform_enemy_piston_push(aim_dir: Vector3):
-	anvil_alt_timer = anvil_alt_cooldown
-	head.add_recoil(0.10, 0.35)
-	head.trigger_muzzle_flash(true)
-	AudioManager.play_sound("shotgun_shot")
-	
-	var start_pos = head.get_muzzle_position()
-	var max_range = 22.0
-	var space_state = head.camera.get_world_3d().direct_space_state
-	var from_pos = head.camera.global_position
-	var to_pos = from_pos + aim_dir * max_range
-	
-	var hit_target: Node = null
-	var hit_pos: Vector3 = to_pos
-	var player_node = get_parent()
-	
-	# 1. Прямой луч через RayCast
-	var ray_query = PhysicsRayQueryParameters3D.create(from_pos, to_pos)
-	if is_instance_valid(player_node):
-		ray_query.exclude = [player_node]
-	ray_query.collide_with_areas = true
-	ray_query.collide_with_bodies = true
-	var ray_res = space_state.intersect_ray(ray_query)
-	
-	if not ray_res.is_empty():
-		hit_pos = ray_res.position
-		var col = ray_res.collider
-		if col:
-			if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
-				hit_target = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
-			elif col.has_method("take_damage"):
-				hit_target = col
-			elif col.get_parent() and col.get_parent().has_method("take_damage"):
-				hit_target = col.get_parent()
-				
-	# 2. Если луч слегка промахнулся — конический SphereCast для надежности попадания поршнем
-	if not hit_target:
-		var sphere = SphereShape3D.new()
-		sphere.radius = 0.85
-		var shape_query = PhysicsShapeQueryParameters3D.new()
-		shape_query.shape = sphere
-		shape_query.transform = Transform3D(Basis(), from_pos + aim_dir * (max_range * 0.45))
-		if is_instance_valid(player_node):
-			shape_query.exclude = [player_node]
-		shape_query.collide_with_areas = true
-		shape_query.collide_with_bodies = true
-		var results = space_state.intersect_shape(shape_query, 8)
-		for r in results:
-			var col = r.collider
-			if col and col != player_node:
-				var candidate: Node = null
-				if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
-					candidate = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
-				elif col.has_method("take_damage"):
-					candidate = col
-				elif col.get_parent() and col.get_parent().has_method("take_damage"):
-					candidate = col.get_parent()
-				if candidate and candidate.has_method("take_damage"):
-					hit_target = candidate
-					hit_pos = candidate.global_position + Vector3(0, 0.9, 0)
-					break
-					
-	if hit_target and hit_target.has_method("take_damage"):
-		var push_speed = 26.0 # Превышает порог wall_slam_threshold (16.0)
-		var push_dir = aim_dir.normalized()
-		var push_vec = push_dir * push_speed
-		if push_vec.y < 2.5:
-			push_vec.y = max(push_vec.y, 3.0)
-			
-		var direct_dmg = 20
-		print("[ANVIL PISTON] PUSH -> %s with speed %.1f (dir: %s)" % [hit_target.name, push_speed, push_dir])
-		# is_shockwave = true включает отслеживание столкновения со стеной/врагами
-		hit_target.take_damage(direct_dmg, push_vec, hit_pos, false, false, true, false)
-		
-	spawn_piston_tracer(start_pos, hit_pos, false)
 
 func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: bool = false):
 	var dir = end_pos - start_pos
@@ -526,26 +632,26 @@ func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: b
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(mesh_inst.queue_free)
 	
-	if is_self_launch:
-		var sphere = MeshInstance3D.new()
-		var smesh = SphereMesh.new()
-		smesh.radius = 0.3
-		smesh.height = 0.6
-		sphere.mesh = smesh
-		var smat = StandardMaterial3D.new()
-		smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		smat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-		smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		smat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		smat.albedo_color = Color(1.0, 0.75, 0.3, 0.8)
-		sphere.material_override = smat
-		scene_root.add_child(sphere)
-		sphere.global_position = end_pos
-		
-		var stween = create_tween().set_parallel(true)
-		stween.tween_property(sphere, "scale", Vector3(2.5, 0.4, 2.5), 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		stween.tween_property(smat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		stween.chain().tween_callback(sphere.queue_free)
+	var sphere = MeshInstance3D.new()
+	var smesh = SphereMesh.new()
+	smesh.radius = 0.25
+	smesh.height = 0.5
+	sphere.mesh = smesh
+	var smat = StandardMaterial3D.new()
+	smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	smat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	smat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	smat.albedo_color = Color(1.0, 0.75, 0.3, 0.8) if is_self_launch else Color(0.6, 0.85, 1.0, 0.75)
+	sphere.material_override = smat
+	scene_root.add_child(sphere)
+	sphere.global_position = end_pos
+	
+	var stween = create_tween().set_parallel(true)
+	var target_scale = Vector3(2.4, 2.4, 2.4) if is_self_launch else Vector3(1.6, 1.6, 1.6)
+	stween.tween_property(sphere, "scale", target_scale, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	stween.tween_property(smat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	stween.chain().tween_callback(sphere.queue_free)
 
 func _fire_injector_inflate():
 	if injector_alt_timer > 0.0:
