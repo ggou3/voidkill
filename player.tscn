@@ -498,6 +498,21 @@ offset_bottom = 621.0
 theme_override_font_sizes/font_size = 32
 text = "DASH: 3/3"
 
+[node name="ComboLabel" type="Label" parent="HUD" unique_id=773412600]
+visible = false
+offset_left = 34.0
+offset_top = 452.0
+offset_right = 350.0
+offset_bottom = 484.0
+theme_override_colors/font_color = Color(1, 0.82, 0.2, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "★ VARIETY +3 ★"
+
 [node name="BPMLabel" type="Label" parent="HUD" unique_id=773412599]
 offset_left = 34.0
 offset_top = 484.0

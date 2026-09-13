@@ -36,6 +36,8 @@ var last_kill_weapon: String = ""
 @onready var slam_ray = $"../SlamRay"
 @onready var dash_label = $"../HUD/DashLabel"
 @onready var bpm_label = get_node_or_null("../HUD/BPMLabel")
+@onready var combo_label: Label = get_node_or_null("../HUD/ComboLabel")
+var combo_tween: Tween = null
 
 func _ready():
 	dashes = MAX_DASH
@@ -113,6 +115,7 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 		print("[BPM VARIETY BONUS] +3.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
 			weapon_type, last_kill_weapon, base_bpm + bonus_bpm
 		])
+		_show_combo_popup(bonus_bpm)
 	elif last_kill_weapon != "" and weapon_type == last_kill_weapon:
 		print("[BPM KILL] Same weapon '%s' (Total: +%.1f BPM, no variety bonus)" % [weapon_type, base_bpm])
 	else:
@@ -124,6 +127,47 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	var total_bpm = base_bpm + bonus_bpm
 	add_bpm(total_bpm)
 	return total_bpm
+
+func _show_combo_popup(bonus_amount: float):
+	if not combo_label:
+		var hud = get_node_or_null("../HUD")
+		if hud:
+			combo_label = hud.get_node_or_null("ComboLabel")
+			if not combo_label:
+				combo_label = Label.new()
+				combo_label.name = "ComboLabel"
+				combo_label.offset_left = 34.0
+				combo_label.offset_top = 452.0
+				combo_label.offset_right = 350.0
+				combo_label.offset_bottom = 484.0
+				combo_label.add_theme_font_size_override("font_size", 22)
+				combo_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.2, 1.0))
+				combo_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
+				combo_label.add_theme_constant_override("outline_size", 6)
+				combo_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+				combo_label.add_theme_constant_override("shadow_offset_x", 2)
+				combo_label.add_theme_constant_override("shadow_offset_y", 2)
+				hud.add_child(combo_label)
+
+	if not combo_label:
+		return
+		
+	# Если предыдущая плашка ещё на экране, отменяем её tween и обновляем таймер/текст
+	if combo_tween and combo_tween.is_valid():
+		combo_tween.kill()
+		
+	combo_label.text = "★ VARIETY +%d ★" % int(round(bonus_amount))
+	combo_label.visible = true
+	combo_label.modulate.a = 1.0
+	combo_label.position.y = 452.0
+	
+	combo_tween = create_tween()
+	# Плавное всплытие вверх на 10px за 1.2 секунды
+	combo_tween.tween_property(combo_label, "position:y", 442.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# Держится на экране 0.7с, затем плавное исчезновение (fade out) 0.5с
+	combo_tween.parallel().tween_property(combo_label, "modulate:a", 1.0, 0.7)
+	combo_tween.chain().tween_property(combo_label, "modulate:a", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	combo_tween.chain().tween_callback(func(): if is_instance_valid(combo_label): combo_label.visible = false)
 
 func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
