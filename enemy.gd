@@ -4,11 +4,12 @@ enum State {
 	IDLE,
 	CHASE,
 	ATTACK,
+	LUNGE,
 	DEAD
 }
 
 @export var max_health: int = 100
-@export var move_speed: float = 9.4
+@export var move_speed: float = 11.5
 @export var acceleration: float = 6.2
 @export var attack_damage: int = 15
 @export var attack_range: float = 2.0
@@ -21,6 +22,12 @@ enum State {
 @export var wall_slam_damage_multiplier: float = 3.5
 @export var wall_slam_max_damage: float = 55.0
 @export var reaction_delay: float = 0.4
+@export var lunge_min_range: float = 5.0
+@export var lunge_max_range: float = 7.0
+@export var lunge_speed: float = 22.0
+@export var lunge_telegraph_time: float = 0.38
+@export var lunge_dash_time: float = 0.28
+@export var lunge_cooldown: float = 4.5
 
 var current_state: State = State.IDLE
 var health: int = 100
@@ -43,6 +50,12 @@ const REPATH_COOLDOWN: float = 2.0
 var is_jumping_link: bool = false
 var jump_grace_timer: float = 0.0
 var jump_timeout: float = 0.0
+
+var lunge_cooldown_timer: float = 0.0
+var lunge_timer: float = 0.0
+var lunge_dir: Vector3 = Vector3.ZERO
+var lunge_phase: int = 0
+var lunge_has_hit: bool = false
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
@@ -101,6 +114,7 @@ func _ready():
 		nav_agent.link_reached.connect(_on_link_reached)
 		
 	_setup_health_bar()
+	lunge_cooldown_timer = randf_range(0.5, 2.5)
 
 	# NavigationServer3D sync delay before using navigation agent
 	set_physics_process(false)
@@ -182,6 +196,8 @@ func _physics_process(delta):
 		attack_timer -= delta
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
+	if lunge_cooldown_timer > 0.0:
+		lunge_cooldown_timer -= delta
 		
 	# Обработка стаков яда (Poison DoT)
 	if not poison_stacks.is_empty():
@@ -240,6 +256,8 @@ func _physics_process(delta):
 				_process_chase(delta)
 			State.ATTACK:
 				_process_attack(delta)
+			State.LUNGE:
+				_process_lunge(delta)
 			
 	pre_move_velocity = velocity
 	move_and_slide()
@@ -251,7 +269,12 @@ func set_state(new_state: State):
 		return
 		
 	print("[%s] State: %s -> %s" % [name, State.keys()[current_state], State.keys()[new_state]])
+	var prev_state = current_state
 	current_state = new_state
+	
+	if prev_state == State.LUNGE and new_state != State.LUNGE:
+		_reset_lunge_visuals()
+		lunge_phase = 0
 	
 	match current_state:
 		State.IDLE:
@@ -266,6 +289,8 @@ func set_state(new_state: State):
 			# На первый контакт (вход в зону атаки) обязательная задержка перед ударом
 			attack_timer = max(attack_timer, reaction_delay)
 			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
+		State.LUNGE:
+			is_jumping_link = false
 		State.DEAD:
 			is_jumping_link = false
 			die()
@@ -298,6 +323,13 @@ func _process_chase(delta):
 	if dist_to_player <= attack_range:
 		set_state(State.ATTACK)
 		return
+		
+	# Проверка атаки-выпада (LUNGE):
+	# дистанция 5-7м, кулдаун готов, стоим на земле, не прыгаем link, не отброшены от стены
+	if lunge_cooldown_timer <= 0.0 and dist_to_player >= lunge_min_range and dist_to_player <= lunge_max_range:
+		if is_on_floor() and not is_jumping_link and wall_slam_timer <= 0.0 and _can_lunge_to_player():
+			start_lunge()
+			return
 		
 	# Обновляем целевую позицию для NavigationAgent3D с фиксированным интервалом
 	path_update_timer -= delta
@@ -362,7 +394,7 @@ func _process_chase(delta):
 			_apply_movement(Vector3.ZERO, delta)
 
 func _on_velocity_computed(safe_velocity: Vector3):
-	if is_jumping_link:
+	if is_jumping_link or current_state == State.LUNGE:
 		return
 	var final_target = safe_velocity
 	# Мёртвая зона avoidance: если вектор уклонения незначительно отличается от прямого пути
@@ -442,6 +474,189 @@ func perform_attack():
 		var attack_impulse = attack_dir * 8.0 + Vector3.UP * 2.0
 		target_player.take_damage(attack_damage, attack_impulse, target_player.global_position)
 
+func _can_lunge_to_player() -> bool:
+	if not is_instance_valid(target_player):
+		return false
+	var space_state = get_world_3d().direct_space_state
+	if not space_state:
+		return true
+	var from_pos = global_position + Vector3(0.0, 0.6, 0.0)
+	var to_pos = target_player.global_position + Vector3(0.0, 0.6, 0.0)
+	var query = PhysicsRayQueryParameters3D.create(from_pos, to_pos)
+	query.exclude = [self]
+	var result = space_state.intersect_ray(query)
+	if result.is_empty():
+		return true
+	var col_obj = result.get("collider")
+	if is_instance_valid(col_obj) and (col_obj == target_player or col_obj.is_in_group("player")):
+		return true
+	return false
+
+func start_lunge():
+	if not is_instance_valid(target_player):
+		return
+	set_state(State.LUNGE)
+	lunge_phase = 1 # Фаза 1: Телеграф
+	lunge_timer = lunge_telegraph_time
+	lunge_has_hit = false
+	lunge_cooldown_timer = lunge_cooldown
+	
+	# Полная остановка горизонтального движения при начале телеграфа
+	velocity.x = 0.0
+	velocity.z = 0.0
+	if nav_agent and nav_agent.avoidance_enabled:
+		nav_agent.set_velocity(Vector3.ZERO)
+		
+	# Фиксируем направление на игрока в начале телеграфа
+	var to_player = target_player.global_position - global_position
+	to_player.y = 0.0
+	if to_player.length_squared() > 0.01:
+		lunge_dir = to_player.normalized()
+		rotation.y = atan2(-lunge_dir.x, -lunge_dir.z)
+	else:
+		lunge_dir = -transform.basis.z.normalized()
+		
+	# Визуальный телеграф (0.35-0.4с):
+	# 1. Глаза загораются ярким янтарно-оранжевым цветом
+	if eyes_material:
+		eyes_material.emission_enabled = true
+		eyes_material.emission = Color(1.0, 0.6, 0.0)
+		eyes_material.emission_energy_multiplier = 4.5
+		
+	# 2. Моделька приседает / сжимается по вертикали (crouch & squash)
+	if not is_inflated:
+		if body_mesh:
+			body_mesh.scale = Vector3(1.2, 0.75, 1.2)
+		if head_mesh:
+			head_mesh.position = Vector3(0.0, 0.38, 0.0)
+		if eyes:
+			eyes.position = Vector3(0.0, 0.38, -0.28)
+		if head_hitbox:
+			head_hitbox.position = Vector3(0.0, 0.38, 0.0)
+			
+	print("[%s] LUNGE started: Telegraph (%.2fs) towards %s" % [name, lunge_telegraph_time, lunge_dir])
+
+func _process_lunge(delta: float):
+	lunge_timer -= delta
+	
+	if lunge_phase == 1:
+		# Фаза 1: Телеграф (0.38с)
+		# Враг замирает на месте
+		velocity.x = lerp(velocity.x, knockback_velocity.x, 15.0 * delta)
+		velocity.z = lerp(velocity.z, knockback_velocity.z, 15.0 * delta)
+		
+		# Плавная доводка взгляда на игрока во время телеграфа
+		if is_instance_valid(target_player):
+			var to_player = target_player.global_position - global_position
+			to_player.y = 0.0
+			if to_player.length_squared() > 0.01:
+				var target_angle = atan2(-to_player.x, -to_player.z)
+				rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, 10.0 * delta))
+				
+		if lunge_timer <= 0.0:
+			# Переход в Фазу 2: Рывок (Dash, 0.28с)
+			lunge_phase = 2
+			lunge_timer = lunge_dash_time
+			lunge_has_hit = false
+			
+			# Направление фиксируется СТРОГО на момент старта рывка (НЕ наводится в полёте)
+			if is_instance_valid(target_player):
+				var to_player = target_player.global_position - global_position
+				to_player.y = 0.0
+				if to_player.length_squared() > 0.01:
+					lunge_dir = to_player.normalized()
+				else:
+					lunge_dir = -transform.basis.z.normalized()
+			else:
+				lunge_dir = -transform.basis.z.normalized()
+				
+			rotation.y = atan2(-lunge_dir.x, -lunge_dir.z)
+			
+			# Задаем скорость рывка (22 м/с)
+			velocity.x = lunge_dir.x * lunge_speed
+			velocity.z = lunge_dir.z * lunge_speed
+			
+			# Визуал фазы рывка: вытягивание вперёд, алые глаза
+			if eyes_material:
+				eyes_material.emission_enabled = true
+				eyes_material.emission = Color(1.0, 0.15, 0.1)
+				eyes_material.emission_energy_multiplier = 4.0
+			if not is_inflated:
+				if body_mesh:
+					body_mesh.scale = Vector3(0.85, 1.0, 1.25)
+				if head_mesh:
+					head_mesh.position = Vector3(0.0, 0.55, 0.0)
+				if eyes:
+					eyes.position = Vector3(0.0, 0.55, -0.28)
+				if head_hitbox:
+					head_hitbox.position = Vector3(0.0, 0.55, 0.0)
+					
+			AudioManager.play_sound("dash")
+			print("[%s] LUNGE DASH! speed: %.1f, dir: %s" % [name, lunge_speed, lunge_dir])
+			
+	elif lunge_phase == 2:
+		# Фаза 2: Прямолинейный рывок (Dash)
+		# Скорость поддерживается постоянной (прямолинейный полёт без наведения)
+		velocity.x = lunge_dir.x * lunge_speed
+		velocity.z = lunge_dir.z * lunge_speed
+		
+		# Проверка попадания по игроку через slide collisions
+		for i in range(get_slide_collision_count()):
+			var col = get_slide_collision(i)
+			var collider = col.get_collider()
+			if is_instance_valid(collider) and collider.is_in_group("player"):
+				_on_lunge_hit_player(collider)
+				return
+				
+		# Дополнительная проверка расстояния до игрока
+		if not lunge_has_hit and is_instance_valid(target_player):
+			var dist = global_position.distance_to(target_player.global_position)
+			if dist <= 1.4:
+				_on_lunge_hit_player(target_player)
+				return
+				
+		# Время рывка истекло (промахнулся)
+		if lunge_timer <= 0.0:
+			print("[%s] LUNGE MISSED player, recovering..." % [name])
+			end_lunge()
+
+func _on_lunge_hit_player(player: Node3D):
+	if lunge_has_hit:
+		return
+	lunge_has_hit = true
+	if player.has_method("take_damage"):
+		var attack_impulse = lunge_dir * 10.0 + Vector3.UP * 3.0
+		player.take_damage(attack_damage, attack_impulse, global_position)
+	print("[%s] LUNGE HIT player for %d damage!" % [name, attack_damage])
+	end_lunge()
+
+func end_lunge():
+	_reset_lunge_visuals()
+	lunge_phase = 0
+	# Сброс остаточной скорости выпада
+	velocity.x *= 0.2
+	velocity.z *= 0.2
+	set_state(State.CHASE)
+
+func _reset_lunge_visuals():
+	if eyes_material:
+		eyes_material.emission_enabled = true
+		eyes_material.emission = Color(1.0, 1.0, 1.0)
+		eyes_material.emission_energy_multiplier = 2.0
+	if head_mesh and not is_inflated:
+		head_mesh.position = Vector3(0.0, 0.55, 0.0)
+	if eyes:
+		eyes.position = Vector3(0.0, 0.55, -0.28)
+	if head_hitbox:
+		head_hitbox.position = Vector3(0.0, 0.55, 0.0)
+	if not is_inflated:
+		if needle_count > 0:
+			_update_needle_visuals()
+		elif body_mesh:
+			body_mesh.scale = Vector3.ONE
+			if head_mesh:
+				head_mesh.scale = Vector3.ONE
+
 func start_chase(player: Node3D):
 	if repath_cooldown_timer > 0.0:
 		return
@@ -452,7 +667,7 @@ func start_chase(player: Node3D):
 		nav_agent.target_position = target_player.global_position
 
 func _on_link_reached(details: Dictionary):
-	if is_jumping_link or current_state == State.DEAD:
+	if is_jumping_link or current_state == State.DEAD or current_state == State.LUNGE:
 		return
 		
 	var exit_pos: Vector3 = details.get("link_exit_position", Vector3.ZERO)
@@ -704,6 +919,9 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	knockback_velocity = Vector3(knockback_vector.x, 0, knockback_vector.z)
 	if is_shockwave or is_execute or is_melee or knockback_vector.length_squared() > 10.0:
 		is_jumping_link = false
+	if current_state == State.LUNGE and (is_shockwave or is_execute or is_melee or amount >= 20 or knockback_vector.length_squared() > 10.0):
+		print("[%s] Lunge interrupted by damage/melee!" % [name])
+		end_lunge()
 	
 	# При melee-ударе активируем окно отслеживания удара об стену только для мощной ударной волны или добивания
 	if is_shockwave or is_execute:
