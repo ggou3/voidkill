@@ -23,10 +23,11 @@ enum State {
 @export var wall_slam_max_damage: float = 55.0
 @export var reaction_delay: float = 0.4
 @export var lunge_min_range: float = 5.0
-@export var lunge_max_range: float = 7.0
-@export var lunge_speed: float = 22.0
+@export var lunge_max_range: float = 8.5
+@export var lunge_speed: float = 30.0
+@export var lunge_damage: int = 20
 @export var lunge_telegraph_time: float = 0.38
-@export var lunge_dash_time: float = 0.28
+@export var lunge_dash_time: float = 0.30
 @export var lunge_cooldown: float = 4.5
 
 var current_state: State = State.IDLE
@@ -480,9 +481,11 @@ func _has_floor_at_destination(target_pos: Vector3) -> bool:
 	var space_state = get_world_3d().direct_space_state
 	if not space_state:
 		return true
-	# Луч вниз от расчетной точки приземления (от +0.5м над текущей высотой врага до -2.5м вниз)
-	var ray_start = Vector3(target_pos.x, global_position.y + 0.5, target_pos.z)
-	var ray_end = Vector3(target_pos.x, global_position.y - 2.5, target_pos.z)
+	# Луч вниз от новой (потенциально более высокой) расчетной точки приземления
+	var ray_start_y = target_pos.y + 0.5
+	var ray_end_y = min(global_position.y, target_pos.y) - 3.0
+	var ray_start = Vector3(target_pos.x, ray_start_y, target_pos.z)
+	var ray_end = Vector3(target_pos.x, ray_end_y, target_pos.z)
 	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
 	
 	# Исключаем себя, игрока и других врагов, чтобы проверять именно статическую геометрию/пол
@@ -498,7 +501,7 @@ func _has_floor_at_destination(target_pos: Vector3) -> bool:
 	
 	var result = space_state.intersect_ray(query)
 	if result.is_empty():
-		return false # Нет пола в пределах 2.5м вниз — пропасть/обрыв
+		return false # Нет пола в пределах допустимой глубины — пропасть/обрыв
 		
 	var normal = result.get("normal", Vector3.UP)
 	# Проверяем, что коллизия — это проходимый пол или наклонная поверхность (не отвесная стена)
@@ -507,13 +510,48 @@ func _has_floor_at_destination(target_pos: Vector3) -> bool:
 		
 	return true
 
+func _calculate_lunge_vector_and_distance() -> Dictionary:
+	if not is_instance_valid(target_player):
+		return {
+			"dir": -transform.basis.z.normalized(),
+			"dist": 8.0
+		}
+	var diff = target_player.global_position - global_position
+	var horiz = Vector2(diff.x, diff.z)
+	var horiz_dist = horiz.length()
+	var dy = diff.y
+	
+	var dir_3d = Vector3.ZERO
+	if horiz_dist > 0.01:
+		var horiz_norm = horiz.normalized()
+		# Вертикальное наведение: если цель выше врага (в прыжке или на платформе),
+		# добавляем вертикальную составляющую вверх с лимитом 35-40° (38° ≈ 0.663 рад)
+		var pitch = 0.0
+		if dy > 0.0:
+			var raw_pitch = atan2(dy, horiz_dist)
+			pitch = min(raw_pitch, deg_to_rad(38.0))
+		var cos_p = cos(pitch)
+		var sin_p = sin(pitch)
+		dir_3d = Vector3(horiz_norm.x * cos_p, sin_p, horiz_norm.y * cos_p).normalized()
+	else:
+		dir_3d = Vector3.UP if dy > 0.0 else -transform.basis.z.normalized()
+		
+	# Дистанция рывка 7.5 - 9.0 метров с пролётом дальше текущей позиции цели
+	var total_dist = diff.length()
+	var target_dist = clamp(total_dist + 1.5, 7.5, 9.0)
+	
+	return {
+		"dir": dir_3d,
+		"dist": target_dist
+	}
+
 func _can_lunge_to_player() -> bool:
 	if not is_instance_valid(target_player):
 		return false
 		
-	# Игрок должен быть примерно на одном ярусе (не в 5 метрах выше на крыше или глубоко внизу)
-	var height_diff = abs(target_player.global_position.y - global_position.y)
-	if height_diff > 2.2:
+	# Лимит перепада высоты: цель не выше 4.0м и не ниже 2.5м
+	var height_diff = target_player.global_position.y - global_position.y
+	if height_diff > 4.0 or height_diff < -2.5:
 		return false
 		
 	# 1. Проверка прямой видимости (Line of Sight)
@@ -530,16 +568,11 @@ func _can_lunge_to_player() -> bool:
 		if is_instance_valid(col_obj) and col_obj != target_player and not col_obj.is_in_group("player"):
 			return false # Препятствие между врагом и игроком (стена, колонна)
 			
-	# 2. Предварительная проверка наличия пола в направлении рывка (защита от пропастей)
-	var to_player_flat = target_player.global_position - global_position
-	to_player_flat.y = 0.0
-	var dist = to_player_flat.length()
-	if dist > 0.01:
-		var dir = to_player_flat / dist
-		var est_dist = clamp(dist + 1.2, 5.5, 6.5)
-		var test_landing = global_position + dir * est_dist
-		if not _has_floor_at_destination(test_landing):
-			return false # Направление ведёт в пропасть — не начинаем телеграф
+	# 2. Предварительная проверка наличия пола в направлении рывка с учётом 3D-вектора
+	var lunge_data = _calculate_lunge_vector_and_distance()
+	var test_landing = global_position + lunge_data["dir"] * lunge_data["dist"]
+	if not _has_floor_at_destination(test_landing):
+		return false # Направление ведёт в пропасть — не начинаем телеграф
 			
 	return true
 
@@ -606,25 +639,15 @@ func _process_lunge(delta: float):
 				
 		if lunge_timer <= 0.0:
 			# МОМЕНТ ЗАВЕРШЕНИЯ ТЕЛЕГРАФА:
-			# Фиксируем направление и полную дистанцию рывка (5-6 метров) на основе позиции игрока В ЭТОТ МОМЕНТ
-			if is_instance_valid(target_player):
-				var to_player = target_player.global_position - global_position
-				to_player.y = 0.0
-				var current_dist = to_player.length()
-				if current_dist > 0.01:
-					lunge_dir = to_player.normalized()
-				else:
-					lunge_dir = -transform.basis.z.normalized()
-				# Пролетает полную дистанцию 5-6 метров (с запасом дальше игрока, если тот увернется)
-				lunge_target_distance = clamp(current_dist + 1.2, 5.5, 6.5)
-			else:
-				lunge_dir = -transform.basis.z.normalized()
-				lunge_target_distance = 6.0
+			# Фиксируем 3D-направление (с вертикальным наведением до 38°) и полную дистанцию рывка (7.5-9м)
+			var lunge_data = _calculate_lunge_vector_and_distance()
+			lunge_dir = lunge_data["dir"]
+			lunge_target_distance = lunge_data["dist"]
 				
 			rotation.y = atan2(-lunge_dir.x, -lunge_dir.z)
 			
 			# Защита от рывка в пропасть / с края платформы:
-			# Проверяем raycast вниз от конечной точки рывка (позиция + вектор × дистанция)
+			# Проверяем raycast вниз от новой (3D) конечной точки рывка (позиция + вектор × дистанция)
 			var landing_pos = global_position + lunge_dir * lunge_target_distance
 			if not _has_floor_at_destination(landing_pos):
 				print("[%s] LUNGE cancelled: Destination %s has no floor (chasm)! Resuming chase." % [name, landing_pos])
@@ -639,9 +662,8 @@ func _process_lunge(delta: float):
 			# Защитный таймаут на основе дистанции и скорости (с запасом 0.08с)
 			lunge_timer = (lunge_target_distance / lunge_speed) + 0.08
 			
-			# Применяем импульс рывка (22 м/с) строго по зафиксированному направлению
-			velocity.x = lunge_dir.x * lunge_speed
-			velocity.z = lunge_dir.z * lunge_speed
+			# Применяем импульс рывка (28-32 м/с) строго по зафиксированному 3D-направлению
+			velocity = lunge_dir * lunge_speed
 			
 			# Визуал фазы рывка: вытягивание вперёд, алые глаза
 			if eyes_material:
@@ -664,9 +686,8 @@ func _process_lunge(delta: float):
 			])
 			
 	elif lunge_phase == 2:
-		# Фаза 2: Прямолинейный рывок по зафиксированному вектору (НЕ наводится и НЕ тормозит)
-		velocity.x = lunge_dir.x * lunge_speed
-		velocity.z = lunge_dir.z * lunge_speed
+		# Фаза 2: Прямолинейный рывок по зафиксированному 3D-вектору (НЕ наводится и НЕ тормозит)
+		velocity = lunge_dir * lunge_speed
 		
 		# Проверка нанесения урона при пересечении с игроком в любой момент рывка
 		if not lunge_has_hit:
@@ -678,15 +699,14 @@ func _process_lunge(delta: float):
 					_on_lunge_hit_player(collider)
 					break
 					
-			# 2. Дополнительная проверка расстояния (защита от туннелирования на высокой скорости 22 м/с)
+			# 2. Дополнительная проверка расстояния (защита от туннелирования на высокой скорости 30 м/с)
 			if not lunge_has_hit and is_instance_valid(target_player):
 				var dist = global_position.distance_to(target_player.global_position)
-				if dist <= 1.4:
+				if dist <= 1.6:
 					_on_lunge_hit_player(target_player)
 					
-		# Расчёт фактически пройденного горизонтального расстояния от точки старта рывка
-		var covered_vec = Vector2(global_position.x - lunge_start_pos.x, global_position.z - lunge_start_pos.z)
-		var covered_dist = covered_vec.length()
+		# Расчёт фактически пройденного 3D-расстояния от точки старта рывка
+		var covered_dist = global_position.distance_to(lunge_start_pos)
 		
 		# Завершение рывка строго по прохождению полной дистанции или по истечению таймаута
 		if covered_dist >= lunge_target_distance or lunge_timer <= 0.0:
@@ -700,9 +720,9 @@ func _on_lunge_hit_player(player: Node3D):
 		return
 	lunge_has_hit = true
 	if player.has_method("take_damage"):
-		var attack_impulse = lunge_dir * 10.0 + Vector3.UP * 3.0
-		player.take_damage(attack_damage, attack_impulse, global_position)
-	print("[%s] LUNGE HIT player for %d damage! (Continuing full dash)" % [name, attack_damage])
+		var attack_impulse = lunge_dir * 12.0 + Vector3.UP * 3.0
+		player.take_damage(lunge_damage, attack_impulse, global_position)
+	print("[%s] LUNGE HIT player for %d damage! (Continuing full dash)" % [name, lunge_damage])
 	# НЕ вызываем end_lunge() — враг завершает полный рывок по инерции!
 
 func end_lunge():
@@ -711,6 +731,7 @@ func end_lunge():
 	# Сброс остаточной скорости выпада
 	velocity.x *= 0.2
 	velocity.z *= 0.2
+	velocity.y = min(velocity.y, 2.0)
 	set_state(State.CHASE)
 
 func _reset_lunge_visuals():
