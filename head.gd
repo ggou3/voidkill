@@ -19,6 +19,7 @@ var slide_tween: Tween
 @onready var revolver_model = $Camera3D/Revolver
 @onready var shotgun_model = $Camera3D/Shotgun
 @onready var injector_model = get_node_or_null("Camera3D/Injector")
+@onready var smg_model = get_node_or_null("Camera3D/SewingMachine")
 @onready var left_arm = $Camera3D/LeftArm
 
 var active_weapon: Node3D
@@ -89,6 +90,8 @@ func switch_weapon_visual(index: int):
 		shotgun_model.visible = (index == 1)
 	if injector_model:
 		injector_model.visible = (index == 2)
+	if smg_model:
+		smg_model.visible = (index == 3)
 		
 	if index == 0:
 		active_weapon = revolver_model
@@ -96,6 +99,8 @@ func switch_weapon_visual(index: int):
 		active_weapon = shotgun_model
 	elif index == 2:
 		active_weapon = injector_model
+	elif index == 3:
+		active_weapon = smg_model if smg_model else null
 		
 	if active_weapon:
 		active_weapon.position = weapon_default_pos

@@ -30,7 +30,8 @@ var sound_durations: Dictionary = {
 	"reload": 0.34,
 	"slide": 1.5,
 	"dry_fire": 0.08,
-	"rail_shot": 0.32
+	"rail_shot": 0.32,
+	"needle_shot": 0.06
 }
 
 var external_sounds: Dictionary = {}
@@ -242,6 +243,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["reload"] = _gen_reload()
 	sound_buffers["dry_fire"] = _gen_dry_fire()
 	sound_buffers["rail_shot"] = _gen_rail_shot()
+	sound_buffers["needle_shot"] = _gen_needle_shot()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -256,6 +258,23 @@ func _gen_dry_fire() -> PackedVector2Array:
 		phase += freq * dt * TAU
 		var env = exp(-t * 55.0)
 		var s = sin(phase) * env * 0.35
+		arr[i] = Vector2(s, s)
+	return arr
+
+func _gen_needle_shot() -> PackedVector2Array:
+	var dur = sound_durations["needle_shot"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t = float(i) * dt
+		var freq = 2600.0 * exp(-t * 90.0) + 400.0
+		phase += TAU * freq * dt
+		var click = sin(phase) * exp(-t * 75.0) * 0.42
+		var noise = randf_range(-1.0, 1.0) * exp(-t * 95.0) * 0.32
+		var s = clamp((click + noise) * 0.5, -1.0, 1.0)
 		arr[i] = Vector2(s, s)
 	return arr
 

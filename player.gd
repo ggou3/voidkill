@@ -188,6 +188,7 @@ func _input(event):
 		if event.keycode == KEY_1: weapons.switch_weapon(0) 
 		elif event.keycode == KEY_2: weapons.switch_weapon(1) 
 		elif event.keycode == KEY_3: weapons.switch_weapon(2)
+		elif event.keycode == KEY_4: weapons.switch_weapon(3)
 			
 	if event.is_action_pressed("shoot"):
 		weapons.shoot(has_infinite_ammo())

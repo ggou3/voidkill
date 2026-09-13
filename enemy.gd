@@ -47,6 +47,8 @@ var poison_dot_duration: float = 0.0
 var poison_tick_interval: float = 0.5
 var poison_tick_timer: float = 0.0
 var poison_damage_per_tick: int = 3
+var needle_count: int = 0
+var needle_timers: Array[float] = []
 var inflation_tween: Tween = null
 var inflation_pulse_tween: Tween = null
 
@@ -181,6 +183,22 @@ func _physics_process(delta):
 		if poison_tick_timer <= 0.0:
 			poison_tick_timer = poison_tick_interval
 			_apply_poison_tick()
+			
+	# Обработка застрявших игл: независимый таймер 6.0с на каждую иглу
+	if not needle_timers.is_empty():
+		var write_idx = 0
+		var changed = false
+		for i in range(needle_timers.size()):
+			var t = needle_timers[i] - delta
+			if t > 0.0:
+				needle_timers[write_idx] = t
+				write_idx += 1
+			else:
+				changed = true
+		if changed:
+			needle_timers.resize(write_idx)
+			needle_count = write_idx
+			_update_needle_visuals()
 		
 	match current_state:
 		State.IDLE:
@@ -428,6 +446,43 @@ func _apply_poison_tick():
 	if health <= 0:
 		explosion_chain_depth = 0
 		set_state(State.DEAD)
+
+func add_needle():
+	if current_state == State.DEAD:
+		return
+	needle_timers.append(6.0)
+	needle_count = needle_timers.size()
+	_update_needle_visuals()
+	print("[%s] Needle stuck! Total needles: %d" % [name, needle_count])
+
+func _update_needle_visuals():
+	if current_state == State.DEAD:
+		return
+	if is_inflated:
+		return # Визуал раздутия Инъектора имеет приоритет
+		
+	if needle_count > 0:
+		# Мягкое увеличение размера пропорционально количеству игл (до +18% при 30 иглах)
+		var n_factor = clamp(float(needle_count) / 30.0, 0.0, 1.0)
+		var target_scale = Vector3.ONE * (1.0 + n_factor * 0.18)
+		if body_mesh:
+			body_mesh.scale = target_scale
+			if not body_override_mat:
+				var orig_mat = body_mesh.get_surface_override_material(0)
+				body_override_mat = orig_mat.duplicate() if orig_mat else StandardMaterial3D.new()
+				body_mesh.set_surface_override_material(0, body_override_mat)
+			body_override_mat.emission_enabled = true
+			body_override_mat.emission = Color(0.75, 0.88, 1.0) # Металлический отблеск игл
+			body_override_mat.emission_energy_multiplier = 0.4 + n_factor * 1.6
+		if head_mesh:
+			head_mesh.scale = target_scale
+	else:
+		if body_mesh:
+			body_mesh.scale = Vector3.ONE
+			if body_override_mat:
+				body_override_mat.emission_enabled = false
+		if head_mesh:
+			head_mesh.scale = Vector3.ONE
 
 func inflate():
 	if is_inflated or current_state == State.DEAD:

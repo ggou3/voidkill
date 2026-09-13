@@ -3,8 +3,8 @@ extends Node
 var current_weapon_index = 0
 var is_reloading = false
 var is_bursting = false
-var fire_timers = [0.0, 0.0, 0.0]
-var passive_reload_timers = [0.0, 0.0, 0.0]
+var fire_timers = [0.0, 0.0, 0.0, 0.0]
+var passive_reload_timers = [0.0, 0.0, 0.0, 0.0]
 var active_reload_timer = 0.0
 
 var anvil_alt_cooldown: float = 1.2
@@ -67,10 +67,28 @@ var weapons = [
 		"air_multiplier": 1.0,
 		"has_vacuum": false,
 		"is_injector": true
+	},
+	{
+		"name": "ШВЕЙНАЯ МАШИНА",
+		"max_ammo": 40,
+		"damage": 6,
+		"pellets": 1,
+		"spread": 0.02,
+		"fire_rate": 0.1, # 10 выстрелов/сек (0.1с интервал)
+		"reload_time": 2.0,
+		"cam_shake": 0.025,
+		"weapon_kick": 0.08,
+		"knockback": 1.0,
+		"upward_kick": 0.0,
+		"headshot_multiplier": 1.5,
+		"air_multiplier": 1.0,
+		"has_vacuum": false,
+		"is_automatic": true,
+		"is_sewing_machine": true
 	}
 ]
 
-var ammos = [4, 2, 6]
+var ammos = [4, 2, 6, 40]
 
 @onready var head = $"../Head"
 @onready var ammo_label = $"../HUD/AmmoLabel"
@@ -209,6 +227,14 @@ func _process(delta):
 			ammos[current_weapon_index] = weapons[current_weapon_index]["max_ammo"]
 			is_reloading = false
 			active_reload_timer = 0.0
+
+	# Автоматическая стрельба при удержании ЛКМ
+	if current_weapon_index < weapons.size() and weapons[current_weapon_index].get("is_automatic", false):
+		if Input.is_action_pressed("shoot") and not is_reloading and fire_timers[current_weapon_index] <= 0:
+			var inf = false
+			if is_instance_valid(player_node) and player_node.has_method("has_infinite_ammo"):
+				inf = player_node.has_infinite_ammo()
+			shoot(inf)
 
 	# Пассивная перезарядка неактивного оружия в фоне
 	for i in range(weapons.size()):
@@ -350,6 +376,9 @@ func alt_shoot(has_infinite_ammo: bool = false):
 	elif current_weapon_index == 2:
 		# Инъектор: ПКМ раздутие (независимый кулдаун, не зависит от магазина ЛКМ)
 		_fire_injector_inflate()
+	elif current_weapon_index == 3:
+		# Швейная машина: ПКМ заградительный залп (следующий шаг)
+		pass
 
 func _fire_anvil_piston():
 	if anvil_alt_timer > 0.0:
@@ -1135,6 +1164,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 		AudioManager.play_sound("shotgun_shot")
 	elif weapon_idx == 2:
 		AudioManager.play_sound("injector_shot")
+	elif weapon_idx == 3:
+		AudioManager.play_sound("needle_shot")
 		
 	var aim_dir = head.get_aim_direction()
 	var start_pos = head.get_muzzle_position()
@@ -1200,6 +1231,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 						
 					if weapon_idx == 2 and target.has_method("apply_poison_dot"):
 						target.apply_poison_dot(3.0, 3, 0.5)
+					elif weapon_idx == 3 and target.has_method("add_needle"):
+						target.add_needle()
 						
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
 					
@@ -1211,6 +1244,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 			spawn_shotgun_pellet_tracer(start_pos, hit_pos)
 		elif weapon_idx == 2:
 			spawn_syringe_tracer(start_pos, hit_pos)
+		elif weapon_idx == 3:
+			spawn_needle_tracer(start_pos, hit_pos)
 
 func spawn_shotgun_pellet_tracer(start_pos: Vector3, end_pos: Vector3):
 	var dir = end_pos - start_pos
@@ -1318,6 +1353,60 @@ func spawn_syringe_tracer(start_pos: Vector3, end_pos: Vector3):
 	
 	var tween = create_tween()
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
+
+func spawn_needle_tracer(start_pos: Vector3, end_pos: Vector3):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.012
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(0.85, 0.95, 1.0, 0.9)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(mesh_inst.queue_free)
 
 func spawn_bullet_tracer(start_pos: Vector3, end_pos: Vector3):
