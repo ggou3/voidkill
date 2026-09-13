@@ -14,6 +14,9 @@ var anvil_self_launch_chain: int = 0
 var injector_alt_cooldown: float = 2.8
 var injector_alt_timer: float = 0.0
 
+var sewing_alt_cooldown: float = 1.5
+var sewing_alt_timer: float = 0.0
+
 var weapons = [
 	{
 		"name": "КАЛИБР-0",
@@ -216,6 +219,9 @@ func _process(delta):
 	if injector_alt_timer > 0.0:
 		injector_alt_timer -= delta
 
+	if sewing_alt_timer > 0.0:
+		sewing_alt_timer -= delta
+
 	var player_node = get_parent()
 	if is_instance_valid(player_node) and player_node.is_on_floor() and player_node.velocity.y <= 0.0:
 		anvil_self_launch_chain = 0
@@ -285,7 +291,14 @@ func update_hud(has_infinite_ammo: bool):
 			
 			if is_reloading:
 				var progress = clamp((float(w["reload_time"]) - active_reload_timer) / float(w["reload_time"]), 0.0, 1.0)
-				slot["ammo_text"].text = "RELOAD %d%%" % int(progress * 100.0)
+				var alt_suffix = ""
+				if i == 1 and anvil_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
+				elif i == 2 and injector_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
+				elif i == 3 and sewing_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % sewing_alt_timer
+				slot["ammo_text"].text = ("RELOAD %d%%" % int(progress * 100.0)) + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.6, 0.1, 1.0))
 				slot["pbar"].visible = true
 				slot["pbar"].value = progress * 100.0
@@ -302,6 +315,8 @@ func update_hud(has_infinite_ammo: bool):
 					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
 				elif i == 2 and injector_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
+				elif i == 3 and sewing_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % sewing_alt_timer
 				slot["ammo_text"].text = "INF (OVERDRIVE)" + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
 				slot["pbar"].visible = false
@@ -311,6 +326,8 @@ func update_hud(has_infinite_ammo: bool):
 					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
 				elif i == 2 and injector_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
+				elif i == 3 and sewing_alt_timer > 0.0:
+					alt_suffix = " (RMB %.1fs)" % sewing_alt_timer
 				slot["ammo_text"].text = ("%d / %d" % [ammos[i], w["max_ammo"]]) + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 				slot["pbar"].visible = false
@@ -377,8 +394,8 @@ func alt_shoot(has_infinite_ammo: bool = false):
 		# Инъектор: ПКМ раздутие (независимый кулдаун, не зависит от магазина ЛКМ)
 		_fire_injector_inflate()
 	elif current_weapon_index == 3:
-		# Швейная машина: ПКМ заградительный залп (следующий шаг)
-		pass
+		# Швейная машина: ПКМ заградительный веерный залп
+		_fire_sewing_barrage(has_infinite_ammo)
 
 func _fire_anvil_piston():
 	if anvil_alt_timer > 0.0:
@@ -1144,6 +1161,75 @@ func spawn_piercing_beam_tracer(start_pos: Vector3, end_pos: Vector3):
 	itween.tween_property(impact_sphere, "scale", Vector3(2.6, 2.6, 2.6), 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	itween.tween_property(imat, "albedo_color:a", 0.0, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	itween.chain().tween_callback(impact_sphere.queue_free)
+
+func _fire_sewing_barrage(has_infinite_ammo: bool = false):
+	if sewing_alt_timer > 0.0:
+		return
+		
+	# Тратит 10 игл из общего магазина ЛКМ; если меньше 10 — недоступен (dry_fire)
+	if ammos[3] < 10:
+		AudioManager.play_sound("dry_fire")
+		return
+		
+	if not has_infinite_ammo:
+		ammos[3] -= 10
+		
+	sewing_alt_timer = sewing_alt_cooldown
+	
+	head.add_recoil(0.06, 0.22)
+	head.trigger_muzzle_flash(false)
+	AudioManager.play_sound("needle_shot")
+	
+	const NEEDLE_COUNT: int = 12
+	const NEEDLE_DAMAGE: int = 4
+	var aim_dir = head.get_aim_direction()
+	var start_pos = head.get_muzzle_position()
+	
+	# Веерный разброс 12 игл широким сектором (конус разброса 35-40 градусов)
+	for i in range(NEEDLE_COUNT):
+		var h_frac = (float(i) / float(NEEDLE_COUNT - 1)) * 2.0 - 1.0 # от -1.0 до +1.0
+		var spread_x = (h_frac * 0.34) + randf_range(-0.03, 0.03) # дуга ~38 градусов
+		var spread_y = randf_range(-0.16, 0.16) # вертикальный разброс ~18 градусов
+		
+		head.raycast.target_position = Vector3(spread_x * 100.0, spread_y * 100.0, -100.0)
+		head.raycast.force_raycast_update()
+		var ray = head.raycast
+		
+		var hit_pos = ray.to_global(ray.target_position)
+		if ray.is_colliding():
+			hit_pos = ray.get_collision_point()
+			var hit = ray.get_collider()
+			if hit != null:
+				var target: Node = null
+				var is_headshot: bool = false
+				
+				if hit.is_in_group("enemy_head") or hit.name == "HeadHitbox":
+					is_headshot = true
+					if hit.has_meta("enemy"):
+						target = hit.get_meta("enemy")
+					elif hit.get_parent():
+						target = hit.get_parent()
+				elif hit.has_method("take_damage"):
+					target = hit
+				elif hit.get_parent() and hit.get_parent().has_method("take_damage"):
+					target = hit.get_parent()
+					
+				if target != null and target.has_method("take_damage"):
+					var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
+					var knockback_vector = flat_dir * 1.5 + Vector3.UP * 0.5
+					var final_dmg = NEEDLE_DAMAGE
+					if is_headshot:
+						final_dmg = int(round(float(NEEDLE_DAMAGE) * 1.5))
+						
+					if target.has_method("add_needle"):
+						target.add_needle()
+						
+					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
+					
+		spawn_needle_tracer(start_pos, hit_pos)
+		
+	head.raycast.target_position = Vector3(0, 0, -100)
+	print("[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [NEEDLE_COUNT, ammos[3]])
 
 func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: bool = false):
 	var w = weapons[weapon_idx]
