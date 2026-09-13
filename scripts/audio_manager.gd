@@ -28,7 +28,9 @@ var sound_durations: Dictionary = {
 	"enemy_hit": 0.07,
 	"enemy_death": 0.35,
 	"reload": 0.34,
-	"slide": 1.5
+	"slide": 1.5,
+	"dry_fire": 0.08,
+	"rail_shot": 0.32
 }
 
 var external_sounds: Dictionary = {}
@@ -238,6 +240,53 @@ func _generate_all_procedural_sounds():
 	sound_buffers["enemy_hit"] = _gen_enemy_hit()
 	sound_buffers["enemy_death"] = _gen_enemy_death()
 	sound_buffers["reload"] = _gen_reload()
+	sound_buffers["dry_fire"] = _gen_dry_fire()
+	sound_buffers["rail_shot"] = _gen_rail_shot()
+
+func _gen_dry_fire() -> PackedVector2Array:
+	var dur = sound_durations["dry_fire"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t = i * dt
+		var freq = 1400.0 * exp(-t * 40.0) + 350.0
+		phase += freq * dt * TAU
+		var env = exp(-t * 55.0)
+		var s = sin(phase) * env * 0.35
+		arr[i] = Vector2(s, s)
+	return arr
+
+func _gen_rail_shot() -> PackedVector2Array:
+	var dur = sound_durations["rail_shot"]
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var phase1: float = 0.0
+	var phase2: float = 0.0
+	for i in range(samples):
+		var t = float(i) * dt
+		# Сверхзвуковой электрический треск: экспоненциальное падение частоты от 3200 до 120 Гц
+		var f1 = 120.0 + 3080.0 * exp(-42.0 * t)
+		phase1 += TAU * f1 * dt
+		var tone = sin(phase1) * 0.45
+		
+		# Резонирующий металлический/энергетический гул 480 Гц
+		phase2 += TAU * 480.0 * dt
+		var hum = sin(phase2) * exp(-14.0 * t) * 0.25
+		
+		# Резкий взрывной шум разряда
+		var noise = randf_range(-1.0, 1.0) * exp(-35.0 * t) * 0.6
+		
+		# Тяжёлый саб-басовый удар 65 Гц
+		var sub = sin(TAU * 65.0 * t) * exp(-9.0 * t) * 0.55
+		
+		var sample = clamp((tone + hum + noise + sub) * 0.55, -1.0, 1.0)
+		arr[i] = Vector2(sample, sample)
+	return arr
 
 # 1. "revolver_shot" — короткий резкий высокочастотный щелчок/хлопок
 func _gen_revolver_shot() -> PackedVector2Array:

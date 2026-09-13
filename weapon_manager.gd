@@ -29,11 +29,9 @@ var weapons = [
 		"upward_kick": 0.0, # Не подбрасывает вверх
 		"headshot_multiplier": 2.2, # Хедшот: 70 * 2.2 = 154 урона (ваншот)
 		"air_multiplier": 2.0,      # Бонус x2 по воздушным целям (стакается с хедшотом)
-		"alt_burst_interval": 0.12, # Увеличенный интервал между выстрелами ПКМ залпа (различимая очередь)
-		"alt_spread": 0.06,         # Разброс пуль в залпе ПКМ
 		"has_vacuum": true,
-		"vacuum_radius": 2.0,
-		"vacuum_force": 16.0
+		"vacuum_radius": 2.5,
+		"vacuum_force": 25.6
 	},
 	{
 		"name": "КРОВАВАЯ НАКОВАЛЬНЯ",
@@ -77,6 +75,14 @@ var ammos = [4, 2, 6]
 @onready var head = $"../Head"
 @onready var ammo_label = $"../HUD/AmmoLabel"
 @onready var hud = $"../HUD"
+@onready var skill_manager = get_node_or_null("../SkillManager")
+
+func _get_bpm_tier() -> String:
+	if not skill_manager and is_inside_tree():
+		skill_manager = get_node_or_null("../SkillManager")
+	if is_instance_valid(skill_manager) and skill_manager.has_method("get_bpm_tier"):
+		return skill_manager.get_bpm_tier()
+	return "CALM"
 
 var weapon_hud_container: VBoxContainer
 var weapon_ui_slots: Array = []
@@ -264,7 +270,9 @@ func update_hud(has_infinite_ammo: bool):
 				slot["pbar"].visible = false
 			elif has_infinite_ammo:
 				var alt_suffix = ""
-				if i == 1 and anvil_alt_timer > 0.0:
+				if i == 0:
+					alt_suffix = " [RMB: %d]" % ammos[0]
+				elif i == 1 and anvil_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
 				elif i == 2 and injector_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
@@ -327,12 +335,15 @@ func alt_shoot(has_infinite_ammo: bool = false):
 	if current_weapon_index == 0:
 		if is_reloading or fire_timers[0] > 0:
 			return
-		# Калибр-0: ПКМ быстрый залп (всегда расходует реальные патроны из барабана)
+		# Калибр-0: ПКМ пробивной рейлган-выстрел (BPM-гейт: доступен ТОЛЬКО на OVERDRIVE)
+		if _get_bpm_tier() != "OVERDRIVE":
+			AudioManager.play_sound("dry_fire")
+			return
 		if ammos[0] <= 0:
+			AudioManager.play_sound("dry_fire")
 			reload()
 			return
-		var shots_to_fire = ammos[0]
-		_perform_burst(shots_to_fire)
+		_fire_caliber_piercing_shot()
 	elif current_weapon_index == 1:
 		# Кровавая наковальня: ПКМ поршень (толчок врага / self-launch)
 		_fire_anvil_piston()
@@ -855,28 +866,255 @@ func spawn_inflate_tracer(start_pos: Vector3, end_pos: Vector3):
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_callback(mesh_inst.queue_free)
 
-func _perform_burst(shots_count: int):
-	is_bursting = true
-	var w = weapons[0]
-	var burst_spread = float(w.get("alt_spread", 0.06))
-	var burst_interval = float(w.get("alt_burst_interval", 0.12))
+func _fire_caliber_piercing_shot():
+	ammos[0] = 0
+	fire_timers[0] = weapons[0]["fire_rate"]
 	
-	for i in range(shots_count):
-		if not is_instance_valid(self) or not is_inside_tree():
-			is_bursting = false
-			return
-		if current_weapon_index != 0:
+	head.add_recoil(0.20, 0.60)
+	head.trigger_muzzle_flash(true)
+	AudioManager.play_sound("rail_shot")
+	
+	var aim_dir = head.get_aim_direction().normalized()
+	var from_pos = head.camera.global_position
+	var start_pos = head.get_muzzle_position()
+	var space_state = head.camera.get_world_3d().direct_space_state
+	var player_node = get_parent()
+	
+	const MAX_BEAM_DIST: float = 120.0
+	var current_from = from_pos
+	var remaining_dist = MAX_BEAM_DIST
+	var beam_end = from_pos + aim_dir * MAX_BEAM_DIST
+	var exclude_list: Array[RID] = []
+	if is_instance_valid(player_node):
+		exclude_list.append(player_node.get_rid())
+		
+	while remaining_dist > 0.1:
+		var ray_query = PhysicsRayQueryParameters3D.create(current_from, current_from + aim_dir * remaining_dist)
+		ray_query.exclude = exclude_list
+		ray_query.collide_with_areas = true
+		ray_query.collide_with_bodies = true
+		var hit_res = space_state.intersect_ray(ray_query)
+		if hit_res.is_empty():
+			break
+		var col = hit_res.collider
+		var is_enemy_or_part = false
+		if col:
+			if col.is_in_group("enemy") or col.is_in_group("enemy_head") or col.name == "HeadHitbox":
+				is_enemy_or_part = true
+			elif col.has_method("take_damage") or (col.get_parent() and col.get_parent().has_method("take_damage")):
+				is_enemy_or_part = true
+				
+		if is_enemy_or_part:
+			if "get_rid" in col:
+				exclude_list.append(col.get_rid())
+			current_from = hit_res.position + aim_dir * 0.05
+			remaining_dist = MAX_BEAM_DIST - from_pos.distance_to(current_from)
+		else:
+			beam_end = hit_res.position
 			break
 			
-		ammos[0] = max(0, ammos[0] - 1)
-		_fire_pellets(0, burst_spread, true)
-		
-		if i < shots_count - 1:
-			await get_tree().create_timer(burst_interval).timeout
+	var beam_vec = beam_end - from_pos
+	var beam_len = beam_vec.length()
+	if beam_len < 0.1:
+		reload()
+		return
+	var beam_dir = beam_vec / beam_len
+	
+	var all_enemies = get_tree().get_nodes_in_group("enemy")
+	var hit_enemies: Array = []
+	const BEAM_TOLERANCE: float = 0.38
+	
+	for e in all_enemies:
+		if not is_instance_valid(e):
+			continue
+		if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
+			continue
 			
-	is_bursting = false
-	ammos[0] = 0
+		var e_pos = e.global_position
+		var head_pos = e_pos + Vector3(0.0, 0.55, 0.0)
+		var t_head = clamp((head_pos - from_pos).dot(beam_dir), 0.0, beam_len)
+		var beam_pt_head = from_pos + beam_dir * t_head
+		var dist_to_head = beam_pt_head.distance_to(head_pos)
+		
+		var t_body = clamp((e_pos - from_pos).dot(beam_dir), 0.0, beam_len)
+		var beam_pt_body = from_pos + beam_dir * t_body
+		var clamped_body_y = clamp(beam_pt_body.y, e_pos.y - 0.95, e_pos.y + 0.35)
+		var body_axis_pt = Vector3(e_pos.x, clamped_body_y, e_pos.z)
+		var dist_to_body = beam_pt_body.distance_to(body_axis_pt)
+		
+		var hit_head = dist_to_head <= (0.34 + BEAM_TOLERANCE)
+		var hit_body = dist_to_body <= (0.36 + BEAM_TOLERANCE)
+		
+		if not hit_head and not hit_body:
+			continue
+			
+		if t_head <= 0.05 and t_body <= 0.05:
+			continue
+			
+		var is_headshot = false
+		var hit_pos = beam_pt_body
+		var target_dist = t_body
+		
+		if hit_head and (not hit_body or dist_to_head < dist_to_body or beam_pt_head.y >= e_pos.y + 0.35):
+			is_headshot = true
+			hit_pos = beam_pt_head
+			target_dist = t_head
+			
+		var los_query = PhysicsRayQueryParameters3D.create(from_pos, hit_pos)
+		los_query.collide_with_areas = false
+		los_query.collide_with_bodies = true
+		los_query.exclude = [player_node]
+		var los_res = space_state.intersect_ray(los_query)
+		if not los_res.is_empty():
+			var blocker = los_res.collider
+			if blocker != e and not blocker.is_in_group("enemy") and not blocker.is_in_group("enemy_head"):
+				continue
+				
+		hit_enemies.append({
+			"enemy": e,
+			"hit_pos": hit_pos,
+			"dist": target_dist,
+			"is_headshot": is_headshot
+		})
+		
+	hit_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
+	
+	var w = weapons[0]
+	var base_dmg = float(w.get("damage", 70))
+	var hs_mult = float(w.get("headshot_multiplier", 2.2))
+	var air_mult = float(w.get("air_multiplier", 2.0))
+	var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
+	var knockback_vector = flat_dir * float(w.get("knockback", 4.5))
+	knockback_vector.y = float(w.get("upward_kick", 0.0))
+	
+	for item in hit_enemies:
+		var target = item["enemy"]
+		if not is_instance_valid(target) or ("current_state" in target and target.current_state == target.State.DEAD):
+			continue
+			
+		var is_headshot = item["is_headshot"]
+		var is_airborne: bool = false
+		if target.has_method("is_on_floor"):
+			is_airborne = not target.is_on_floor()
+		elif target.get_parent() and target.get_parent().has_method("is_on_floor"):
+			is_airborne = not target.get_parent().is_on_floor()
+			
+		var total_mult = 1.0
+		if is_headshot and is_airborne:
+			total_mult = hs_mult * air_mult
+		elif is_headshot:
+			total_mult = hs_mult
+		elif is_airborne:
+			total_mult = air_mult
+			
+		var final_dmg = int(round(base_dmg * total_mult))
+		
+		if is_headshot and is_airborne:
+			print("[RAIL SHOT] AIRBORNE HEADSHOT on %s! (%.1fx MULTIPLICATIVE) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+		elif is_headshot:
+			print("[RAIL SHOT] HEADSHOT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+		elif is_airborne:
+			print("[RAIL SHOT] AIRBORNE HIT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+		else:
+			print("[RAIL SHOT] PIERCING HIT on %s! Damage: %d | Base: %d" % [target.name, final_dmg, int(base_dmg)])
+			
+		target.take_damage(final_dmg, knockback_vector, item["hit_pos"], false, false, false, is_headshot)
+		
+	spawn_piercing_beam_tracer(start_pos, beam_end)
+	apply_vacuum_wake(start_pos, beam_end, 2.5, 25.6, null)
+	
 	reload()
+
+func spawn_piercing_beam_tracer(start_pos: Vector3, end_pos: Vector3):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.2:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r_core = 0.065
+	st.add_vertex(start_pos - right * r_core)
+	st.add_vertex(end_pos + right * r_core)
+	st.add_vertex(end_pos - right * r_core)
+	
+	st.add_vertex(start_pos - right * r_core)
+	st.add_vertex(start_pos + right * r_core)
+	st.add_vertex(end_pos + right * r_core)
+	
+	st.add_vertex(start_pos - up * r_core)
+	st.add_vertex(end_pos + up * r_core)
+	st.add_vertex(end_pos - up * r_core)
+	
+	st.add_vertex(start_pos - up * r_core)
+	st.add_vertex(start_pos + up * r_core)
+	st.add_vertex(end_pos + up * r_core)
+	
+	var r_outer = 0.26
+	st.add_vertex(start_pos - right * r_outer)
+	st.add_vertex(end_pos + right * r_outer)
+	st.add_vertex(end_pos - right * r_outer)
+	
+	st.add_vertex(start_pos - right * r_outer)
+	st.add_vertex(start_pos + right * r_outer)
+	st.add_vertex(end_pos + right * r_outer)
+	
+	st.add_vertex(start_pos - up * r_outer)
+	st.add_vertex(end_pos + up * r_outer)
+	st.add_vertex(end_pos - up * r_outer)
+	
+	st.add_vertex(start_pos - up * r_outer)
+	st.add_vertex(start_pos + up * r_outer)
+	st.add_vertex(end_pos + up * r_outer)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(0.85, 0.95, 1.0, 0.95)
+	mesh_inst.material_override = mat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if not scene_root:
+		return
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
+	
+	var impact_sphere = MeshInstance3D.new()
+	var smesh = SphereMesh.new()
+	smesh.radius = 0.28
+	smesh.height = 0.56
+	impact_sphere.mesh = smesh
+	var imat = StandardMaterial3D.new()
+	imat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	imat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	imat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	imat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	imat.albedo_color = Color(0.5, 0.85, 1.0, 0.9)
+	impact_sphere.material_override = imat
+	scene_root.add_child(impact_sphere)
+	impact_sphere.global_position = end_pos
+	
+	var itween = create_tween().set_parallel(true)
+	itween.tween_property(impact_sphere, "scale", Vector3(2.6, 2.6, 2.6), 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	itween.tween_property(imat, "albedo_color:a", 0.0, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	itween.chain().tween_callback(impact_sphere.queue_free)
 
 func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: bool = false):
 	var w = weapons[weapon_idx]
@@ -938,17 +1176,25 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 						is_airborne = not target.get_parent().is_on_floor()
 						
 					var base_dmg = float(w.get("damage", 70))
+					var hs_mult = float(w.get("headshot_multiplier", 1.0)) if is_headshot else 1.0
+					var air_mult = float(w.get("air_multiplier", 1.0)) if is_airborne else 1.0
 					var total_mult = 1.0
 					
-					if is_headshot:
-						total_mult *= float(w.get("headshot_multiplier", 2.2))
-					if is_airborne:
-						total_mult *= float(w.get("air_multiplier", 2.0))
+					if is_headshot and is_airborne:
+						if _get_bpm_tier() == "OVERDRIVE":
+							total_mult = hs_mult * air_mult
+						else:
+							total_mult = 1.0 + (hs_mult - 1.0) + (air_mult - 1.0)
+					elif is_headshot:
+						total_mult = hs_mult
+					elif is_airborne:
+						total_mult = air_mult
 						
 					var final_dmg = int(round(base_dmg * total_mult))
 					
 					if is_headshot and is_airborne:
-						print("[%s] AIRBORNE HEADSHOT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == "OVERDRIVE" else "ADDITIVE"
+						print("[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
 						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 						
@@ -959,8 +1205,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					
 		if w.get("has_vacuum", false):
 			spawn_bullet_tracer(start_pos, hit_pos)
-			if not is_alt_fire:
-				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.0)), float(w.get("vacuum_force", 16.0)), directly_hit_target)
+			if not is_alt_fire and _get_bpm_tier() == "OVERDRIVE":
+				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.5)), float(w.get("vacuum_force", 25.6)), directly_hit_target)
 		elif weapon_idx == 1:
 			spawn_shotgun_pellet_tracer(start_pos, hit_pos)
 		elif weapon_idx == 2:
