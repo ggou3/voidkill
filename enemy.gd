@@ -822,6 +822,12 @@ func die():
 		if det_col:
 			det_col.set_deferred("disabled", true)
 			
+	# Разлёт застрявших игл при смерти (Швейная машина)
+	var was_inflated = is_inflated
+	var chain_depth = explosion_chain_depth
+	if needle_count > 0:
+		_trigger_needle_burst(was_inflated, chain_depth)
+
 	# Если враг был раздут шприцем — инициируем кровавую детонацию с учётом глубины цепи
 	if is_inflated:
 		if explosion_chain_depth > 3:
@@ -950,3 +956,163 @@ func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float):
 	tween.tween_property(sphere, "scale", Vector3(radius * 1.6, radius * 1.6, radius * 1.6), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(sphere.queue_free)
+
+func _trigger_needle_burst(was_inflated: bool, depth: int):
+	const NEEDLE_BURST_RADIUS: float = 3.0
+	var count = needle_count
+	needle_count = 0
+	needle_timers.clear()
+	
+	# Расчет урона за иглу с учетом раздутия и цепного затухания Инъектора
+	var base_needle_dmg = 8.0 if was_inflated else 3.0
+	var mult: float = 1.0
+	if was_inflated:
+		if depth >= 3:
+			mult = 0.20
+		else:
+			mult = pow(0.7, depth)
+	var damage_per_needle = max(1, int(round(base_needle_dmg * mult)))
+	
+	var burst_pos = global_position + Vector3(0.0, 0.85, 0.0)
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	var space_state = get_world_3d().direct_space_state
+	
+	var all_enemies = get_tree().get_nodes_in_group("enemy")
+	var nearby_enemies: Array = []
+	for e in all_enemies:
+		if not is_instance_valid(e) or e == self:
+			continue
+		if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
+			continue
+		var e_pos = e.global_position + Vector3(0.0, 0.85, 0.0)
+		var dist = burst_pos.distance_to(e_pos)
+		if dist <= NEEDLE_BURST_RADIUS:
+			nearby_enemies.append({"enemy": e, "pos": e_pos, "dist": dist})
+			
+	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
+	
+	print("[%s] NEEDLE BURST! Count: %d | Inflated: %s | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
+		name, count, str(was_inflated), damage_per_needle, depth, nearby_enemies.size()
+	])
+	
+	AudioManager.play_sound("needle_shot")
+	
+	const NEEDLE_TOLERANCE: float = 0.40
+	
+	for i in range(count):
+		var needle_dir: Vector3 = Vector3.FORWARD
+		if nearby_enemies.size() > 0:
+			var target_entry = nearby_enemies[i % nearby_enemies.size()]
+			var to_target = target_entry["pos"] - burst_pos
+			var base_dir = to_target.normalized() if to_target.length_squared() > 0.01 else Vector3.FORWARD
+			var jitter = Vector3(randf_range(-0.12, 0.12), randf_range(-0.12, 0.12), randf_range(-0.12, 0.12))
+			needle_dir = (base_dir + jitter).normalized()
+		else:
+			var angle = (float(i) / float(count)) * TAU + randf_range(-0.1, 0.1)
+			needle_dir = Vector3(cos(angle), randf_range(-0.2, 0.3), sin(angle)).normalized()
+			
+		var max_dist = NEEDLE_BURST_RADIUS
+		var wall_query = PhysicsRayQueryParameters3D.create(burst_pos, burst_pos + needle_dir * max_dist)
+		wall_query.exclude = [self]
+		wall_query.collide_with_areas = false
+		wall_query.collide_with_bodies = true
+		var wall_res = space_state.intersect_ray(wall_query)
+		var needle_end = burst_pos + needle_dir * max_dist
+		if not wall_res.is_empty():
+			var col = wall_res.collider
+			if col and not (col.is_in_group("enemy") or col.is_in_group("enemy_head")):
+				needle_end = wall_res.position
+				max_dist = burst_pos.distance_to(needle_end)
+				
+		var line_vec = needle_end - burst_pos
+		var line_len = line_vec.length()
+		if line_len < 0.05:
+			continue
+		var line_dir = line_vec / line_len
+		
+		var hit_on_path: Array = []
+		for cand in nearby_enemies:
+			var e = cand["enemy"]
+			if not is_instance_valid(e):
+				continue
+			var e_pos = cand["pos"]
+			var t = clamp((e_pos - burst_pos).dot(line_dir), 0.0, line_len)
+			if t < 0.05:
+				continue
+			var pt = burst_pos + line_dir * t
+			var d = pt.distance_to(e_pos)
+			if d <= (0.36 + NEEDLE_TOLERANCE):
+				hit_on_path.append({"enemy": e, "hit_pos": pt, "dist": t})
+				
+		hit_on_path.sort_custom(func(a, b): return a["dist"] < b["dist"])
+		
+		if not was_inflated:
+			# Обычный разлёт: игла поражает только ближайшего врага на траектории (не пробивает)
+			if not hit_on_path.is_empty():
+				var first_hit = hit_on_path[0]
+				var target = first_hit["enemy"]
+				if is_instance_valid(target) and ("health" in target and target.health > 0):
+					var knock = needle_dir * 1.5 + Vector3.UP * 0.5
+					target.take_damage(damage_per_needle, knock, first_hit["hit_pos"], false, false, false, false, -1)
+				needle_end = first_hit["hit_pos"]
+		else:
+			# Раздутый враг: иглы пробивают навылет всех врагов на своей траектории с наследованием chain_depth
+			for hit_info in hit_on_path:
+				var target = hit_info["enemy"]
+				if is_instance_valid(target) and ("health" in target and target.health > 0):
+					var knock = needle_dir * 2.5 + Vector3.UP * 0.8
+					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth)
+					
+		if scene_root:
+			_spawn_needle_shrapnel_tracer(scene_root, burst_pos, needle_end, was_inflated)
+
+func _spawn_needle_shrapnel_tracer(scene_root: Node, start_pos: Vector3, end_pos: Vector3, is_blood_needle: bool):
+	var dir = end_pos - start_pos
+	var dist = dir.length()
+	if dist < 0.15:
+		return
+		
+	var forward = dir / dist
+	var up = Vector3.UP
+	if abs(forward.dot(up)) > 0.92:
+		up = Vector3.RIGHT
+	var right = forward.cross(up).normalized()
+	up = right.cross(forward).normalized()
+	
+	var mesh_inst = MeshInstance3D.new()
+	var st = SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	
+	var r = 0.016 if is_blood_needle else 0.012
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(end_pos + right * r)
+	st.add_vertex(end_pos - right * r)
+	
+	st.add_vertex(start_pos - right * r)
+	st.add_vertex(start_pos + right * r)
+	st.add_vertex(end_pos + right * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(end_pos + up * r)
+	st.add_vertex(end_pos - up * r)
+	
+	st.add_vertex(start_pos - up * r)
+	st.add_vertex(start_pos + up * r)
+	st.add_vertex(end_pos + up * r)
+	
+	mesh_inst.mesh = st.commit()
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.35, 0.25, 0.95) if is_blood_needle else Color(0.85, 0.95, 1.0, 0.9)
+	mesh_inst.material_override = mat
+	
+	scene_root.add_child(mesh_inst)
+	mesh_inst.global_transform = Transform3D.IDENTITY
+	
+	var tween = create_tween()
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(mesh_inst.queue_free)
