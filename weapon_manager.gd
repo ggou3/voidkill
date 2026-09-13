@@ -350,16 +350,16 @@ func _fire_anvil_piston():
 	var space_state = head.camera.get_world_3d().direct_space_state
 	var player_node = get_parent()
 	
-	const PISTON_RANGE: float = 5.0 # Короткий конус ближнего действия (4-5 метров)
-	const CONE_ANGLE_DEG: float = 20.0 # Угол конуса ~15-20 градусов
-	var half_angle_rad: float = deg_to_rad(CONE_ANGLE_DEG * 0.5)
-	var min_cos: float = cos(half_angle_rad) # cos(10 deg) ~ 0.9848
+	const PISTON_RANGE: float = 5.0 # Дальность действия ПКМ (5.0 метров)
+	const SPHERE_TOLERANCE: float = 0.40 # Радиус допуска sphere-cast (0.4 метра вокруг центральной линии прицела)
+	const ENEMY_COL_RADIUS: float = 0.38 # Радиус коллизии врага
 	
-	# 1. Поиск врагов в ближнем конусе действия
+	# 1. Поиск врагов с помощью Sphere-Cast детекции с радиусом допуска вдоль линии прицела
 	var enemies_in_cone: Array = []
+	var detected_enemies_set: Dictionary = {}
 	var all_enemies = get_tree().get_nodes_in_group("enemy")
 	
-	# Проверяем прямой луч по прицелу
+	# А. Проверка прямого тонкого луча (для максимально точной фиксации точки коллизии при прямом прицеливании)
 	var direct_ray = PhysicsRayQueryParameters3D.create(from_pos, from_pos + aim_dir * PISTON_RANGE)
 	if is_instance_valid(player_node):
 		direct_ray.exclude = [player_node]
@@ -386,47 +386,76 @@ func _fire_anvil_piston():
 			"hit_pos": direct_hit_pos,
 			"dist": from_pos.distance_to(direct_hit_pos)
 		})
+		detected_enemies_set[direct_target] = true
 		
-	# Сканируем остальных врагов в конусе перед игроком
+	# Б. Sphere-Cast сканирование врагов с радиусом допуска (0.4м на дистанции, до 0.55м в упор)
+	var ray_dir_h = Vector2(aim_dir.x, aim_dir.z)
+	var ray_dir_h_len_sq = ray_dir_h.length_squared()
+	
 	for e in all_enemies:
-		if not is_instance_valid(e):
+		if not is_instance_valid(e) or detected_enemies_set.has(e):
 			continue
-		if "current_state" in e and e.current_state == e.State.DEAD:
-			continue
-		if "health" in e and e.health <= 0:
-			continue
-		if direct_target and e == direct_target:
+		if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
 			continue
 			
-		var e_center = e.global_position + Vector3(0, 0.9, 0)
-		var to_e = e_center - from_pos
-		var dist = to_e.length()
-		if dist > PISTON_RANGE:
-			continue
-			
-		var dir_to_e = to_e / max(0.001, dist)
-		var dot = aim_dir.dot(dir_to_e)
+		var e_pos = e.global_position
+		var y_min = e_pos.y - 0.95
+		var y_max = e_pos.y + 0.85
 		
-		# В упор (до 1.8м) захватываем более широкий сектор, на дистанции — в пределах угла конуса
-		var threshold = 0.86 if dist <= 1.8 else min_cos
-		if dot < threshold:
+		# Проекция на линию луча прицела
+		var t: float = 0.0
+		if ray_dir_h_len_sq > 0.0001:
+			var to_e_h = Vector2(e_pos.x - from_pos.x, e_pos.z - from_pos.z)
+			var t_h = to_e_h.dot(ray_dir_h) / ray_dir_h_len_sq
+			if t_h < -0.2:
+				continue # Враг находится позади взгляда игрока
+			t = clamp(t_h, 0.0, PISTON_RANGE)
+		else:
+			t = clamp(from_pos.y - e_pos.y, 0.0, PISTON_RANGE)
+			
+		var ray_pt = from_pos + aim_dir * t
+		
+		# Горизонтальное расстояние от точки луча до вертикальной оси врага
+		var h_dist = Vector2(ray_pt.x - e_pos.x, ray_pt.z - e_pos.z).length()
+		# Ближайшая точка по высоте на теле врага к точке луча
+		var contact_y = clamp(ray_pt.y, y_min, y_max)
+		var v_dist = abs(ray_pt.y - contact_y)
+		
+		var dist_to_axis = sqrt(h_dist * h_dist + v_dist * v_dist)
+		var dist_to_surface = max(0.0, dist_to_axis - ENEMY_COL_RADIUS)
+		
+		# Радиус допуска: 0.40м на дистанции, до 0.55м в упор (до 2.0м)
+		var allowed_tolerance = 0.55 if t <= 2.0 else SPHERE_TOLERANCE
+		if dist_to_surface > allowed_tolerance:
 			continue
 			
-		# Проверка видимости (не сквозь сплошную геометрию стен)
-		var occ_ray = PhysicsRayQueryParameters3D.create(from_pos, e_center)
+		var hit_pos = Vector3(e_pos.x, contact_y, e_pos.z)
+		if h_dist > 0.01:
+			var h_norm = Vector3(ray_pt.x - e_pos.x, 0.0, ray_pt.z - e_pos.z).normalized()
+			hit_pos += h_norm * ENEMY_COL_RADIUS
+			
+		var dist_from_player = from_pos.distance_to(hit_pos)
+		if dist_from_player > PISTON_RANGE:
+			continue
+			
+		# Проверка видимости цели через геометрию стен (Line of Sight)
+		var occ_ray = PhysicsRayQueryParameters3D.create(from_pos, hit_pos)
 		if is_instance_valid(player_node):
 			occ_ray.exclude = [player_node]
+		occ_ray.collide_with_areas = false
+		occ_ray.collide_with_bodies = true
 		var occ_res = space_state.intersect_ray(occ_ray)
 		if not occ_res.is_empty():
 			var occ_col = occ_res.collider
 			if occ_col != e and not occ_col.is_in_group("enemy") and not (occ_col.get_parent() and occ_col.get_parent().is_in_group("enemy")):
-				continue
+				continue # Перекрыто сплошной стеной
 				
 		enemies_in_cone.append({
 			"enemy": e,
-			"hit_pos": e_center,
-			"dist": dist
+			"hit_pos": hit_pos,
+			"dist": dist_from_player
 		})
+		detected_enemies_set[e] = true
 		
 	# Если обнаружен хотя бы один враг в конусе — бьем врагов (self-launch не срабатывает)
 	if enemies_in_cone.size() > 0:
