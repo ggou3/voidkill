@@ -1133,23 +1133,24 @@ func perform_melee():
 			var knock_factor = lerp(1.0, cone_min_knockback_ratio, t)
 			
 			# Основная цель melee-удара получает увеличенный урон (direct-hit ударной волны)
-			var eff_dmg: int
+			var raw_eff_dmg: int
 			if is_prim:
-				eff_dmg = int(round(speed_base_dmg * 1.45))
+				raw_eff_dmg = int(round(speed_base_dmg * 1.45))
 			else:
-				eff_dmg = int(round(speed_base_dmg * dmg_factor))
+				raw_eff_dmg = int(round(speed_base_dmg * dmg_factor))
 				
-			var needles: int = 0
+			var needle_count: int = 0
 			if "needle_count" in e:
-				needles = e.needle_count
+				needle_count = e.needle_count
 			elif e.get_parent() and "needle_count" in e.get_parent():
-				needles = e.get_parent().needle_count
-			var needle_mult: float = 1.0
-			if needles > 0:
-				needle_mult = 1.0 + float(min(needles, 15)) * 0.04
-				eff_dmg = int(round(float(eff_dmg) * needle_mult))
-				print("[%s] CONE MELEE NEEDLE BONUS! (+%d%% from %d needles) EffDmg: %d" % [
-					e.name, int(round((needle_mult - 1.0) * 100)), min(needles, 15), eff_dmg
+				needle_count = e.get_parent().needle_count
+			
+			var final_multiplier: float = 1.0 + min(needle_count, 15) * 0.04
+			var eff_dmg: int = int(round(float(raw_eff_dmg) * final_multiplier))
+			
+			if needle_count > 0:
+				print("[%s] CONE MELEE HIT: BaseEffDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+					e.name, raw_eff_dmg, needle_count, final_multiplier, eff_dmg
 				])
 				
 			var eff_knock_speed = cone_melee_base_knockback * knock_factor
@@ -1217,23 +1218,21 @@ func perform_melee():
 			var enemy_cur_hp: int = hit_collider.health if "health" in hit_collider else 100
 			var enemy_max_hp: int = hit_collider.max_health if "max_health" in hit_collider else 100
 			
-			var needles: int = 0
+			var needle_count: int = 0
 			if "needle_count" in hit_collider:
-				needles = hit_collider.needle_count
+				needle_count = hit_collider.needle_count
 			elif hit_collider.get_parent() and "needle_count" in hit_collider.get_parent():
-				needles = hit_collider.get_parent().needle_count
-			var needle_mult: float = 1.0
-			if needles > 0:
-				needle_mult = 1.0 + float(min(needles, 15)) * 0.04
+				needle_count = hit_collider.get_parent().needle_count
 				
+			var final_multiplier: float = 1.0 + min(needle_count, 15) * 0.04
 			var is_execute: bool = (float(enemy_cur_hp) <= float(enemy_max_hp) * execute_health_threshold)
-			var eff_melee_damage = int(round(float(melee_damage) * needle_mult))
+			var eff_melee_damage: int = int(round(float(melee_damage) * final_multiplier))
 			var dmg: int = max(eff_melee_damage, enemy_cur_hp) if is_execute else eff_melee_damage
 			var will_kill: bool = is_execute or (enemy_cur_hp <= dmg)
 			
-			if needle_mult > 1.0:
-				print("[%s] MELEE NEEDLE BONUS! (+%d%% from %d needles) Dmg: %d" % [
-					hit_collider.name, int(round((needle_mult - 1.0) * 100)), min(needles, 15), dmg
+			if needle_count > 0:
+				print("[%s] REGULAR MELEE HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+					hit_collider.name, melee_damage, needle_count, final_multiplier, dmg
 				])
 			
 			var knock_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()

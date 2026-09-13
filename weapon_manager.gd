@@ -1221,26 +1221,25 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					elif is_airborne:
 						total_mult = air_mult
 						
-					var needle_mult: float = 1.0
-					var needles: int = 0
+					var final_multiplier: float = 1.0
+					var needle_count: int = 0
 					if weapon_idx == 1:
 						if "needle_count" in target:
-							needles = target.needle_count
+							needle_count = target.needle_count
 						elif target.get_parent() and "needle_count" in target.get_parent():
-							needles = target.get_parent().needle_count
-						if needles > 0:
-							needle_mult = 1.0 + float(min(needles, 15)) * 0.04
+							needle_count = target.get_parent().needle_count
+						final_multiplier = 1.0 + min(needle_count, 15) * 0.04
 					
-					var final_dmg = int(round(base_dmg * total_mult * needle_mult))
+					var final_dmg = int(round(base_dmg * total_mult * final_multiplier))
 					
 					if is_headshot and is_airborne:
 						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == "OVERDRIVE" else "ADDITIVE"
 						print("[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
 						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
-					elif needle_mult > 1.0:
-						print("[%s] SHOTGUN NEEDLE BONUS! (+%d%% from %d needles) Damage: %d | Base: %d" % [
-							target.name, int(round((needle_mult - 1.0) * 100)), min(needles, 15), final_dmg, int(base_dmg)
+					elif weapon_idx == 1 and needle_count > 0:
+						print("[%s] SHOTGUN PELLET HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+							target.name, int(base_dmg), needle_count, final_multiplier, final_dmg
 						])
 						
 					if weapon_idx == 2 and target.has_method("apply_poison_dot"):
