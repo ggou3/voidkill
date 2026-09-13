@@ -13,9 +13,6 @@ const SLAM_AOE = 6.0
 const SLAM_DMG = 30
 const SLAM_CD = 4.0
 
-@export var blood_buff_duration: float = 7.0 # Длительность активного кровавого баффа (было 5.0 сек)
-const BLOOD_DUR = 7.0
-
 var dashes = MAX_DASH
 var dash_timer_cd = 0.0
 var dash_interval_timer = 0.0
@@ -26,7 +23,6 @@ var dash_current_speed: float = 16.0
 
 var is_slamming = false
 var slam_timer = 0.0
-var blood_timer = 0.0
 
 # --- BPM SYSTEM (Сердцебиение) ---
 const MIN_BPM: float = 50.0
@@ -71,7 +67,6 @@ func _process(delta):
 		dash_interval_timer -= delta
 			
 	if slam_timer > 0: slam_timer -= delta
-	if blood_timer > 0: blood_timer -= delta
 	
 	# BPM: активный кровавый сёрф (слайд по луже крови): +3 BPM/сек
 	if is_instance_valid(player) and player.is_sliding and player.is_on_blood:
@@ -123,11 +118,12 @@ func get_bpm_tier() -> String:
 	else:
 		return "OVERDRIVE"
 
+# Устаревшие методы кровавого баффа (заменены BPM-системой)
 func activate_blood_buff():
-	blood_timer = blood_buff_duration
+	pass
 
 func has_blood_buff() -> bool:
-	return blood_timer > 0
+	return false
 
 func add_dash_charge():
 	if dashes < MAX_DASH:

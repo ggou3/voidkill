@@ -689,7 +689,6 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()
-			player.skills.activate_blood_buff()
 		set_state(State.DEAD)
 
 

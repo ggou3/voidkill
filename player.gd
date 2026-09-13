@@ -124,20 +124,20 @@ func _get_game_manager() -> Node:
 	return game_manager
 
 func is_blood_active() -> bool:
-	return is_on_blood or (skills != null and skills.has_blood_buff())
+	return is_on_blood
 
 func has_infinite_ammo() -> bool:
 	return skills != null and skills.has_method("get_bpm_tier") and skills.get_bpm_tier() == "OVERDRIVE"
 
-func get_current_max_speed() -> float:
+func get_bpm_ratio() -> float:
 	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
-	var bpm_ratio = clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
-	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_ratio)
+	return clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
+
+func get_current_max_speed() -> float:
+	return lerp(normal_max_speed, blood_buffed_max_speed, get_bpm_ratio())
 
 func get_bpm_damage_reduction() -> float:
-	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
-	var bpm_ratio = clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
-	return lerp(0.0, 0.30, bpm_ratio)
+	return lerp(0.0, 0.30, get_bpm_ratio())
 
 func _ready():
 	is_dead = false
@@ -216,20 +216,17 @@ func _process(_delta):
 	var current_speed: float = Vector2(velocity.x, velocity.z).length()
 	var bhop_text = ""
 	if bhop_chain > 0:
-		bhop_text = (" (BLOOD BHOP x" + str(bhop_chain) + ")") if is_blood_active() else (" (BHOP x" + str(bhop_chain) + ")")
+		bhop_text = (" (BHOP x" + str(bhop_chain) + ")")
 	speed_label.text = "SPEED: " + str(snapped(current_speed, 0.1)) + bhop_text
 	if health != _last_displayed_health:
 		_update_health_display(true)
 	weapons.update_hud(has_infinite_ammo())
 	
 	if blood_buff_label:
-		var blood_active = is_blood_active()
-		blood_buff_label.visible = blood_active
-		if blood_active:
-			if skills and skills.has_blood_buff():
-				blood_buff_label.text = "★ BLOOD FRENZY (" + ("%.1f" % skills.blood_timer) + "s) ★"
-			else:
-				blood_buff_label.text = "★ BLOOD ACTIVE ★"
+		var blood_surf = is_sliding and is_on_blood
+		blood_buff_label.visible = blood_surf
+		if blood_surf:
+			blood_buff_label.text = "★ BLOOD SURF (+3 BPM/s) ★"
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
@@ -319,9 +316,6 @@ func _physics_process(delta):
 		is_sliding = true
 	if is_sliding and current_horiz_speed < CROUCH_SPEED + 0.8:
 		is_sliding = false
-
-	if is_sliding and is_on_blood:
-		skills.activate_blood_buff()
 
 	# Гравитация в воздухе (при wallrun гравитация своя, существенно сниженная)
 	if not is_on_floor() and not skills.is_dashing and not skills.is_slamming and not is_wallrunning:
@@ -445,7 +439,8 @@ func handle_jump() -> bool:
 				and speed_2d >= (WALK_SPEED * 0.7)
 				
 			if is_clean_bhop:
-				var mult = bhop_blood_speed_multiplier if is_blood_active() else bhop_speed_multiplier
+				var bpm_r = get_bpm_ratio()
+				var mult = lerp(bhop_speed_multiplier, bhop_blood_speed_multiplier, bpm_r)
 				var boosted = clamp(speed_2d * mult, speed_2d, cap)
 				var dir = Vector2(velocity.x, velocity.z).normalized()
 				if dir == Vector2.ZERO:
@@ -458,7 +453,7 @@ func handle_jump() -> bool:
 				velocity.x = dir.x * boosted
 				velocity.z = dir.y * boosted
 				bhop_chain += 1
-				head.add_recoil(0.045 if is_blood_active() else 0.035, 0.0)
+				head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
 				time_on_ground = 0.0
 				prev_air_time = 0.0
 				if skills and skills.has_method("add_bpm"):
@@ -628,8 +623,7 @@ func process_wallrun_physics(delta: float, input_dir: Vector2):
 	# Поддерживаем и слегка разгоняем скорость вдоль стены
 	var cur_horiz = Vector2(velocity.x, velocity.z).length()
 	var run_speed = clamp(max(cur_horiz, wallrun_speed) + delta * 2.0, wallrun_speed, wallrun_max_speed)
-	if skills.has_blood_buff():
-		run_speed *= 1.2
+	run_speed *= lerp(1.0, 1.2, get_bpm_ratio())
 		
 	var move_vel = wall_tangent * run_speed
 	
@@ -644,20 +638,15 @@ func process_wallrun_physics(delta: float, input_dir: Vector2):
 	velocity.y -= slip_accel * delta
 
 func handle_slide_physics(vel_2d: Vector2, direction: Vector3, delta: float) -> Vector2:
+	var bpm_r = get_bpm_ratio()
 	if direction:
 		var current_slide_speed = vel_2d.length()
 		if current_slide_speed > 0.1:
-			var turn_speed = 3.0 if skills.has_blood_buff() else 1.5
+			var turn_speed = lerp(1.5, 3.0, bpm_r)
 			var target_dir = Vector2(direction.x, direction.z)
 			vel_2d = vel_2d.normalized().lerp(target_dir, turn_speed * delta).normalized() * current_slide_speed
 	
-	var active_friction = NORMAL_SLIDE_FRICTION
-	if skills.has_blood_buff():
-		if skills.blood_timer <= 2.0:
-			active_friction = lerp(NORMAL_SLIDE_FRICTION, BLOOD_SLIDE_FRICTION, skills.blood_timer / 2.0)
-		else:
-			active_friction = BLOOD_SLIDE_FRICTION
-			
+	var active_friction = lerp(NORMAL_SLIDE_FRICTION, BLOOD_SLIDE_FRICTION, bpm_r)
 	vel_2d = vel_2d.move_toward(Vector2.ZERO, active_friction * delta)
 	
 	var cap = get_current_max_speed()
@@ -690,12 +679,12 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 				var cur_wish_speed = vel_2d.dot(wish_dir)
 				var add_speed = air_wish_cap - cur_wish_speed
 				if add_speed > 0.0:
-					var eff_accel = air_accel * (1.3 if is_blood_active() else 1.0)
+					var eff_accel = air_accel * lerp(1.0, 1.3, get_bpm_ratio())
 					var accel_amount = min(eff_accel * delta, add_speed)
 					vel_2d += wish_dir * accel_amount
 				
 				# Плавный CPM поворот вектора скорости без потери набранной величины скорости
-				var steer_rate = 2.4 if is_blood_active() else 1.5
+				var steer_rate = lerp(1.5, 2.4, get_bpm_ratio())
 				if vel_2d.length_squared() > 0.001:
 					vel_2d = vel_2d.normalized().lerp(wish_dir, steer_rate * delta).normalized() * vel_2d.length()
 		else:
@@ -1177,7 +1166,6 @@ func perform_melee():
 			head.trigger_melee_impact(executed_any)
 			if killed_any and skills:
 				skills.add_dash_charge()
-				skills.activate_blood_buff()
 	else:
 		# РЕЖИМ 2: Одиночный прямой слабый удар ближнего боя (RayCast + SphereCast)
 		var to_pos = from_pos + aim_dir * melee_range
@@ -1229,7 +1217,6 @@ func perform_melee():
 			
 			if will_kill and skills:
 				skills.add_dash_charge()
-				skills.activate_blood_buff()
 				
 		print("[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | SHOCKWAVE: false | Dmg: %d | Hit: %s" % [
 			effective_speed, cur_speed, recent_peak_speed, cone_melee_speed_threshold, melee_damage, str(hit_anything)
