@@ -18,6 +18,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var is_crouched = false
 var is_sliding = false
 var is_on_blood = false 
+var blood_pool_count: int = 0
 var wall_jump_count = 0 
 var current_horiz_speed: float = 0.0 
 

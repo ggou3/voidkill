@@ -38,6 +38,7 @@ var last_kill_weapon: String = ""
 @onready var bpm_label = get_node_or_null("../HUD/BPMLabel")
 @onready var combo_label: Label = get_node_or_null("../HUD/ComboLabel")
 var combo_tween: Tween = null
+var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 func _ready():
 	dashes = MAX_DASH
@@ -128,7 +129,7 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	add_bpm(total_bpm)
 	return total_bpm
 
-func _show_combo_popup(bonus_amount: float):
+func show_hud_popup(text: String):
 	if not combo_label:
 		var hud = get_node_or_null("../HUD")
 		if hud:
@@ -156,7 +157,7 @@ func _show_combo_popup(bonus_amount: float):
 	if combo_tween and combo_tween.is_valid():
 		combo_tween.kill()
 		
-	combo_label.text = "★ VARIETY +%d ★" % int(round(bonus_amount))
+	combo_label.text = text
 	combo_label.visible = true
 	combo_label.modulate.a = 1.0
 	combo_label.position.y = 452.0
@@ -168,6 +169,9 @@ func _show_combo_popup(bonus_amount: float):
 	combo_tween.parallel().tween_property(combo_label, "modulate:a", 1.0, 0.7)
 	combo_tween.chain().tween_property(combo_label, "modulate:a", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	combo_tween.chain().tween_callback(func(): if is_instance_valid(combo_label): combo_label.visible = false)
+
+func _show_combo_popup(bonus_amount: float):
+	show_hud_popup("★ VARIETY +%d ★" % int(round(bonus_amount)))
 
 func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
@@ -260,15 +264,44 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 				
 	if not hit_enemy and player.is_on_floor():
 		is_slamming = false
-		head.add_recoil(0.25, 0.0)
 		vel.y = 0
 		slam_timer = SLAM_CD
-		AudioManager.play_sound("slam_impact")
+		
+		# Проверка наличия лужи крови в радиусе обычного слэма + 2 метра (8.0м) или нахождения на крови
+		var search_radius: float = SLAM_AOE + 2.0
+		var nearby_blood_pools = _find_nearby_blood_pools(player.global_position, search_radius)
+		var has_blood_slam: bool = (nearby_blood_pools.size() > 0) or player.is_on_blood
+		
+		var effective_aoe: float = SLAM_AOE
+		
+		if has_blood_slam:
+			effective_aoe = SLAM_AOE * 1.5 # 9.0 метров
+			head.add_recoil(0.35, 0.0)
+			AudioManager.play_sound("slam_impact")
+			AudioManager.play_sound("flask_splash")
+			
+			# Временное расширение луж крови (масштаб x1.4 на 4.0 секунды)
+			for pool in nearby_blood_pools:
+				if is_instance_valid(pool) and pool.has_method("expand_temporarily"):
+					pool.expand_temporarily(1.4, 4.0)
+					
+			# Мгновенный разовый бонус +10 BPM
+			add_bpm(10.0)
+			show_hud_popup("★ BLOOD SLAM +10 ★")
+			
+			# Визуальный эффект расширяющейся волны крови
+			_spawn_blood_slam_vfx(player.global_position, effective_aoe)
+			print("[BLOOD SLAM] Enhanced shockwave! AOE: %.1fm, +10 BPM, expanded %d blood pool(s)" % [
+				effective_aoe, nearby_blood_pools.size()
+			])
+		else:
+			head.add_recoil(0.25, 0.0)
+			AudioManager.play_sound("slam_impact")
 		
 		var enemies = player.get_tree().get_nodes_in_group("enemy")
 		for e in enemies:
 			if is_instance_valid(e):
-				if player.global_position.distance_to(e.global_position) <= SLAM_AOE:
+				if player.global_position.distance_to(e.global_position) <= effective_aoe:
 					e.take_damage(SLAM_DMG, (e.global_position - player.global_position).normalized(), e.global_position, true, false, true, false, -1, "melee")
 					
 	if is_slamming:
@@ -277,3 +310,84 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 		vel.z = 0
 		
 	return vel
+
+func _find_nearby_blood_pools(impact_pos: Vector3, search_radius: float) -> Array[Node]:
+	var blood_pools = player.get_tree().get_nodes_in_group("blood_pool")
+	var found: Array[Node] = []
+	for pool in blood_pools:
+		if not is_instance_valid(pool) or not (pool is Node3D):
+			continue
+		var pool_pos = pool.global_position
+		# Проверяем перепад высоты (допустимый перепад до 3.0м)
+		if abs(impact_pos.y - pool_pos.y) <= 3.0:
+			var horiz_dist = Vector2(impact_pos.x - pool_pos.x, impact_pos.z - pool_pos.z).length()
+			# Радиус цилиндра лужи ~1.7м, учитываем его при проверке дистанции
+			if horiz_dist <= (search_radius + 1.7):
+				found.append(pool)
+	return found
+
+func _spawn_blood_slam_vfx(impact_pos: Vector3, radius: float):
+	var scene_root = player.get_tree().current_scene if player.get_tree().current_scene else player.get_parent()
+	if not scene_root:
+		return
+		
+	var ground_y = impact_pos.y - 0.95
+	var space_state = player.get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(impact_pos, impact_pos + Vector3.DOWN * 2.5)
+	var result = space_state.intersect_ray(query)
+	if result:
+		ground_y = result.position.y + 0.05
+		
+	var center_pos = Vector3(impact_pos.x, ground_y, impact_pos.z)
+	
+	# 1. Радиальный разлёт брызг крови
+	if blood_splatter_scene:
+		var splatter = blood_splatter_scene.instantiate()
+		splatter.amount = 85
+		var pmat = splatter.process_material.duplicate()
+		pmat.direction = Vector3.UP
+		pmat.spread = 85.0
+		pmat.initial_velocity_min = 10.0
+		pmat.initial_velocity_max = 22.0
+		pmat.scale_min = 0.35
+		pmat.scale_max = 0.8
+		splatter.process_material = pmat
+		scene_root.add_child(splatter)
+		splatter.global_position = center_pos + Vector3(0, 0.1, 0)
+		
+	# 2. Расширяющаяся тороидальная волна крови по полу
+	var ring = MeshInstance3D.new()
+	var tmesh = TorusMesh.new()
+	tmesh.inner_radius = 0.88
+	tmesh.outer_radius = 1.0
+	tmesh.rings = 36
+	tmesh.ring_segments = 12
+	ring.mesh = tmesh
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(0.9, 0.06, 0.06, 0.85)
+	ring.material_override = mat
+	
+	scene_root.add_child(ring)
+	ring.global_position = center_pos + Vector3(0, 0.04, 0)
+	ring.scale = Vector3(0.5, 0.2, 0.5)
+	
+	var tween = ring.create_tween().set_parallel(true)
+	tween.tween_property(ring, "scale", Vector3(radius, 0.2, radius), 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(ring.queue_free)
+	
+	# 3. Кратковременная алая вспышка освещения
+	var light = OmniLight3D.new()
+	light.light_color = Color(1.0, 0.1, 0.05)
+	light.light_energy = 4.0
+	light.omni_range = radius
+	scene_root.add_child(light)
+	light.global_position = center_pos + Vector3(0, 0.5, 0)
+	var ltween = light.create_tween()
+	ltween.tween_property(light, "light_energy", 0.0, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	ltween.tween_callback(light.queue_free)
