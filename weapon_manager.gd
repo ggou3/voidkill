@@ -586,7 +586,7 @@ func _fire_anvil_piston():
 				print("[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, on_floor: %s, speed: %.1f, push_vec: %s)" % [target.name, rel_height, str(target_on_floor), push_speed, push_vec])
 				
 			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
-			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
+			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth, "anvil")
 			
 		spawn_piston_tracer(start_pos, primary_hit_pos, false)
 		return
@@ -682,7 +682,7 @@ func _fire_anvil_piston():
 				print("[ANVIL PISTON] FLOOR SPLASH LAUNCH -> %s (h_dist: %.2f, impulse: %.1f)" % [target.name, splash_enemies[idx]["dist"], upward_impulse])
 				
 				var hit_pos = target.global_position + Vector3(0, -0.6, 0)
-				target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
+				target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth, "anvil")
 				
 		# Выполняем self-launch игрока (в пределах дальности PISTON_RANGE при упоре в любую статичную геометрию).
 		# Срабатывает ОДНОВРЕМЕННО с подбросом врагов, если выстрел был в пол рядом с ними.
@@ -1079,7 +1079,7 @@ func _fire_caliber_piercing_shot():
 		else:
 			print("[RAIL SHOT] PIERCING HIT on %s! Damage: %d | Base: %d" % [target.name, final_dmg, int(base_dmg)])
 			
-		target.take_damage(final_dmg, knockback_vector, item["hit_pos"], false, false, false, is_headshot)
+		target.take_damage(final_dmg, knockback_vector, item["hit_pos"], false, false, false, is_headshot, -1, "caliber0")
 		
 	spawn_piercing_beam_tracer(start_pos, beam_end)
 	apply_vacuum_wake(start_pos, beam_end, 2.5, 25.6, null)
@@ -1239,7 +1239,7 @@ func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 					if target.has_method("add_needle"):
 						target.add_needle()
 						
-					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
+					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, "sewing")
 					
 		spawn_needle_tracer(start_pos, hit_pos)
 		
@@ -1348,7 +1348,13 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					elif weapon_idx == 3 and target.has_method("add_needle"):
 						target.add_needle()
 						
-					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot)
+					var weapon_key = "caliber0"
+					match weapon_idx:
+						0: weapon_key = "caliber0"
+						1: weapon_key = "anvil"
+						2: weapon_key = "injector"
+						3: weapon_key = "sewing"
+					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, weapon_key)
 					
 		if w.get("has_vacuum", false):
 			spawn_bullet_tracer(start_pos, hit_pos)

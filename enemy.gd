@@ -67,6 +67,7 @@ var flee_timer: float = 0.0
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
 var was_killed_by_shockwave: bool = false
+var last_damage_weapon: String = ""
 var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
 var slow_factor: float = 1.0
@@ -1041,6 +1042,7 @@ func remove_slow():
 func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5, chain_depth: int = 0):
 	if current_state == State.DEAD:
 		return
+	last_damage_weapon = "injector"
 	if poison_stacks.size() < MAX_POISON_STACKS:
 		poison_stacks.append({
 			"duration": duration,
@@ -1063,6 +1065,7 @@ func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval:
 func _apply_poison_tick(damage: int):
 	if current_state == State.DEAD:
 		return
+	last_damage_weapon = "injector"
 	health -= damage
 	_update_health_bar()
 	var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
@@ -1078,6 +1081,7 @@ func _apply_poison_tick(damage: int):
 func add_needle():
 	if current_state == State.DEAD:
 		return
+	last_damage_weapon = "sewing"
 	needle_timers.append(6.0)
 	needle_count = needle_timers.size()
 	_update_needle_visuals()
@@ -1115,6 +1119,7 @@ func _update_needle_visuals():
 func inflate():
 	if is_inflated or current_state == State.DEAD:
 		return
+	last_damage_weapon = "injector"
 	is_inflated = true
 	
 	if inflation_tween:
@@ -1155,7 +1160,7 @@ func inflate():
 
 	print("[%s] INFLATED with blood!" % name)
 
-func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
 	if current_state == State.DEAD:
 		return
 		
@@ -1174,6 +1179,11 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		was_killed_by_shockwave = false
 		
 	was_killed_by_melee = is_melee or is_shockwave or is_execute
+	if is_melee or is_shockwave or is_execute:
+		last_damage_weapon = "melee"
+	elif weapon_source != "":
+		last_damage_weapon = weapon_source
+		
 	health -= amount
 	_update_health_bar()
 	_spawn_damage_number(amount, hit_pos, is_headshot)
@@ -1428,13 +1438,29 @@ func die():
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
 	
-	# Начисление BPM игроку (+12 за убийство ударной волной, +8 за обычное убийство)
+	# Начисление BPM игроку (+12 за убийство ударной волной, +8 за обычное убийство, +3 за смену оружия)
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and "skills" in player and is_instance_valid(player.skills):
-		if was_killed_by_shockwave:
-			player.skills.add_bpm(12.0)
+		var weapon_used = last_damage_weapon
+		if was_killed_by_shockwave or was_killed_by_melee:
+			weapon_used = "melee"
+		elif weapon_used == "":
+			# Фолбэк на текущее активное оружие игрока
+			var weapons_mgr = player.get_node_or_null("Weapons")
+			if is_instance_valid(weapons_mgr) and "current_weapon_index" in weapons_mgr:
+				match weapons_mgr.current_weapon_index:
+					0: weapon_used = "caliber0"
+					1: weapon_used = "anvil"
+					2: weapon_used = "injector"
+					3: weapon_used = "sewing"
+					_: weapon_used = "unknown"
+			else:
+				weapon_used = "unknown"
+				
+		if player.skills.has_method("record_kill_bpm"):
+			player.skills.record_kill_bpm(weapon_used, was_killed_by_shockwave)
 		else:
-			player.skills.add_bpm(8.0)
+			player.skills.add_bpm(12.0 if was_killed_by_shockwave else 8.0)
 	
 	if hp_sprite:
 		hp_sprite.visible = false
@@ -1562,7 +1588,7 @@ func _trigger_inflation_explosion(depth: int = 0):
 			var knock_vec = knock_dir * (14.0 * mult) + Vector3.UP * (4.5 * mult)
 			
 			print("[%s] DETONATION AOE HIT (chain %d -> %d) -> %s for %d dmg!" % [name, depth, depth + 1, enemy.name, dmg])
-			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, depth)
+			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, depth, "injector")
 			
 	# 2. Лечение игрока, если он в радиусе взрыва
 	var player = get_tree().get_first_node_in_group("player")
@@ -1758,7 +1784,7 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 				var target = first_hit["enemy"]
 				if is_instance_valid(target) and ("health" in target and target.health > 0):
 					var knock = needle_dir * 1.5 + Vector3.UP * 0.5
-					target.take_damage(damage_per_needle, knock, first_hit["hit_pos"], false, false, false, false, -1)
+					target.take_damage(damage_per_needle, knock, first_hit["hit_pos"], false, false, false, false, -1, "sewing")
 				needle_end = first_hit["hit_pos"]
 		else:
 			# Раздутый враг: иглы пробивают навылет всех врагов на своей траектории с наследованием chain_depth
@@ -1766,7 +1792,7 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 				var target = hit_info["enemy"]
 				if is_instance_valid(target) and ("health" in target and target.health > 0):
 					var knock = needle_dir * 2.5 + Vector3.UP * 0.8
-					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth)
+					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth, "sewing")
 					
 		if scene_root:
 			_spawn_needle_shrapnel_tracer(scene_root, burst_pos, needle_end, was_inflated)

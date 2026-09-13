@@ -29,6 +29,7 @@ const MIN_BPM: float = 50.0
 const MAX_BPM: float = 200.0
 var bpm: float = MIN_BPM
 var time_since_bpm_gain: float = 0.0
+var last_kill_weapon: String = ""
 
 @onready var player = $".."
 @onready var head = $"../Head"
@@ -101,6 +102,28 @@ func add_bpm(amount: float):
 		return
 	bpm = clamp(bpm + amount, MIN_BPM, MAX_BPM)
 	time_since_bpm_gain = 0.0
+
+func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
+	var base_bpm: float = 12.0 if is_shockwave else 8.0
+	var bonus_bpm: float = 0.0
+	
+	# Бонус за разнообразие (+3 BPM), если оружие отличается от предыдущего убийства
+	if last_kill_weapon != "" and weapon_type != "" and weapon_type != last_kill_weapon:
+		bonus_bpm = 3.0
+		print("[BPM VARIETY BONUS] +3.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
+			weapon_type, last_kill_weapon, base_bpm + bonus_bpm
+		])
+	elif last_kill_weapon != "" and weapon_type == last_kill_weapon:
+		print("[BPM KILL] Same weapon '%s' (Total: +%.1f BPM, no variety bonus)" % [weapon_type, base_bpm])
+	else:
+		print("[BPM KILL] First kill with '%s' (Total: +%.1f BPM)" % [weapon_type, base_bpm])
+		
+	if weapon_type != "":
+		last_kill_weapon = weapon_type
+		
+	var total_bpm = base_bpm + bonus_bpm
+	add_bpm(total_bpm)
+	return total_bpm
 
 func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
@@ -185,7 +208,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 				is_slamming = false
 				vel.y = BOUNCE_VEL
 				add_dash_charge()
-				hit.take_damage(100, Vector3.DOWN, hit.global_position)
+				hit.take_damage(100, Vector3.DOWN, hit.global_position, true, false, false, false, -1, "melee")
 				head.add_recoil(0.1, 0.0)
 				slam_timer = SLAM_CD
 				AudioManager.play_sound("slam_impact")
@@ -202,7 +225,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 		for e in enemies:
 			if is_instance_valid(e):
 				if player.global_position.distance_to(e.global_position) <= SLAM_AOE:
-					e.take_damage(SLAM_DMG, (e.global_position - player.global_position).normalized(), e.global_position)
+					e.take_damage(SLAM_DMG, (e.global_position - player.global_position).normalized(), e.global_position, true, false, true, false, -1, "melee")
 					
 	if is_slamming:
 		vel.y = -SLAM_SPEED

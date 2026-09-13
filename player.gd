@@ -1170,7 +1170,7 @@ func perform_melee():
 				flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
 			var knock_vec = flat_dir * eff_knock_speed + Vector3.UP * 7.5
 			
-			e.take_damage(final_dmg, knock_vec, hit_pos, true, is_exec, true)
+			e.take_damage(final_dmg, knock_vec, hit_pos, true, is_exec, true, false, -1, "melee")
 			hit_count += 1
 			if will_kill:
 				killed_any = true
@@ -1244,7 +1244,7 @@ func perform_melee():
 			var knockback_vector = knock_dir * knock_speed
 			knockback_vector.y = 3.0 if is_execute else 1.5
 			
-			hit_collider.take_damage(dmg, knockback_vector, hit_pos, true, is_execute, false)
+			hit_collider.take_damage(dmg, knockback_vector, hit_pos, true, is_execute, false, false, -1, "melee")
 			head.trigger_melee_impact(is_execute)
 			
 			if will_kill and skills:
