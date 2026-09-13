@@ -11,7 +11,7 @@ var anvil_alt_cooldown: float = 1.2
 var anvil_alt_timer: float = 0.0
 var anvil_self_launch_chain: int = 0
 
-var injector_alt_cooldown: float = 2.8
+var injector_alt_cooldown: float = 4.5
 var injector_alt_timer: float = 0.0
 
 var sewing_alt_cooldown: float = 1.5
@@ -57,10 +57,10 @@ var weapons = [
 	{
 		"name": "ИНЪЕКТОР",
 		"max_ammo": 6,
-		"damage": 18,
+		"damage": 24, # Прямой урон увеличен с 18 до 24 HP (суммарно с DoT: 24 + 18 = 42 HP)
 		"pellets": 1,
 		"spread": 0.0,
-		"fire_rate": 0.32,
+		"fire_rate": 0.20, # Ускорено в 1.6x (0.20с между выстрелами вместо 0.32с, 5 выстр/сек)
 		"reload_time": 1.4,
 		"cam_shake": 0.04,
 		"weapon_kick": 0.16,
