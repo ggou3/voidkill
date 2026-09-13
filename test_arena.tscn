@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cb5k2x4v8m1op"]
+[gd_scene load_steps=8 format=3 uid="uid://cb5k2x4v8m1op"]
 
 [ext_resource type="PackedScene" uid="uid://ba6hrp5v4fg0f" path="res://player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://rkw44u1bvqo3" path="res://enemy.tscn" id="2_enemy"]
@@ -28,9 +28,6 @@ shadow_enabled = true
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
 navigation_mesh = ExtResource("4_navmesh")
 
-# ==============================================================================
-# ZONE 1: START & RUNWAY ACCELERATION (Z: +45 to +15, length 30m)
-# ==============================================================================
 [node name="Zone1_Runway" type="Node3D" parent="."]
 
 [node name="Z1_Floor" type="CSGBox3D" parent="Zone1_Runway"]
@@ -68,9 +65,6 @@ transform = Transform3D(1, 0, 0, 0, 0.996195, 0.0871557, 0, -0.0871557, 0.996195
 use_collision = true
 size = Vector3(8, 0.6, 6)
 
-# ==============================================================================
-# ZONE 2: HIGH-SPEED WALLRUN TRANSIT CORRIDOR (Z: +15 to -25, length 40m, width 10m)
-# ==============================================================================
 [node name="Zone2_WallrunCorridor" type="Node3D" parent="."]
 
 [node name="Z2_Floor" type="CSGBox3D" parent="Zone2_WallrunCorridor"]
@@ -98,9 +92,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -18)
 use_collision = true
 size = Vector3(10, 0.8, 3)
 
-# ==============================================================================
-# ZONE 3: GRAND COMBAT ARENA (Z: -25 to -75, length 50m, width 40m)
-# ==============================================================================
 [node name="Zone3_GrandArena" type="Node3D" parent="."]
 
 [node name="Z3_Floor" type="CSGBox3D" parent="Zone3_GrandArena"]
@@ -158,9 +149,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 5.5, -75)
 use_collision = true
 size = Vector3(13, 11, 1)
 
-# ==============================================================================
-# ZONE 4: VERTICAL SHAFT & TIERED PLATFORMING SECTOR (Z: -75 to -125, length 50m, width 26m)
-# ==============================================================================
 [node name="Zone4_VerticalSector" type="Node3D" parent="."]
 
 [node name="Z4_Floor" type="CSGBox3D" parent="Zone4_VerticalSector"]
@@ -218,9 +206,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 6, -125)
 use_collision = true
 size = Vector3(6, 12, 1)
 
-# ==============================================================================
-# ZONE 5: CQC BUNKER / LABYRINTH KILLBOX (Z: -125 to -175, length 50m, width 24m)
-# ==============================================================================
 [node name="Zone5_CQCBunker" type="Node3D" parent="."]
 
 [node name="Z5_Floor" type="CSGBox3D" parent="Zone5_CQCBunker"]
@@ -263,62 +248,43 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, -163)
 use_collision = true
 size = Vector3(16, 8, 1)
 
-# ==============================================================================
-# BLOOD POOLS (8 pools distributed across all 5 zones)
-# ==============================================================================
 [node name="BloodPools" type="Node3D" parent="."]
 
-# Zone 1: Runway start blood pool
 [node name="Pool_Z1_Start" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 27)
 
-# Zone 2: Wallrun corridor mid blood pool
 [node name="Pool_Z2_Corridor" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -5)
 
-# Zone 3: Grand arena open center
 [node name="Pool_Z3_Center" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -45)
 
-# Zone 3: Grand arena west flank
 [node name="Pool_Z3_Flank" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -60)
 
-# Zone 4: Vertical sector base approach
 [node name="Pool_Z4_Base" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -78)
 
-# Zone 5: CQC bunker first bend
 [node name="Pool_Z5_Bend1" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.05, -140)
 
-# Zone 5: CQC bunker second choke
 [node name="Pool_Z5_Bend2" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.05, -152)
 
-# Zone 5: Final killbox chamber
 [node name="Pool_Z5_End" parent="BloodPools" instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -170)
 
-# ==============================================================================
-# PLAYER SPAWN (Zone 1 Runway)
-# ==============================================================================
 [node name="Player" parent="." instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 40)
 
-# ==============================================================================
-# ENEMIES (19 enemies distributed across all 5 zones)
-# ==============================================================================
 [node name="Enemies" type="Node3D" parent="."]
 
-# Zone 1: Runway intro enemies (2)
 [node name="Enemy_Z1_1" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 22)
 
 [node name="Enemy_Z1_2" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, 18)
 
-# Zone 2: Wallrun corridor enemies (3)
 [node name="Enemy_Z2_Entrance" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 10)
 
@@ -328,7 +294,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.5, -8)
 [node name="Enemy_Z2_Perch" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -18)
 
-# Zone 3: Grand arena enemies (5)
 [node name="Enemy_Z3_Center1" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -38)
 
@@ -344,7 +309,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.5, -58)
 [node name="Enemy_Z3_Sniper" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 5.5, -55)
 
-# Zone 4: Vertical platforming sector enemies (4)
 [node name="Enemy_Z4_Tier1" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
 
@@ -357,7 +321,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.5, -105)
 [node name="Enemy_Z4_Apex" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -116)
 
-# Zone 5: CQC bunker & killbox enemies (5)
 [node name="Enemy_Z5_Bend1Ambush" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -138)
 
