@@ -435,25 +435,30 @@ func _fire_anvil_piston():
 		head.trigger_muzzle_flash(true)
 		AudioManager.play_sound("shotgun_shot")
 		
+		# Сортируем врагов по расстоянию от игрока (ближайший — первая цель цепи)
+		enemies_in_cone.sort_custom(func(a, b): return a["dist"] < b["dist"])
+		
 		var primary_hit_pos = enemies_in_cone[0]["hit_pos"]
 		
-		for data in enemies_in_cone:
+		for idx in range(enemies_in_cone.size()):
+			var data = enemies_in_cone[idx]
 			var target = data["enemy"]
 			var hit_pos = data["hit_pos"]
+			var chain_depth = idx
 			
-			var enemy_feet_y = target.global_position.y
-			var enemy_center = target.global_position + Vector3(0, 0.9, 0)
-			var to_enemy_center = (enemy_center - from_pos).normalized()
+			# Фактическая высота точки контакта на теле врага
+			# Враг: капсула тела (y от -1.0 до +0.25) + сфера головы (y от +0.21 до +0.89)
+			var feet_y = target.global_position.y - 1.0
+			var head_top_y = target.global_position.y + 0.89
+			var total_height = head_top_y - feet_y # ~1.89м
 			
-			# Вычисляем высоту точки прицеливания на дистанции врага
-			var forward_dist = (enemy_center - from_pos).dot(aim_dir)
-			var aim_point_at_enemy = from_pos + aim_dir * max(0.5, forward_dist)
-			var aim_height_rel_to_feet = aim_point_at_enemy.y - enemy_feet_y
-			var aim_pitch_diff = aim_dir.y - to_enemy_center.y
+			# Определяем фактическую высоту точки контакта на модели цели
+			var contact_y = hit_pos.y
+			var rel_height = clamp((contact_y - feet_y) / max(0.1, total_height), 0.0, 1.0)
 			
-			# Условие подброса: прицел направлен на нижнюю часть модели врага (уровень ног <= 0.65м)
-			# при крутом угле взгляда вниз относительно центра модели цели
-			var is_aiming_at_legs = (aim_height_rel_to_feet <= 0.65) and (aim_dir.y < -0.15 or aim_pitch_diff < -0.10)
+			# Условие подброса: точка контакта в нижних ~25-30% капсулы (rel_height <= 0.28, уровень ног)
+			# Зависит ИСКЛЮЧИТЕЛЬНО от высоты точки контакта на теле цели, угол камеры не участвует
+			var is_aiming_at_legs = (rel_height <= 0.28)
 			
 			var push_vec: Vector3 = Vector3.ZERO
 			if is_aiming_at_legs:
@@ -461,17 +466,17 @@ func _fire_anvil_piston():
 				var upward_impulse = 21.0
 				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
 				push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
-				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (impulse: %.1f)" % [target.name, upward_impulse])
+				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
 			else:
 				# Горизонтальный отброс от игрока в упор (38-45 м/с -> 42.0 м/с)
 				var push_speed = 42.0
 				var push_dir = aim_dir.normalized()
 				push_vec = push_dir * push_speed
 				push_vec.y = clamp(push_vec.y, 3.0, 7.0)
-				print("[ANVIL PISTON] HORIZONTAL SLAM PUSH -> %s with speed %.1f" % [target.name, push_speed])
+				print("[ANVIL PISTON] HORIZONTAL SLAM PUSH -> %s (rel_height: %.2f, speed: %.1f)" % [target.name, rel_height, push_speed])
 				
-			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam
-			target.take_damage(0, push_vec, hit_pos, false, false, true, false)
+			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
+			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
 			
 		spawn_piston_tracer(start_pos, primary_hit_pos, false)
 		return
@@ -479,6 +484,7 @@ func _fire_anvil_piston():
 	# 2. Врагов нет — проверяем попадание конуса в статичную геометрию (стена, пол, потолок)
 	var hit_geom: bool = false
 	var geom_hit_pos: Vector3 = from_pos + aim_dir * PISTON_RANGE
+	var geom_hit_normal: Vector3 = Vector3.UP
 	var geom_hit_dist: float = PISTON_RANGE
 	
 	var geom_ray = PhysicsRayQueryParameters3D.create(from_pos, from_pos + aim_dir * PISTON_RANGE)
@@ -491,6 +497,7 @@ func _fire_anvil_piston():
 	if not geom_res.is_empty():
 		hit_geom = true
 		geom_hit_pos = geom_res.position
+		geom_hit_normal = geom_res.normal
 		geom_hit_dist = from_pos.distance_to(geom_hit_pos)
 	else:
 		# Проверяем лучи по периметру конуса (~18 градусов)
@@ -515,10 +522,11 @@ func _fire_anvil_piston():
 					hit_geom = true
 					geom_hit_dist = d
 					geom_hit_pos = sub_res.position
+					geom_hit_normal = sub_res.normal
 					
 	if hit_geom:
 		# Self-launch при упоре в любую статичную геометрию (стена, пол, потолок)
-		_perform_self_launch(aim_dir, geom_hit_pos)
+		_perform_self_launch(aim_dir, geom_hit_pos, geom_hit_normal)
 	else:
 		# Выстрел в пустое пространство (> 5 метров)
 		anvil_alt_timer = anvil_alt_cooldown
@@ -528,7 +536,7 @@ func _fire_anvil_piston():
 		spawn_piston_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, false)
 		print("[ANVIL PISTON] Air blast (no surface or enemy in range)")
 
-func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3):
+func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, surface_normal: Vector3):
 	var player_node = get_parent()
 	if not is_instance_valid(player_node):
 		return
@@ -549,16 +557,37 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3):
 		mult = 0.35
 	anvil_self_launch_chain += 1
 	
-	# Импульс ВСЕГДА направлен строго противоположно направлению взгляда камеры ("толкает назад от того, куда целится")
-	var launch_dir = -aim_dir.normalized()
 	var base_impulse: float = 19.5
 	var final_impulse: float = base_impulse * mult
-	var impulse_vec = launch_dir * final_impulse
 	
-	player_node.velocity = impulse_vec
-	# Если отталкиваемся от стены стоя на полу — даем стартовый отрыв от земли против трения
-	if launch_dir.y >= 0.0 and player_node.is_on_floor():
-		player_node.velocity.y = max(impulse_vec.y, 4.5)
+	# Проверяем тип поверхности по нормали в точке попадания:
+	# Если нормаль близка к вертикали (пол в пределах ~35-40 градусов: cos(40 deg) ~ 0.766)
+	var is_floor_surface: bool = surface_normal.dot(Vector3.UP) >= 0.75
+	
+	if is_floor_surface:
+		# ПОЛ: преимущественно вертикальный импульс вверх, горизонтальная скорость полностью сохраняется!
+		if player_node.velocity.y < 0.0:
+			player_node.velocity.y = max(0.0, player_node.velocity.y) + final_impulse
+		else:
+			player_node.velocity.y += final_impulse
+	else:
+		# СТЕНА / ПОТОЛОК: импульс в направлении -aim_dir, ДОБАВЛЯЕТСЯ к текущей скорости
+		var push_dir = -aim_dir.normalized()
+		var impulse_vec = push_dir * final_impulse
+		player_node.velocity.x += impulse_vec.x
+		player_node.velocity.z += impulse_vec.z
+		
+		if impulse_vec.y > 0.0:
+			if player_node.velocity.y < 0.0:
+				player_node.velocity.y = max(0.0, player_node.velocity.y) + impulse_vec.y
+			else:
+				player_node.velocity.y += impulse_vec.y
+		else:
+			player_node.velocity.y += impulse_vec.y
+			
+		# Если отталкиваемся от стены стоя на полу — даем стартовый отрыв от земли против трения
+		if impulse_vec.y >= 0.0 and player_node.is_on_floor():
+			player_node.velocity.y = max(player_node.velocity.y, 4.5)
 		
 	if "has_jumped" in player_node:
 		player_node.has_jumped = true
@@ -574,8 +603,8 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3):
 	var start_pos = head.get_muzzle_position()
 	spawn_piston_tracer(start_pos, surface_hit_pos, true)
 	
-	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Dir: %s | Impulse: %.1f | Vel: %s" % [
-		anvil_self_launch_chain, mult, launch_dir, final_impulse, player_node.velocity
+	print("[ANVIL PISTON] SELF-LAUNCH! Floor: %s | Chain: %d | Mult: %.2f | Impulse: %.1f | Vel: %s" % [
+		is_floor_surface, anvil_self_launch_chain, mult, final_impulse, player_node.velocity
 	])
 
 func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: bool = false):

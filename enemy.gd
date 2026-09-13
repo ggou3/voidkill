@@ -38,6 +38,7 @@ var current_target_vel: Vector3 = Vector3.ZERO
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
 var explosion_chain_depth: int = 0
+var slam_chain_depth: int = 0
 var slow_factor: float = 1.0
 var slow_sources: int = 0
 var poison_dot_duration: float = 0.0
@@ -481,6 +482,9 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	else:
 		explosion_chain_depth = 0
 		
+	if is_shockwave:
+		slam_chain_depth = max(0, source_chain_depth)
+		
 	was_killed_by_melee = is_melee or is_shockwave or is_execute
 	health -= amount
 	_update_health_bar()
@@ -606,10 +610,25 @@ func _check_wall_slam(delta: float):
 
 func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 	wall_slam_timer = 0.0 # Предотвращаем повторное срабатывание в течение одного отброса
-	var wall_damage = int(round(impact_speed * wall_slam_damage_multiplier))
-	print("[%s] Wall slam! Impact speed: %.1f, damage: %d" % [name, impact_speed, wall_damage])
+	var base_wall_damage = int(round(impact_speed * wall_slam_damage_multiplier))
 	
-	# Если столкновение произошло с другим врагом — наносим урон от столкновения обоим
+	# Затухание урона от столкновений по цепочке (100% -> 60% -> 35% -> 20%)
+	var my_mult: float = 1.0
+	if slam_chain_depth == 0:
+		my_mult = 1.0
+	elif slam_chain_depth == 1:
+		my_mult = 0.60
+	elif slam_chain_depth == 2:
+		my_mult = 0.35
+	else:
+		my_mult = 0.20
+		
+	var wall_damage = int(round(base_wall_damage * my_mult))
+	print("[%s] Wall slam! Speed: %.1f, chain_depth: %d, damage: %d (base: %d)" % [
+		name, impact_speed, slam_chain_depth, wall_damage, base_wall_damage
+	])
+	
+	# Если столкновение произошло с другим врагом — наносим collateral_slam со следующим уровнем глубины цепи
 	var other = col.get_collider()
 	if is_instance_valid(other) and other != self:
 		var target: Node = null
@@ -620,8 +639,18 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		elif other.get_parent() and other.get_parent().has_method("take_damage"):
 			target = other.get_parent()
 		if target and target != self and target.has_method("take_damage"):
-			print("[%s] Collision hit other enemy: %s for %d damage!" % [name, target.name, wall_damage])
-			target.take_damage(wall_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), false, false, true, false)
+			var next_depth = slam_chain_depth + 1
+			var next_mult: float = 1.0
+			if next_depth == 1:
+				next_mult = 0.60
+			elif next_depth == 2:
+				next_mult = 0.35
+			else:
+				next_mult = 0.20
+			var collateral_damage = int(round(base_wall_damage * next_mult))
+			print("[%s] Collateral hit %s! Depth: %d, damage: %d" % [name, target.name, next_depth, collateral_damage])
+			# Импульс отброса сохраняется, урон ослаблен по цепи:
+			target.take_damage(collateral_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), false, false, true, false, next_depth)
 	
 	# Сочный разлёт крови на стену в точке удара
 	if blood_splatter_scene:
