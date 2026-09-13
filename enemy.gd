@@ -35,6 +35,10 @@ var path_update_timer: float = 0.0
 const PATH_UPDATE_INTERVAL: float = 0.35
 var debug_diag_timer: float = 0.0
 var current_target_vel: Vector3 = Vector3.ZERO
+var unreachable_timer: float = 0.0
+const UNREACHABLE_TIMEOUT: float = 2.0
+var repath_cooldown_timer: float = 0.0
+const REPATH_COOLDOWN: float = 2.0
 
 var is_inflated: bool = false
 var was_killed_by_melee: bool = false
@@ -234,10 +238,14 @@ func set_state(new_state: State):
 		State.DEAD:
 			die()
 
-func _process_idle(_delta):
+func _process_idle(delta):
 	velocity.x = knockback_velocity.x
 	velocity.z = knockback_velocity.z
 	
+	if repath_cooldown_timer > 0.0:
+		repath_cooldown_timer -= delta
+		return
+		
 	# Поиск игрока в радиусе детекции
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player):
@@ -265,23 +273,37 @@ func _process_chase(delta):
 		path_update_timer = PATH_UPDATE_INTERVAL
 		nav_agent.target_position = target_player.global_position
 		
+	# Проверка достижимости цели (защита от бесконечного застревания в недостижимой точке)
+	var is_reachable = nav_agent.is_target_reachable()
+	if not is_reachable:
+		unreachable_timer += delta
+		if unreachable_timer >= UNREACHABLE_TIMEOUT:
+			print("[%s] Target unreachable for %.1fs, returning to IDLE with repath cooldown" % [name, unreachable_timer])
+			unreachable_timer = 0.0
+			repath_cooldown_timer = REPATH_COOLDOWN
+			set_state(State.IDLE)
+			return
+	else:
+		unreachable_timer = max(0.0, unreachable_timer - delta * 2.0)
+		
 	var next_path_pos = nav_agent.get_next_path_position()
 	var move_dir = next_path_pos - global_position
 	move_dir.y = 0.0
 	
 	# Фолбэк: если nav_agent вернул текущую позицию (нет пути или точка на краю navmesh),
-	# используем прямое направление на игрока
+	# используем прямое направление на игрока ТОЛЬКО если путь в целом достижим или в упор (dist <= 6м)
 	if move_dir.length_squared() <= 0.01 and dist_to_player > attack_range:
-		var direct = target_player.global_position - global_position
-		direct.y = 0.0
-		if direct.length_squared() > 0.01:
-			move_dir = direct
+		if is_reachable or dist_to_player <= 6.0:
+			var direct = target_player.global_position - global_position
+			direct.y = 0.0
+			if direct.length_squared() > 0.01:
+				move_dir = direct
 			
 	# Диагностический лог в CHASE (раз в 0.5с)
 	debug_diag_timer -= delta
 	if debug_diag_timer <= 0.0:
 		debug_diag_timer = 0.5
-		print("[%s CHASE] dist: %.2f | next_pos: %s | my_pos: %s | move_dir: %s | vel: (%.1f, %.1f) | reachable: %s" % [
+		print("[%s CHASE] dist: %.2f | next_pos: %s | my_pos: %s | move_dir: %s | vel: (%.1f, %.1f) | reachable: %s | unreach_t: %.1f" % [
 			name,
 			dist_to_player,
 			next_path_pos,
@@ -289,7 +311,8 @@ func _process_chase(delta):
 			move_dir,
 			velocity.x,
 			velocity.z,
-			nav_agent.is_target_reachable()
+			is_reachable,
+			unreachable_timer
 		])
 	
 	if move_dir.length_squared() > 0.05:
@@ -386,7 +409,10 @@ func perform_attack():
 		target_player.take_damage(attack_damage, attack_impulse, target_player.global_position)
 
 func start_chase(player: Node3D):
+	if repath_cooldown_timer > 0.0:
+		return
 	target_player = player
+	unreachable_timer = 0.0
 	set_state(State.CHASE)
 	if is_instance_valid(nav_agent):
 		nav_agent.target_position = target_player.global_position
@@ -394,6 +420,8 @@ func start_chase(player: Node3D):
 func _on_detection_area_body_entered(body: Node3D):
 	if body.is_in_group("player") and current_state == State.IDLE:
 		if "is_dead" in body and body.is_dead:
+			return
+		if repath_cooldown_timer > 0.0:
 			return
 		start_chase(body)
 
