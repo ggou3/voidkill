@@ -485,24 +485,33 @@ func _fire_anvil_piston():
 			var contact_y = hit_pos.y
 			var rel_height = clamp((contact_y - feet_y) / max(0.1, total_height), 0.0, 1.0)
 			
+			# Определение, находится ли враг на земле
+			var target_on_floor: bool = false
+			if target.has_method("is_on_floor"):
+				target_on_floor = target.is_on_floor()
+			elif target.get_parent() and target.get_parent().has_method("is_on_floor"):
+				target_on_floor = target.get_parent().is_on_floor()
+				
 			# Условие подброса: точка контакта в нижних ~25-30% капсулы (rel_height <= 0.28, уровень ног)
-			# Зависит ИСКЛЮЧИТЕЛЬНО от высоты точки контакта на теле цели, угол камеры не участвует
-			var is_aiming_at_legs = (rel_height <= 0.28)
+			# И враг обязательно стоит на земле (is_on_floor == true).
+			# Если враг уже в воздухе — подброс не применяется, выполняется стандартный 3D-толчок по вектору камеры.
+			var is_aiming_at_legs = (rel_height <= 0.28) and target_on_floor
 			
 			var push_vec: Vector3 = Vector3.ZERO
 			if is_aiming_at_legs:
-				# Вертикальный подброс врага вверх (аналог self-launch)
+				# Вертикальный подброс врага вверх (только для наземных целей)
 				var upward_impulse = 21.0
 				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
 				push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
-				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
+				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, on_floor: true, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
 			else:
 				# Полный 3D-вектор толчка от игрока с учетом вертикального угла камеры (aim_dir.y):
-				# Если игрок целится сверху вниз, толчок направляет врага в пол для срабатывания wall_slam
+				# Если игрок целится сверху вниз, толчок направляет врага в пол для срабатывания wall_slam.
+				# Также применяется для любых попаданий по врагам, уже находящимся в воздухе.
 				var push_speed = 42.0
 				var push_dir = aim_dir.normalized()
 				push_vec = push_dir * push_speed
-				print("[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, speed: %.1f, push_vec: %s)" % [target.name, rel_height, push_speed, push_vec])
+				print("[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, on_floor: %s, speed: %.1f, push_vec: %s)" % [target.name, rel_height, str(target_on_floor), push_speed, push_vec])
 				
 			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
 			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth)
