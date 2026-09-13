@@ -24,7 +24,7 @@ enum State {
 @export var reaction_delay: float = 0.4
 @export var lunge_min_range: float = 5.0
 @export var lunge_max_range: float = 8.5
-@export var lunge_speed: float = 30.0
+@export var lunge_speed: float = 25.0
 @export var lunge_damage: int = 20
 @export var lunge_telegraph_time: float = 0.38
 @export var lunge_dash_time: float = 0.30
@@ -536,9 +536,9 @@ func _calculate_lunge_vector_and_distance() -> Dictionary:
 	else:
 		dir_3d = Vector3.UP if dy > 0.0 else -transform.basis.z.normalized()
 		
-	# Дистанция рывка 7.5 - 9.0 метров с пролётом дальше текущей позиции цели
+	# Дистанция рывка 6.5 - 7.5 метров с пролётом дальше текущей позиции цели
 	var total_dist = diff.length()
-	var target_dist = clamp(total_dist + 1.5, 7.5, 9.0)
+	var target_dist = clamp(total_dist + 1.5, 6.5, 7.5)
 	
 	return {
 		"dir": dir_3d,
@@ -639,7 +639,7 @@ func _process_lunge(delta: float):
 				
 		if lunge_timer <= 0.0:
 			# МОМЕНТ ЗАВЕРШЕНИЯ ТЕЛЕГРАФА:
-			# Фиксируем 3D-направление (с вертикальным наведением до 38°) и полную дистанцию рывка (7.5-9м)
+			# Фиксируем 3D-направление (с вертикальным наведением до 38°) и полную дистанцию рывка (6.5-7.5м)
 			var lunge_data = _calculate_lunge_vector_and_distance()
 			lunge_dir = lunge_data["dir"]
 			lunge_target_distance = lunge_data["dist"]
@@ -662,7 +662,7 @@ func _process_lunge(delta: float):
 			# Защитный таймаут на основе дистанции и скорости (с запасом 0.08с)
 			lunge_timer = (lunge_target_distance / lunge_speed) + 0.08
 			
-			# Применяем импульс рывка (28-32 м/с) строго по зафиксированному 3D-направлению
+			# Применяем импульс рывка (24-26 м/с) строго по зафиксированному 3D-направлению
 			velocity = lunge_dir * lunge_speed
 			
 			# Визуал фазы рывка: вытягивание вперёд, алые глаза
@@ -699,7 +699,7 @@ func _process_lunge(delta: float):
 					_on_lunge_hit_player(collider)
 					break
 					
-			# 2. Дополнительная проверка расстояния (защита от туннелирования на высокой скорости 30 м/с)
+			# 2. Дополнительная проверка расстояния (защита от туннелирования на высокой скорости)
 			if not lunge_has_hit and is_instance_valid(target_player):
 				var dist = global_position.distance_to(target_player.global_position)
 				if dist <= 1.6:
@@ -724,8 +724,8 @@ func _process_lunge(delta: float):
 				
 	elif lunge_phase == 3:
 		# Фаза 3: Свободное падение по баллистической траектории с сохранением инерции
-		# В воздухе действует лёгкое сопротивление воздуха на горизонтальную скорость
-		var air_drag = 0.8
+		# В воздухе действует сопротивление воздуха на горизонтальную скорость
+		var air_drag = 4.0
 		velocity.x = lerp(velocity.x, 0.0, air_drag * delta)
 		velocity.z = lerp(velocity.z, 0.0, air_drag * delta)
 		# Вертикальная скорость velocity.y падает под действием гравитации в _physics_process()
