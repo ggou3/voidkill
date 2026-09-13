@@ -102,8 +102,15 @@ var wallrun_exhausted: bool = false
 @onready var skills = $SkillManager
 @onready var speed_label = $HUD/SpeedLabel 
 @onready var blood_buff_label = get_node_or_null("HUD/BloodBuffLabel")
-@onready var health_label = get_node_or_null("HUD/HealthLabel") 
+@onready var health_bar: ProgressBar = get_node_or_null("HUD/HealthBar")
+@onready var hp_text: Label = get_node_or_null("HUD/HealthBar/HPText")
+@onready var health_label: Label = hp_text
 @onready var crosshair = get_node_or_null("HUD/Crosshair")
+
+var _health_bg_style: StyleBoxFlat
+var _health_fill_style: StyleBoxFlat
+var _health_tween: Tween = null
+var _last_displayed_health: int = -1
 @onready var game_over_screen = get_node_or_null("HUD/GameOverScreen")
 @onready var restart_button = get_node_or_null("HUD/GameOverScreen/VBoxContainer/RestartButton")
 @onready var post_process_rect: ColorRect = get_node_or_null("CanvasLayer/ColorRect")
@@ -143,6 +150,7 @@ func _ready():
 	prev_air_time = 0.0
 	bhop_chain = 0
 	health = max_health
+	_setup_health_bar()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	collision_shape.shape = collision_shape.shape.duplicate()
 	floor_snap_length = 0.4 
@@ -198,8 +206,6 @@ func _input(event):
 
 func _process(_delta):
 	if is_dead:
-		if health_label:
-			health_label.text = "HP: 0"
 		return
 		
 	var current_speed: float = Vector2(velocity.x, velocity.z).length()
@@ -207,8 +213,8 @@ func _process(_delta):
 	if bhop_chain > 0:
 		bhop_text = (" (BLOOD BHOP x" + str(bhop_chain) + ")") if is_blood_active() else (" (BHOP x" + str(bhop_chain) + ")")
 	speed_label.text = "SPEED: " + str(snapped(current_speed, 0.1)) + bhop_text
-	if health_label:
-		health_label.text = "HP: " + str(health)
+	if health != _last_displayed_health:
+		_update_health_display(true)
 	weapons.update_hud(has_infinite_ammo())
 	
 	if blood_buff_label:
@@ -719,10 +725,71 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 		
 	return vel_2d
 
+func _setup_health_bar():
+	if not health_bar:
+		return
+		
+	_health_bg_style = StyleBoxFlat.new()
+	_health_bg_style.bg_color = Color(0.08, 0.08, 0.09, 0.85)
+	_health_bg_style.border_color = Color(0.35, 0.35, 0.38, 0.9)
+	_health_bg_style.set_border_width_all(2)
+	_health_bg_style.set_corner_radius_all(3)
+	
+	_health_fill_style = StyleBoxFlat.new()
+	_health_fill_style.bg_color = Color(0.2, 0.85, 0.3, 1.0)
+	_health_fill_style.set_corner_radius_all(2)
+	
+	health_bar.add_theme_stylebox_override("background", _health_bg_style)
+	health_bar.add_theme_stylebox_override("fill", _health_fill_style)
+	
+	health_bar.max_value = max_health
+	health_bar.value = health
+	_update_health_display(false)
+
+func _update_health_display(animate: bool = true):
+	_last_displayed_health = health
+	var current_hp = max(0, health)
+	
+	if hp_text:
+		hp_text.text = "%d / %d" % [current_hp, max_health]
+		
+	if not health_bar:
+		return
+		
+	health_bar.max_value = max_health
+	
+	# Пороги здоровья:
+	# > 50%: Зеленый / нейтральный
+	# 25% - 50%: Желтый
+	# < 25%: Красный критический
+	var ratio = float(current_hp) / float(max_health) if max_health > 0 else 0.0
+	var target_color: Color
+	if ratio > 0.5:
+		target_color = Color(0.2, 0.85, 0.3, 1.0)
+	elif ratio >= 0.25:
+		target_color = Color(0.95, 0.8, 0.15, 1.0)
+	else:
+		target_color = Color(0.95, 0.2, 0.2, 1.0)
+		
+	if animate and is_inside_tree():
+		if _health_tween and _health_tween.is_valid():
+			_health_tween.kill()
+		_health_tween = create_tween().set_parallel(true)
+		_health_tween.tween_property(health_bar, "value", float(current_hp), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		if _health_fill_style:
+			_health_tween.tween_property(_health_fill_style, "bg_color", target_color, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	else:
+		if _health_tween and _health_tween.is_valid():
+			_health_tween.kill()
+		health_bar.value = float(current_hp)
+		if _health_fill_style:
+			_health_fill_style.bg_color = target_color
+
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
 	if is_dead:
 		return
 	health = max(0, health - amount)
+	_update_health_display(true)
 	if skills and skills.has_method("drop_bpm_on_damage"):
 		skills.drop_bpm_on_damage()
 	if head:
@@ -738,8 +805,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 	var old_health = health
 	health = min(max_health, health + amount)
 	var gained = health - old_health
-	if health_label:
-		health_label.text = "HP: " + str(health)
+	_update_health_display(true)
 	AudioManager.play_sound("player_heal")
 	_spawn_heal_feedback(amount, is_melee_bonus)
 
@@ -777,6 +843,8 @@ func die():
 	if is_dead:
 		return
 	is_dead = true
+	health = 0
+	_update_health_display(false)
 	end_wallrun()
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
@@ -792,8 +860,6 @@ func die():
 	AudioManager.set_slide_active(false)
 	collision_shape.shape.height = 2.0
 	collision_shape.position.y = 0.0
-	if health_label:
-		health_label.text = "HP: 0"
 	
 	var gm = _get_game_manager()
 	if gm:
