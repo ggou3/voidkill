@@ -8,8 +8,8 @@ enum State {
 }
 
 @export var max_health: int = 100
-@export var move_speed: float = 5.5
-@export var acceleration: float = 4.0
+@export var move_speed: float = 7.5
+@export var acceleration: float = 5.2
 @export var attack_damage: int = 15
 @export var attack_range: float = 2.0
 @export var attack_cooldown: float = 1.0
