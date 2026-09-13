@@ -24,12 +24,15 @@ var dash_current_speed: float = 16.0
 var is_slamming = false
 var slam_timer = 0.0
 
-# --- BPM SYSTEM (Сердцебиение) ---
+# --- BPM SYSTEM (Сердцебиение) & COMBAT MOMENTUM ---
 const MIN_BPM: float = 50.0
 const MAX_BPM: float = 200.0
 var bpm: float = MIN_BPM
 var time_since_bpm_gain: float = 0.0
 var last_kill_weapon: String = ""
+
+var combat_momentum: float = 1.0
+var time_since_momentum_gain: float = 0.0
 
 @onready var player = $".."
 @onready var head = $"../Head"
@@ -72,15 +75,20 @@ func _process(delta):
 			
 	if slam_timer > 0: slam_timer -= delta
 	
-	# BPM: активный кровавый сёрф (слайд по луже крови): +2 BPM/сек
-	if is_instance_valid(player) and player.is_sliding and player.is_on_blood:
-		add_bpm(2.0 * delta)
-	else:
-		time_since_bpm_gain += delta
-		
 	# BPM: пассивный спад к 50.0 при отсутствии событий роста за последние 2 секунды: -4 BPM/сек
+	time_since_bpm_gain += delta
 	if time_since_bpm_gain >= 2.0 and bpm > MIN_BPM:
 		bpm = max(MIN_BPM, bpm - 4.0 * delta)
+		
+	# Combat Momentum: активный кровавый сёрф (слайд по луже крови): +0.05 к моментуму/сек
+	if is_instance_valid(player) and player.is_sliding and player.is_on_blood:
+		add_combat_momentum(0.05 * delta)
+	else:
+		time_since_momentum_gain += delta
+		
+	# Combat Momentum: пассивный спад при отсутствии приращений за последние 1.5 секунды: -0.1/сек (не ниже 1.0)
+	if time_since_momentum_gain >= 1.5 and combat_momentum > 1.0:
+		combat_momentum = max(1.0, combat_momentum - 0.1 * delta)
 		
 	# Индикация BPM в HUD
 	if bpm_label:
@@ -99,6 +107,12 @@ func _process(delta):
 			dash_label.text = "DASH: " + str(MAX_DASH) + " (READY)"
 
 # --- BPM API ---
+
+func add_combat_momentum(amount: float):
+	if amount <= 0.0:
+		return
+	combat_momentum = clampf(combat_momentum + amount, 1.0, 2.0)
+	time_since_momentum_gain = 0.0
 
 func add_bpm(amount: float):
 	if amount <= 0.0:

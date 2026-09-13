@@ -462,8 +462,8 @@ func handle_jump() -> bool:
 				head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
 				time_on_ground = 0.0
 				prev_air_time = 0.0
-				if skills and skills.has_method("add_bpm"):
-					skills.add_bpm(3.5)
+				if skills and skills.has_method("add_combat_momentum"):
+					skills.add_combat_momentum(0.05)
 				
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
