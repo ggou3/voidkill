@@ -134,6 +134,11 @@ func get_current_max_speed() -> float:
 	var bpm_ratio = clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
 	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_ratio)
 
+func get_bpm_damage_reduction() -> float:
+	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
+	var bpm_ratio = clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
+	return lerp(0.0, 0.30, bpm_ratio)
+
 func _ready():
 	is_dead = false
 	is_wallrunning = false
@@ -786,9 +791,11 @@ func _update_health_display(animate: bool = true):
 			_health_fill_style.bg_color = target_color
 
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
-	if is_dead:
+	if is_dead or amount <= 0:
 		return
-	health = max(0, health - amount)
+	var reduction = get_bpm_damage_reduction()
+	var final_damage = max(1, int(round(float(amount) * (1.0 - reduction))))
+	health = max(0, health - final_damage)
 	_update_health_display(true)
 	if skills and skills.has_method("drop_bpm_on_damage"):
 		skills.drop_bpm_on_damage()
