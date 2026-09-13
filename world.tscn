@@ -147,3 +147,36 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.97199, 1.499999, 13.829231
 
 [node name="Enemy5" parent="." unique_id=263087414 instance=ExtResource("2_fj7yv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.511929, 1.499999, 13.479842)
+
+[node name="Enemy8" parent="." unique_id=1385106472 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.141079, 1.499999, 18.009266)
+
+[node name="Enemy9" parent="." unique_id=532685386 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.585528, 1.499999, 19.369003)
+
+[node name="Enemy10" parent="." unique_id=1046832260 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.589489, 1.499999, 19.190437)
+
+[node name="Enemy11" parent="." unique_id=121859366 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39.203056, 1.499999, 0.27721024)
+
+[node name="Enemy12" parent="." unique_id=1431484 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.57531, 1.499999, 7.397129)
+
+[node name="Enemy13" parent="." unique_id=1897983986 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.447205, 1.499999, -1.3644791)
+
+[node name="Enemy14" parent="." unique_id=567637708 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38.550938, 1.499999, -5.518898)
+
+[node name="Enemy15" parent="." unique_id=1173690020 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.100101, 1.499999, 6.0826817)
+
+[node name="Enemy16" parent="." unique_id=285830963 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.40879, 1.4999971, 12.996422)
+
+[node name="Enemy17" parent="." unique_id=388801758 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.842916, 1.4999971, -5.0618935)
+
+[node name="Enemy18" parent="." unique_id=1036245705 instance=ExtResource("2_fj7yv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.563696, 1.4999971, -10.342056)

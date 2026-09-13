@@ -268,7 +268,7 @@ func update_hud(has_infinite_ammo: bool):
 					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
 				elif i == 2 and injector_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
-				slot["ammo_text"].text = "INF (BLOOD)" + alt_suffix
+				slot["ammo_text"].text = "INF (OVERDRIVE)" + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
 				slot["pbar"].visible = false
 			else:

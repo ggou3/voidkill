@@ -119,8 +119,13 @@ func _get_game_manager() -> Node:
 func is_blood_active() -> bool:
 	return is_on_blood or (skills != null and skills.has_blood_buff())
 
+func has_infinite_ammo() -> bool:
+	return skills != null and skills.has_method("get_bpm_tier") and skills.get_bpm_tier() == "OVERDRIVE"
+
 func get_current_max_speed() -> float:
-	return blood_buffed_max_speed if is_blood_active() else normal_max_speed
+	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
+	var bpm_ratio = clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
+	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_ratio)
 
 func _ready():
 	is_dead = false
@@ -172,9 +177,9 @@ func _input(event):
 		elif event.keycode == KEY_3: weapons.switch_weapon(2)
 			
 	if event.is_action_pressed("shoot"):
-		weapons.shoot(is_sliding and skills.has_blood_buff())
+		weapons.shoot(has_infinite_ammo())
 	elif event.is_action_pressed("alt_fire") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
-		weapons.alt_shoot(is_sliding and skills.has_blood_buff())
+		weapons.alt_shoot(has_infinite_ammo())
 	if event.is_action_pressed("reload"):
 		weapons.reload()
 		
@@ -204,7 +209,7 @@ func _process(_delta):
 	speed_label.text = "SPEED: " + str(snapped(current_speed, 0.1)) + bhop_text
 	if health_label:
 		health_label.text = "HP: " + str(health)
-	weapons.update_hud(is_sliding and skills.has_blood_buff())
+	weapons.update_hud(has_infinite_ammo())
 	
 	if blood_buff_label:
 		var blood_active = is_blood_active()
@@ -649,7 +654,7 @@ func handle_slide_physics(vel_2d: Vector2, direction: Vector3, delta: float) -> 
 		var floor_normal = get_floor_normal()
 		if floor_normal.y < 0.99: 
 			var slope_down = Vector3.DOWN.slide(floor_normal).normalized()
-			var max_slope = min(20.0 if is_blood_active() else 14.5, cap)
+			var max_slope = cap
 			if vel_2d.length() < max_slope:
 				vel_2d += Vector2(slope_down.x, slope_down.z) * 32.0 * delta 
 				
