@@ -708,10 +708,45 @@ func _process_lunge(delta: float):
 		# Расчёт фактически пройденного 3D-расстояния от точки старта рывка
 		var covered_dist = global_position.distance_to(lunge_start_pos)
 		
-		# Завершение рывка строго по прохождению полной дистанции или по истечению таймаута
+		# Завершение активного импульса рывка строго по прохождению полной дистанции или по истечению таймаута
 		if covered_dist >= lunge_target_distance or lunge_timer <= 0.0:
-			print("[%s] LUNGE DASH FINISHED: traveled %.2fm / %.2fm (hit_player: %s)" % [
-				name, covered_dist, lunge_target_distance, lunge_has_hit
+			print("[%s] LUNGE DASH DISTANCE REACHED: traveled %.2fm / %.2fm (hit_player: %s, on_floor: %s). Handing over to ballistic inertia." % [
+				name, covered_dist, lunge_target_distance, lunge_has_hit, is_on_floor()
+			])
+			_reset_lunge_visuals()
+			if not is_on_floor():
+				# В воздухе: переходим в фазу 3 (свободное падение по баллистической траектории с сохранением инерции)
+				lunge_phase = 3
+				lunge_timer = 2.5 # Защитный таймаут падения
+			else:
+				# Уже на земле: сохраняем скорость и передаем управление CHASE
+				end_lunge()
+				
+	elif lunge_phase == 3:
+		# Фаза 3: Свободное падение по баллистической траектории с сохранением инерции
+		# В воздухе действует лёгкое сопротивление воздуха на горизонтальную скорость
+		var air_drag = 0.8
+		velocity.x = lerp(velocity.x, 0.0, air_drag * delta)
+		velocity.z = lerp(velocity.z, 0.0, air_drag * delta)
+		# Вертикальная скорость velocity.y падает под действием гравитации в _physics_process()
+		
+		# Проверка нанесения урона при столкновении с игроком в падении
+		if not lunge_has_hit:
+			for i in range(get_slide_collision_count()):
+				var col = get_slide_collision(i)
+				var collider = col.get_collider()
+				if is_instance_valid(collider) and collider.is_in_group("player"):
+					_on_lunge_hit_player(collider)
+					break
+			if not lunge_has_hit and is_instance_valid(target_player):
+				var dist = global_position.distance_to(target_player.global_position)
+				if dist <= 1.6:
+					_on_lunge_hit_player(target_player)
+					
+		# Приземление: возврат управления NavigationAgent3D только после касания земли (или по таймауту)
+		if is_on_floor() or lunge_timer <= 0.0:
+			print("[%s] LUNGE LANDED on floor! (is_on_floor: %s, vel: (%.1f, %.1f, %.1f)). Resuming chase." % [
+				name, is_on_floor(), velocity.x, velocity.y, velocity.z
 			])
 			end_lunge()
 
@@ -728,10 +763,9 @@ func _on_lunge_hit_player(player: Node3D):
 func end_lunge():
 	_reset_lunge_visuals()
 	lunge_phase = 0
-	# Сброс остаточной скорости выпада
-	velocity.x *= 0.2
-	velocity.z *= 0.2
-	velocity.y = min(velocity.y, 2.0)
+	# Сохраняем текущую скорость по инерции, НЕ гасим velocity резко!
+	# Управление передается обратно NavigationAgent3D / _apply_movement,
+	# которая плавно сглаживает скорость через acceleration
 	set_state(State.CHASE)
 
 func _reset_lunge_visuals():
