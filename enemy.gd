@@ -958,7 +958,7 @@ func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float):
 	tween.chain().tween_callback(sphere.queue_free)
 
 func _trigger_needle_burst(was_inflated: bool, depth: int):
-	const NEEDLE_BURST_RADIUS: float = 3.0
+	var burst_radius: float = 6.0 if was_inflated else 4.0
 	var count = needle_count
 	needle_count = 0
 	needle_timers.clear()
@@ -986,13 +986,13 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 			continue
 		var e_pos = e.global_position + Vector3(0.0, 0.85, 0.0)
 		var dist = burst_pos.distance_to(e_pos)
-		if dist <= NEEDLE_BURST_RADIUS:
+		if dist <= burst_radius:
 			nearby_enemies.append({"enemy": e, "pos": e_pos, "dist": dist})
 			
 	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
 	
-	print("[%s] NEEDLE BURST! Count: %d | Inflated: %s | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
-		name, count, str(was_inflated), damage_per_needle, depth, nearby_enemies.size()
+	print("[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
+		name, count, str(was_inflated), burst_radius, damage_per_needle, depth, nearby_enemies.size()
 	])
 	
 	AudioManager.play_sound("needle_shot")
@@ -1011,7 +1011,7 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 			var angle = (float(i) / float(count)) * TAU + randf_range(-0.1, 0.1)
 			needle_dir = Vector3(cos(angle), randf_range(-0.2, 0.3), sin(angle)).normalized()
 			
-		var max_dist = NEEDLE_BURST_RADIUS
+		var max_dist = burst_radius
 		var wall_query = PhysicsRayQueryParameters3D.create(burst_pos, burst_pos + needle_dir * max_dist)
 		wall_query.exclude = [self]
 		wall_query.collide_with_areas = false
