@@ -33,12 +33,16 @@ var last_kill_weapon: String = ""
 
 var combat_momentum: float = 1.0
 var time_since_momentum_gain: float = 0.0
+var momentum_idle_timer: float = 0.0
+var momentum_display_alpha: float = 1.0
+var momentum_font_size: int = 28
 
 @onready var player = $".."
 @onready var head = $"../Head"
 @onready var slam_ray = $"../SlamRay"
 @onready var dash_label = $"../HUD/DashLabel"
 @onready var bpm_label = get_node_or_null("../HUD/BPMLabel")
+@onready var momentum_label: Label = get_node_or_null("../HUD/MomentumLabel")
 @onready var combo_label: Label = get_node_or_null("../HUD/ComboLabel")
 var combo_tween: Tween = null
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
@@ -60,6 +64,18 @@ func _ready():
 			bpm_label.offset_bottom = 529.0
 			bpm_label.add_theme_font_size_override("font_size", 28)
 			hud.add_child(bpm_label)
+
+	if not momentum_label:
+		var hud = get_node_or_null("../HUD")
+		if hud:
+			momentum_label = Label.new()
+			momentum_label.name = "MomentumLabel"
+			momentum_label.offset_left = 350.0
+			momentum_label.offset_top = 484.0
+			momentum_label.offset_right = 660.0
+			momentum_label.offset_bottom = 529.0
+			momentum_label.add_theme_font_size_override("font_size", 28)
+			hud.add_child(momentum_label)
 
 func _process(delta):
 	# Восстановление зарядов дэша
@@ -93,6 +109,9 @@ func _process(delta):
 	# Индикация BPM в HUD
 	if bpm_label:
 		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm)), get_bpm_tier()]
+		
+	# Постоянная индикация Combat Momentum в HUD
+	_update_momentum_hud(delta)
 	
 	# Индикация состояния зарядов и остывания
 	if dash_label:
@@ -113,6 +132,45 @@ func add_combat_momentum(amount: float):
 		return
 	combat_momentum = clampf(combat_momentum + amount, 1.0, 2.0)
 	time_since_momentum_gain = 0.0
+	momentum_idle_timer = 0.0
+
+func _update_momentum_hud(delta: float):
+	if not is_instance_valid(momentum_label):
+		return
+		
+	# Отслеживание времени простоя на базовом значении 1.0
+	if combat_momentum <= 1.001:
+		momentum_idle_timer += delta
+	else:
+		momentum_idle_timer = 0.0
+		
+	# 1. Формат отображения: "MOMENTUM: ×1.45"
+	momentum_label.text = "MOMENTUM: ×%.2f" % combat_momentum
+	
+	# 2. Линейная интерполяция цвета: от нейтрального белого (1.0) к яркому жёлтому/золотому (2.0)
+	var t: float = clampf(combat_momentum - 1.0, 0.0, 1.0)
+	var neutral_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+	var gold_color: Color = Color(1.0, 0.82, 0.2, 1.0)
+	var active_color: Color = neutral_color.lerp(gold_color, t)
+	
+	# 3. Состояние покоя (2+ секунды без изменений на базовом значении 1.0)
+	var is_dimmed: bool = (combat_momentum <= 1.001 and momentum_idle_timer >= 2.0)
+	
+	if is_dimmed:
+		# Плавное затемнение/приглушение до 45% яркости и уменьшенный размер шрифта (24)
+		momentum_display_alpha = move_toward(momentum_display_alpha, 0.45, 2.0 * delta)
+		if momentum_font_size != 24:
+			momentum_font_size = 24
+			momentum_label.add_theme_font_size_override("font_size", 24)
+	else:
+		# Мгновенный возврат к полной яркости и полноразмерному шрифту (28) при любом росте
+		momentum_display_alpha = 1.0
+		if momentum_font_size != 28:
+			momentum_font_size = 28
+			momentum_label.add_theme_font_size_override("font_size", 28)
+			
+	momentum_label.add_theme_color_override("font_color", active_color)
+	momentum_label.modulate.a = momentum_display_alpha
 
 func add_bpm(amount: float):
 	if amount <= 0.0:
@@ -304,8 +362,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 					pool.expand_temporarily(1.4, 4.0)
 					
 			# Мгновенный разовый бонус +10 BPM
-			add_bpm(10.0)
-			show_hud_popup("★ BLOOD SLAM +10 ★")
+			show_hud_popup("★ BLOOD SLAM ★")
 			
 			# Визуальный эффект расширяющейся волны крови
 			_spawn_blood_slam_vfx(player.global_position, effective_aoe)

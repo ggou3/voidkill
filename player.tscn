@@ -521,6 +521,14 @@ offset_bottom = 529.0
 theme_override_font_sizes/font_size = 28
 text = "BPM: 50 (CALM)"
 
+[node name="MomentumLabel" type="Label" parent="HUD" unique_id=773412601]
+offset_left = 350.0
+offset_top = 484.0
+offset_right = 660.0
+offset_bottom = 529.0
+theme_override_font_sizes/font_size = 28
+text = "MOMENTUM: ×1.00"
+
 [node name="HealthBar" type="ProgressBar" parent="HUD" unique_id=773412589]
 offset_left = 34.0
 offset_top = 534.0
