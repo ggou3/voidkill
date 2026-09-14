@@ -61,6 +61,17 @@ emission_enabled = true
 emission = Color(1, 0.82, 0.2, 1)
 emission_energy_multiplier = 3.0
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z3_Trim"]
+albedo_color = Color(0.12, 0.12, 0.15, 1)
+metallic = 0.5
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="Mat_Z3_Crate"]
+albedo_color = Color(0.24, 0.22, 0.2, 1)
+metallic = 0.25
+roughness = 0.6
+
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z4_Floor"]
 albedo_color = Color(0.08, 0.1, 0.15, 1)
 roughness = 0.7
@@ -217,35 +228,29 @@ material = SubResource("Mat_Z3_Floor")
 use_collision = true
 size = Vector3(40, 1, 50)
 
-[node name="Z3_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=784013423]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 5.5, -25)
-material = SubResource("Mat_Z3_Wall")
-use_collision = true
-size = Vector3(15, 11, 1)
-
-[node name="Z3_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=479249405]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 5.5, -25)
-material = SubResource("Mat_Z3_Wall")
-use_collision = true
-size = Vector3(15, 11, 1)
-
 [node name="Z3_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1457444321]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 5.5, -50)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 8, -50)
 material = SubResource("Mat_Z3_Wall")
 use_collision = true
-size = Vector3(1, 11, 50)
+size = Vector3(1, 16, 50)
 
 [node name="Z3_EastWallNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=667626350]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -64)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 8, -64)
 material = SubResource("Mat_Z3_Wall")
 use_collision = true
-size = Vector3(1, 11, 22)
+size = Vector3(1, 16, 22)
 
 [node name="Z3_EastWallSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=816447845]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -36)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 8, -36)
 material = SubResource("Mat_Z3_Wall")
 use_collision = true
-size = Vector3(1, 11, 22)
+size = Vector3(1, 16, 22)
+
+[node name="Z3_EastBalconyArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 12, -50)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(1, 8, 6)
 
 [node name="Z3_EastBalconyRailing" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=853325173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0.6, -50)
@@ -253,11 +258,65 @@ material = SubResource("Mat_Z3_Gold")
 use_collision = true
 size = Vector3(1, 1.2, 6)
 
+[node name="Z3_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=784013423]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 8, -25)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(15, 16, 1)
+
+[node name="Z3_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=479249405]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 8, -25)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(15, 16, 1)
+
+[node name="Z3_SouthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -25)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(10, 8, 1)
+
+[node name="Z3_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=316873893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 8, -75)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(13, 16, 1)
+
+[node name="Z3_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=115772895]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 8, -75)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(13, 16, 1)
+
+[node name="Z3_NorthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -75)
+material = SubResource("Mat_Z3_Wall")
+use_collision = true
+size = Vector3(14, 8, 1)
+
 [node name="Z3_PillarWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1289187769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
 material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(4, 8, 4)
+
+[node name="Z3_PillarWestBase" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.4, -40)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(4.6, 0.8, 4.6)
+
+[node name="Z3_PillarWestCap" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 7.7, -40)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(4.6, 0.6, 4.6)
+
+[node name="Z3_PillarWestNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.4, 6, 4.1)
 
 [node name="Z3_PillarEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=6877742]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
@@ -265,11 +324,23 @@ material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(4, 8, 4)
 
-[node name="Z3_WallrunFlank" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=2020779545]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.5, -58)
-material = SubResource("Mat_Z3_Wall")
+[node name="Z3_PillarEastBase" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.4, -40)
+material = SubResource("Mat_Z3_Trim")
 use_collision = true
-size = Vector3(1, 9, 16)
+size = Vector3(4.6, 0.8, 4.6)
+
+[node name="Z3_PillarEastCap" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 7.7, -40)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(4.6, 0.6, 4.6)
+
+[node name="Z3_PillarEastNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.4, 6, 4.1)
 
 [node name="Z3_SniperNest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1909356843]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2.5, -55)
@@ -277,17 +348,294 @@ material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(8, 5, 8)
 
-[node name="Z3_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=316873893]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 5.5, -75)
-material = SubResource("Mat_Z3_Wall")
+[node name="Z3_SniperPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.4, -55)
+material = SubResource("Mat_Z3_Trim")
 use_collision = true
-size = Vector3(13, 11, 1)
+size = Vector3(8.6, 0.8, 8.6)
 
-[node name="Z3_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=115772895]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 5.5, -75)
+[node name="Z3_SniperParapetFront" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 5.4, -51.2)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(7.6, 0.8, 0.4)
+
+[node name="Z3_SniperParapetInner" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 5.4, -55)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.4, 0.8, 7.6)
+
+[node name="Z3_SniperCornerGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 5.5, -51.2)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.5, 1, 0.5)
+
+[node name="Z3_WallrunFlank" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=2020779545]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -58)
 material = SubResource("Mat_Z3_Wall")
 use_collision = true
-size = Vector3(13, 11, 1)
+size = Vector3(1, 8, 16)
+
+[node name="Z3_WallrunPylonS" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.2, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(1.6, 8.4, 1.6)
+
+[node name="Z3_WallrunPylonN" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.2, -66)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(1.6, 8.4, 1.6)
+
+[node name="Z3_WallrunGuideStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -58)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(1.05, 0.3, 14)
+
+[node name="Z3_WestNicheFrame" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 4, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 8, 6)
+
+[node name="Z3_WestNicheNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 7.8, -50)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.5, 0.4, 5.6)
+
+[node name="Z3_PylonW_32" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -32)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_32_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -32)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonW_40" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -40)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_40_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -40)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonW_48" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -48)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_48_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -48)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonW_56" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -56)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_56_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -56)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonW_64" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -64)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_64_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -64)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonW_72" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -72)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonW_72_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -72)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonE_32" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -32)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonE_32_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000032]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -32)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonE_40" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -40)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonE_40_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -40)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonE_64" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -64)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonE_64_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -64)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_PylonE_72" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -72)
+material = SubResource("Mat_Z3_Trim")
+use_collision = true
+size = Vector3(0.8, 16, 1.4)
+
+[node name="Z3_PylonE_72_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -72)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.85, 12, 0.2)
+
+[node name="Z3_CeilingArch1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -32)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(40, 1, 1.2)
+
+[node name="Z3_CeilingArch1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -32)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z3_CeilingArch2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(40, 1, 1.2)
+
+[node name="Z3_CeilingArch2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -50)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z3_CeilingArch3" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -64)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(40, 1, 1.2)
+
+[node name="Z3_CeilingArch3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -64)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z3_WestCorniceMid" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.7, 8, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(0.6, 0.4, 50)
+
+[node name="Z3_WestCorniceTop" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.7, 15.8, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(0.6, 0.4, 50)
+
+[node name="Z3_PipeRunWest1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.4, 2.8, -50)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(0.2, 0.2, 46)
+
+[node name="Z3_PipeRunWest2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.4, 3.2, -50)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(0.15, 0.15, 46)
+
+[node name="Z3_Crate_SW1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0.7, -27.5)
+material = SubResource("Mat_Z3_Crate")
+use_collision = false
+size = Vector3(1.6, 1.4, 1.6)
+
+[node name="Z3_Crate_SW2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000050]
+transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -17.5, 1.9, -27.5)
+material = SubResource("Mat_Z3_Crate")
+use_collision = false
+size = Vector3(1.2, 1, 1.2)
+
+[node name="Z3_Crate_SE1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 0.7, -27.5)
+material = SubResource("Mat_Z3_Crate")
+use_collision = false
+size = Vector3(1.6, 1.4, 1.6)
+
+[node name="Z3_Crate_SE2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000052]
+transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 17.5, 1.9, -27.5)
+material = SubResource("Mat_Z3_Crate")
+use_collision = false
+size = Vector3(1.2, 1, 1.2)
+
+[node name="Z3_Terminal_NW" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 1.1, -72.5)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(2.4, 2.2, 1.6)
+
+[node name="Z3_Terminal_NW_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 1.6, -72.5)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(2, 0.3, 1.65)
+
+[node name="Z3_Terminal_NE" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 1.1, -72.5)
+material = SubResource("Mat_Z3_Trim")
+use_collision = false
+size = Vector3(2.4, 2.2, 1.6)
+
+[node name="Z3_Terminal_NE_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 1.6, -72.5)
+material = SubResource("Mat_Z3_Gold")
+use_collision = false
+size = Vector3(2, 0.3, 1.65)
+
 
 [node name="Zone4_VerticalSector" type="Node3D" parent="NavigationRegion3D" unique_id=1704989696]
 
