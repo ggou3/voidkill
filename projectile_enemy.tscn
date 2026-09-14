@@ -1,0 +1,47 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://projectile_enemy.gd" id="1_proj"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_proj"]
+radius = 0.28
+
+[sub_resource type="SphereMesh" id="SphereMesh_proj"]
+radius = 0.22
+height = 0.44
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_proj"]
+albedo_color = Color(1, 0.35, 0.08, 1)
+emission_enabled = true
+emission = Color(1, 0.35, 0.08, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+radius = 0.11
+height = 0.22
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_core"]
+albedo_color = Color(1, 0.92, 0.75, 1)
+emission_enabled = true
+emission = Color(1, 0.95, 0.8, 1)
+emission_energy_multiplier = 5.0
+
+[node name="ProjectileEnemy" type="Area3D" groups=["enemy_projectile"]]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_proj")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_proj")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_proj")
+surface_material_override/0 = SubResource("StandardMaterial3D_proj")
+
+[node name="CoreMesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_core")
+surface_material_override/0 = SubResource("StandardMaterial3D_core")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1, 0.42, 0.12, 1)
+light_energy = 1.6
+omni_range = 3.5
