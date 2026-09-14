@@ -91,10 +91,14 @@ func _process(delta):
 			
 	if slam_timer > 0: slam_timer -= delta
 	
-	# BPM: пассивный спад к 50.0 при отсутствии событий роста за последние 2 секунды: -4 BPM/сек
+	# BPM: прогрессивный пассивный спад при отсутствии событий роста:
+	# decay_rate = lerp(1.5, 7.0, (bpm - 50) / 150), задержка 2.0с (или 5.0с на пике bpm >= 195)
 	time_since_bpm_gain += delta
-	if time_since_bpm_gain >= 2.0 and bpm > MIN_BPM:
-		bpm = max(MIN_BPM, bpm - 4.0 * delta)
+	var decay_delay: float = 5.0 if bpm >= 195.0 else 2.0
+	if time_since_bpm_gain >= decay_delay and bpm > MIN_BPM:
+		var bpm_ratio: float = clampf((bpm - MIN_BPM) / (MAX_BPM - MIN_BPM), 0.0, 1.0)
+		var decay_rate: float = lerp(1.5, 7.0, bpm_ratio)
+		bpm = max(MIN_BPM, bpm - decay_rate * delta)
 		
 	# Combat Momentum: источники роста в реальном времени
 	var gained_momentum_continuous: bool = false

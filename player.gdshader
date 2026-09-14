@@ -61,8 +61,8 @@ void fragment() {
         
         // Эффект высокой скорости и тира OVERDRIVE
         float speed_factor = clamp((player_speed - speed_threshold) / (max_speed_threshold - speed_threshold), 0.0, 1.0);
-        // Дополнительный множитель интенсивности x1.5-2 на тире OVERDRIVE
-        float overdrive_intensity_mult = 1.0 + (overdrive_factor * 0.85); // 1.0x при bpm 180 -> ~1.85x при bpm 200
+        // Дополнительный множитель интенсивности на тире OVERDRIVE
+        float overdrive_intensity_mult = 1.0 + (overdrive_factor * 1.3); // 1.0x при bpm 180 -> ~2.3x при bpm 200
         
         if (speed_factor > 0.0 || overdrive_factor > 0.0) {
             // Тонкое динамическое усиление виньетки по краям, усиленное на тире OVERDRIVE
