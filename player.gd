@@ -45,7 +45,7 @@ var is_dead: bool = false
 
 # Настройки распрыжки (Bunny Hop), воздушного контроля (Air-strafing) и лимитов скорости
 @export var normal_max_speed: float = 14.5
-@export var blood_buffed_max_speed: float = 20.0
+@export var blood_buffed_max_speed: float = 25.0
 @export var bhop_speed_multiplier: float = 1.03
 @export var bhop_blood_speed_multiplier: float = 1.08
 @export var bhop_window: float = 0.12
