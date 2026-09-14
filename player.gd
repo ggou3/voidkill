@@ -29,7 +29,7 @@ var is_dead: bool = false
 # Настройки механики Wallrun и Wall-jump
 @export var wallrun_min_speed: float = 5.0
 @export var wallrun_speed: float = 11.0
-@export var wallrun_max_speed: float = 14.0
+@export var wallrun_max_speed: float = 25.0
 @export var wallrun_max_duration: float = 1.2
 @export var wallrun_gravity_scale: float = 0.08
 @export var wallrun_jump_vertical_boost: float = 0.7
@@ -631,10 +631,10 @@ func process_wallrun_physics(delta: float, input_dir: Vector2):
 		end_wallrun()
 		return
 		
-	# Поддерживаем и слегка разгоняем скорость вдоль стены
+	# Поддерживаем и разгоняем скорость вдоль стены вплоть до общего потолка скорости (14.5..25.0 м/с)
 	var cur_horiz = Vector2(velocity.x, velocity.z).length()
-	var run_speed = clamp(max(cur_horiz, wallrun_speed) + delta * 2.0, wallrun_speed, wallrun_max_speed)
-	run_speed *= lerp(1.0, 1.2, get_bpm_ratio())
+	var max_cap = get_current_max_speed()
+	var run_speed = clamp(max(cur_horiz, wallrun_speed) + delta * 2.0, wallrun_speed, max_cap)
 		
 	var move_vel = wall_tangent * run_speed
 	
