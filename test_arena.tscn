@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://cb5k2x4v8m1op"]
+[gd_scene load_steps=10 format=3 uid="uid://cb5k2x4v8m1op"]
 
 [ext_resource type="PackedScene" uid="uid://ba6hrp5v4fg0f" path="res://player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://rkw44u1bvqo3" path="res://enemy.tscn" id="2_enemy"]
 [ext_resource type="PackedScene" uid="uid://0bd00q6imegi" path="res://blood_pool.tscn" id="3_blood_pool"]
 [ext_resource type="NavigationMesh" path="res://test_arena_navmesh.tres" id="4_navmesh"]
 [ext_resource type="PackedScene" path="res://enemy_ranged.tscn" id="5_enemy_ranged"]
+[ext_resource type="PackedScene" path="res://enemy_flyer.tscn" id="6_enemy_flyer"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_arena"]
 
@@ -424,6 +425,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -48)
 [node name="Enemy_Z3_Center3" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, -52)
 
+[node name="Enemy_Flyer_Z3" parent="Enemies" instance=ExtResource("6_enemy_flyer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -42)
+
 [node name="Enemy_Z3_PillarWest" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1.5, -40)
 
@@ -444,6 +448,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -78)
 
 [node name="Enemy_Z4_Tier1" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
+
+[node name="Enemy_Flyer_Z4" parent="Enemies" instance=ExtResource("6_enemy_flyer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.0, -88)
 
 [node name="Enemy_Z4_Tier2" parent="Enemies" instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.5, -94)

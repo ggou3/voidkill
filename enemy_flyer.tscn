@@ -1,0 +1,137 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemy_flyer.gd" id="1_flyer"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_body"]
+radius = 0.48
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.32
+
+[sub_resource type="PrismMesh" id="PrismMesh_core"]
+size = Vector3(0.65, 0.85, 0.55)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flyer_hull"]
+albedo_color = Color(0.02, 0.025, 0.035, 1)
+metallic = 0.35
+roughness = 0.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_head"]
+size = Vector3(0.44, 0.32, 0.44)
+
+[sub_resource type="PrismMesh" id="PrismMesh_wing"]
+size = Vector3(0.18, 0.65, 0.38)
+
+[sub_resource type="SphereMesh" id="SphereMesh_eye"]
+radius = 0.14
+height = 0.28
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eye"]
+albedo_color = Color(0.1, 0.9, 1, 1)
+emission_enabled = true
+emission = Color(0.15, 0.95, 1, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_thruster"]
+top_radius = 0.06
+bottom_radius = 0.02
+height = 0.14
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_laser_outer"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_laser_outer"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(0.15, 0.85, 1, 0.75)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_laser_core"]
+top_radius = 0.35
+bottom_radius = 0.35
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_laser_core"]
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_color = Color(1, 1, 1, 0.95)
+
+[node name="EnemyFlyer" type="CharacterBody3D" groups=["enemy", "enemy_flyer"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_flyer")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_body")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.32, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape3D_head")
+
+[node name="Visuals" type="Node3D" parent="."]
+
+[node name="CoreBody" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(-1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 0, 0, 1, 0, -0.05, 0)
+mesh = SubResource("PrismMesh_core")
+surface_material_override/0 = SubResource("StandardMaterial3D_flyer_hull")
+
+[node name="HeadCowl" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, 0)
+mesh = SubResource("BoxMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_flyer_hull")
+
+[node name="LeftWing" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(0.819152, -0.573576, 0, 0.573576, 0.819152, 0, 0, 0, 1, -0.46, 0.05, 0)
+mesh = SubResource("PrismMesh_wing")
+surface_material_override/0 = SubResource("StandardMaterial3D_flyer_hull")
+
+[node name="RightWing" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 0, 0, 1, 0.46, 0.05, 0)
+mesh = SubResource("PrismMesh_wing")
+surface_material_override/0 = SubResource("StandardMaterial3D_flyer_hull")
+
+[node name="EyeEmitter" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, -0.24)
+mesh = SubResource("SphereMesh_eye")
+surface_material_override/0 = SubResource("StandardMaterial3D_eye")
+
+[node name="EyeLight" type="OmniLight3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.28, -0.32)
+light_color = Color(0.15, 0.95, 1, 1)
+light_energy = 1.8
+omni_range = 4.0
+
+[node name="ThrusterGlow" type="MeshInstance3D" parent="Visuals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.44, 0)
+mesh = SubResource("CylinderMesh_thruster")
+surface_material_override/0 = SubResource("StandardMaterial3D_eye")
+
+[node name="LaserRoot" type="Node3D" parent="."]
+visible = false
+
+[node name="LaserOuter" type="MeshInstance3D" parent="LaserRoot"]
+mesh = SubResource("CylinderMesh_laser_outer")
+surface_material_override/0 = SubResource("StandardMaterial3D_laser_outer")
+
+[node name="LaserCore" type="MeshInstance3D" parent="LaserRoot"]
+mesh = SubResource("CylinderMesh_laser_core")
+surface_material_override/0 = SubResource("StandardMaterial3D_laser_core")
+
+[node name="FloorRay" type="RayCast3D" parent="."]
+target_position = Vector3(0, -30, 0)
+
+[node name="ForwardRay" type="RayCast3D" parent="."]
+target_position = Vector3(0, 0, -4)
+
+[node name="LeftRay" type="RayCast3D" parent="."]
+target_position = Vector3(-3, 0, -3)
+
+[node name="RightRay" type="RayCast3D" parent="."]
+target_position = Vector3(3, 0, -3)

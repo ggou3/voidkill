@@ -3,7 +3,7 @@ extends "res://enemy.gd"
 @export var projectile_scene: PackedScene = preload("res://projectile_enemy.tscn")
 @export var preferred_distance_min: float = 10.0
 @export var preferred_distance_max: float = 15.0
-@export var projectile_speed: float = 14.0
+@export var projectile_speed: float = 18.0
 @export var ranged_damage: int = 12
 @export var ranged_attack_cooldown: float = 2.8
 
