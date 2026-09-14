@@ -426,6 +426,7 @@ func handle_jump() -> bool:
 			if floor_normal.y < 0.99 and is_sliding: 
 				velocity.y += speed_2d * 0.4
 			
+		var was_sliding = is_sliding
 		if is_sliding:
 			var boost_limit = cap
 			if speed_2d < boost_limit:
@@ -435,17 +436,18 @@ func handle_jump() -> bool:
 				velocity.x = dir.x * boosted
 				velocity.z = dir.y * boosted
 			is_sliding = false
-		else:
-			# Проверка условий успешного Bunny Hop:
-			# 1. Игрок только что приземлился из воздуха (был в воздухе хотя бы 0.08с)
-			# 2. Прыжок совершен сразу при приземлении: через буфер прыжка или время на земле <= bhop_window
-			# 3. Имеется начальная скорость движения (не прыжок с места)
-			var is_clean_bhop = (prev_air_time >= 0.08 or air_time >= 0.08 or coyote_timer > 0.0) \
-				and (jump_buffer_timer > 0.0 or time_on_ground <= bhop_window) \
-				and speed_2d >= (WALK_SPEED * 0.7)
-				
-			if is_clean_bhop:
-				var bpm_r = get_bpm_ratio()
+
+		# Проверка условий успешного Bunny Hop (независимо от того, был ли слайд):
+		# 1. Игрок только что приземлился из воздуха (был в воздухе хотя бы 0.08с)
+		# 2. Прыжок совершен сразу при приземлении: через буфер прыжка или время на земле <= bhop_window
+		# 3. Имеется начальная скорость движения (не прыжок с места)
+		var is_clean_bhop = (prev_air_time >= 0.08 or air_time >= 0.08 or coyote_timer > 0.0) \
+			and (jump_buffer_timer > 0.0 or time_on_ground <= bhop_window) \
+			and speed_2d >= (WALK_SPEED * 0.7)
+			
+		if is_clean_bhop:
+			var bpm_r = get_bpm_ratio()
+			if not was_sliding:
 				var mult = lerp(bhop_speed_multiplier, bhop_blood_speed_multiplier, bpm_r)
 				var boosted = clamp(speed_2d * mult, speed_2d, cap)
 				var dir = Vector2(velocity.x, velocity.z).normalized()
@@ -458,12 +460,12 @@ func handle_jump() -> bool:
 						dir = Vector2(-transform.basis.z.x, -transform.basis.z.z).normalized()
 				velocity.x = dir.x * boosted
 				velocity.z = dir.y * boosted
-				bhop_chain += 1
-				head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
-				time_on_ground = 0.0
-				prev_air_time = 0.0
-				if skills and skills.has_method("add_combat_momentum"):
-					skills.add_combat_momentum(0.05)
+			bhop_chain += 1
+			head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
+			time_on_ground = 0.0
+			prev_air_time = 0.0
+			if skills and skills.has_method("add_combat_momentum"):
+				skills.add_combat_momentum(0.05)
 				
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
