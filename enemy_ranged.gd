@@ -11,6 +11,8 @@ const EYES_BASE_COLOR = Color(0.85, 0.2, 1.0)
 const EYES_TELEGRAPH_COLOR = Color(1.0, 0.85, 0.2)
 
 var is_telegraphing_shot: bool = false
+var antenna_material: StandardMaterial3D = null
+@onready var antenna_tip: MeshInstance3D = get_node_or_null("AntennaTip")
 
 func _ready():
 	super._ready()
@@ -22,8 +24,16 @@ func _ready():
 	# Случайная задержка первого выстрела при спавне (0.6 - 1.8с)
 	attack_timer = randf_range(0.6, 1.8)
 	
+	if antenna_tip:
+		var tip_mat = antenna_tip.get_surface_override_material(0)
+		if tip_mat:
+			antenna_material = tip_mat.duplicate()
+			antenna_tip.set_surface_override_material(0, antenna_material)
+	
 	if eyes_material:
 		eyes_material.emission = EYES_BASE_COLOR
+	if antenna_material:
+		antenna_material.emission = EYES_BASE_COLOR
 
 func _can_lunge_to_player() -> bool:
 	# Дальник не использует атаку-выпад LUNGE ближнего боя
@@ -104,11 +114,15 @@ func perform_attack():
 	if not is_instance_valid(target_player):
 		return
 		
-	# Вспышка глаз при выстреле
+	# Вспышка глаз и маячка антенны при выстреле
 	if eyes_material:
 		eyes_material.emission = Color(1.0, 0.4, 0.1)
 		var tween = create_tween()
 		tween.tween_property(eyes_material, "emission", EYES_BASE_COLOR, 0.3)
+	if antenna_material:
+		antenna_material.emission = Color(1.0, 0.4, 0.1)
+		var tween2 = create_tween()
+		tween2.tween_property(antenna_material, "emission", EYES_BASE_COLOR, 0.3)
 		
 	if not projectile_scene:
 		return
@@ -140,6 +154,9 @@ func _start_ranged_telegraph():
 	if eyes_material:
 		var tween = create_tween()
 		tween.tween_property(eyes_material, "emission", EYES_TELEGRAPH_COLOR, 0.18)
+	if antenna_material:
+		var tween2 = create_tween()
+		tween2.tween_property(antenna_material, "emission", EYES_TELEGRAPH_COLOR, 0.18)
 
 func _reset_ranged_telegraph():
 	if not is_telegraphing_shot:
@@ -147,6 +164,8 @@ func _reset_ranged_telegraph():
 	is_telegraphing_shot = false
 	if eyes_material:
 		eyes_material.emission = EYES_BASE_COLOR
+	if antenna_material:
+		antenna_material.emission = EYES_BASE_COLOR
 
 func _process_fear_chain_check(delta: float):
 	if current_state == State.ATTACK:
