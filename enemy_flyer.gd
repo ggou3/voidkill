@@ -20,7 +20,9 @@ enum State {
 # Параметры лазерной атаки
 @export var telegraph_duration: float = 0.6 # 0.5-0.7с
 @export var laser_duration: float = 1.8 # 1.5-2.0с
-@export var laser_tracking_speed: float = 1.7 # рад/с (управляемый поворот луча)
+@export var laser_tracking_speed: float = 1.05 # рад/с (управляемый поворот луча, снижено с 1.7 для возможности уклонения)
+@export var max_sector_angle_deg: float = 60.0 # Ограничение угла доворота луча (полуугол сектора, 60 градусов)
+@export var boundary_color: Color = Color(0.2, 0.85, 1.0, 0.28) # Полупрозрачный цвет направляющих границ сектора
 @export var attack_cooldown_min: float = 4.0
 @export var attack_cooldown_max: float = 5.0
 @export var tick_damage: int = 4 # 4-5 HP за тик
@@ -35,6 +37,17 @@ var telegraph_timer: float = 0.0
 var laser_timer: float = 0.0
 var laser_tick_timer: float = 0.0
 var current_beam_dir: Vector3 = Vector3.FORWARD
+var initial_laser_dir: Vector3 = Vector3.FORWARD
+var boundary_left_dir: Vector3 = Vector3.FORWARD
+var boundary_right_dir: Vector3 = Vector3.FORWARD
+
+var boundary_left_root: Node3D = null
+var boundary_right_root: Node3D = null
+var boundary_left_marker: MeshInstance3D = null
+var boundary_right_marker: MeshInstance3D = null
+var boundary_mat: StandardMaterial3D = null
+var marker_mat: StandardMaterial3D = null
+
 var bob_time: float = 0.0
 var knockback_velocity: Vector3 = Vector3.ZERO
 var slow_factor: float = 1.0
@@ -116,8 +129,63 @@ func _ready():
 		laser_root.visible = false
 		
 	_setup_health_bar()
+	_setup_boundary_visuals()
 	attack_cooldown_timer = randf_range(1.5, 3.0)
 	fear_check_timer = randf_range(1.0, 2.5)
+
+func _setup_boundary_visuals():
+	var cyl_mesh = CylinderMesh.new()
+	cyl_mesh.top_radius = 1.0
+	cyl_mesh.bottom_radius = 1.0
+	cyl_mesh.height = 1.0
+	
+	boundary_mat = StandardMaterial3D.new()
+	boundary_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	boundary_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	boundary_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	boundary_mat.albedo_color = boundary_color
+	
+	var sphere_mesh = SphereMesh.new()
+	sphere_mesh.radius = 0.12
+	sphere_mesh.height = 0.24
+	
+	marker_mat = StandardMaterial3D.new()
+	marker_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	marker_mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	marker_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	marker_mat.albedo_color = Color(boundary_color.r, boundary_color.g, boundary_color.b, min(1.0, boundary_color.a * 2.2))
+	
+	boundary_left_root = Node3D.new()
+	boundary_left_root.name = "BoundaryLeftRoot"
+	boundary_left_root.visible = false
+	var left_mesh = MeshInstance3D.new()
+	left_mesh.mesh = cyl_mesh
+	left_mesh.set_surface_override_material(0, boundary_mat)
+	boundary_left_root.add_child(left_mesh)
+	add_child(boundary_left_root)
+	
+	boundary_left_marker = MeshInstance3D.new()
+	boundary_left_marker.name = "BoundaryLeftMarker"
+	boundary_left_marker.mesh = sphere_mesh
+	boundary_left_marker.set_surface_override_material(0, marker_mat)
+	boundary_left_marker.visible = false
+	add_child(boundary_left_marker)
+	
+	boundary_right_root = Node3D.new()
+	boundary_right_root.name = "BoundaryRightRoot"
+	boundary_right_root.visible = false
+	var right_mesh = MeshInstance3D.new()
+	right_mesh.mesh = cyl_mesh
+	right_mesh.set_surface_override_material(0, boundary_mat)
+	boundary_right_root.add_child(right_mesh)
+	add_child(boundary_right_root)
+	
+	boundary_right_marker = MeshInstance3D.new()
+	boundary_right_marker.name = "BoundaryRightMarker"
+	boundary_right_marker.mesh = sphere_mesh
+	boundary_right_marker.set_surface_override_material(0, marker_mat)
+	boundary_right_marker.visible = false
+	add_child(boundary_right_marker)
 
 func _setup_health_bar():
 	hp_viewport = SubViewport.new()
@@ -384,6 +452,10 @@ func _start_firing():
 	laser_timer = laser_duration
 	laser_tick_timer = 0.0
 	
+	# Фиксируем начальное направление луча строго в момент завершения телеграфа
+	initial_laser_dir = current_beam_dir.normalized()
+	_calculate_sector_boundaries()
+	
 	if eye_material:
 		eye_material.emission = EYE_COLOR_FIRING
 		eye_material.emission_energy_multiplier = 7.0
@@ -392,7 +464,19 @@ func _start_firing():
 		eye_light.light_energy = 3.5
 		
 	_update_beam_visual(true, 0.06, 1.0)
+	_update_boundary_visuals()
 	AudioManager.play_sound("rail_shot")
+
+func _calculate_sector_boundaries():
+	var max_angle_rad = deg_to_rad(max_sector_angle_deg)
+	var up_ref = Vector3.UP
+	if abs(initial_laser_dir.dot(Vector3.UP)) > 0.92:
+		up_ref = Vector3.FORWARD
+	var right_axis = initial_laser_dir.cross(up_ref).normalized()
+	var sector_up = right_axis.cross(initial_laser_dir).normalized()
+	
+	boundary_left_dir = initial_laser_dir.rotated(sector_up, max_angle_rad).normalized()
+	boundary_right_dir = initial_laser_dir.rotated(sector_up, -max_angle_rad).normalized()
 
 func _process_laser_firing(delta: float):
 	laser_timer -= delta
@@ -401,16 +485,31 @@ func _process_laser_firing(delta: float):
 	# Во время стрельбы лазером медленно дрейфуем на высоте
 	_maintain_hover_height(delta, Vector3.ZERO)
 	
+	var eye_pos = _get_eye_position()
+	
 	if is_instance_valid(target_player) and not ("is_dead" in target_player and target_player.is_dead):
-		var eye_pos = _get_eye_position()
 		var target_aim = (target_player.global_position + Vector3(0, 0.2, 0) - eye_pos).normalized()
 		
+		# Ограничиваем суммарный доворот луча конусом 60 градусов от initial_laser_dir
+		var max_angle_rad = deg_to_rad(max_sector_angle_deg)
+		var angle_from_initial = initial_laser_dir.angle_to(target_aim)
+		if angle_from_initial > max_angle_rad:
+			if angle_from_initial > 0.001:
+				target_aim = initial_laser_dir.slerp(target_aim, max_angle_rad / angle_from_initial).normalized()
+			else:
+				target_aim = initial_laser_dir
+				
 		# Ограниченная скорость доворачивания луча (laser_tracking_speed рад/с)
 		var angle_diff = current_beam_dir.angle_to(target_aim)
 		if angle_diff > 0.001:
 			var max_step = laser_tracking_speed * delta
 			var t = min(1.0, max_step / angle_diff)
 			current_beam_dir = current_beam_dir.slerp(target_aim, t).normalized()
+			
+		# Дополнительная страховка: гарантируем, что current_beam_dir никогда не выходит за 60 градусов
+		var cur_angle = initial_laser_dir.angle_to(current_beam_dir)
+		if cur_angle > max_angle_rad and cur_angle > 0.001:
+			current_beam_dir = initial_laser_dir.slerp(current_beam_dir, max_angle_rad / cur_angle).normalized()
 			
 		# Поворачиваем тело дрона в сторону луча
 		var dir_h = Vector3(current_beam_dir.x, 0, current_beam_dir.z).normalized()
@@ -422,6 +521,9 @@ func _process_laser_firing(delta: float):
 	else:
 		_update_beam_visual(true, 0.06, 1.0)
 		
+	# Обновление направляющих границ сектора поражения
+	_update_boundary_visuals()
+	
 	if laser_timer <= 0.0:
 		_end_firing()
 
@@ -495,9 +597,97 @@ func _render_beam_between(start_pos: Vector3, end_pos: Vector3, thickness: float
 	if laser_core_mat:
 		laser_core_mat.albedo_color.a = alpha
 
+func _update_boundary_visuals():
+	if not boundary_left_root or not boundary_right_root:
+		return
+		
+	var eye_pos = _get_eye_position()
+	var max_range = 45.0
+	var space_state = get_world_3d().direct_space_state
+	
+	var exclude_rids: Array[RID] = [get_rid()]
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if enemy is CollisionObject3D:
+			exclude_rids.append(enemy.get_rid())
+	var p = get_tree().get_first_node_in_group("player")
+	if is_instance_valid(p) and p is CollisionObject3D:
+		exclude_rids.append(p.get_rid())
+		
+	# Левая направляющая луча (граница сектора +60°)
+	var left_end = eye_pos + boundary_left_dir * max_range
+	if space_state:
+		var q_left = PhysicsRayQueryParameters3D.create(eye_pos, left_end)
+		q_left.exclude = exclude_rids
+		q_left.collide_with_bodies = true
+		q_left.collide_with_areas = false
+		var hit_left = space_state.intersect_ray(q_left)
+		if not hit_left.is_empty():
+			left_end = hit_left.position
+			if boundary_left_marker:
+				boundary_left_marker.visible = true
+				boundary_left_marker.global_position = hit_left.position + hit_left.normal * 0.08
+		elif boundary_left_marker:
+			boundary_left_marker.visible = false
+	elif boundary_left_marker:
+		boundary_left_marker.visible = false
+		
+	_render_cylinder_beam(boundary_left_root, eye_pos, left_end, 0.012)
+	
+	# Правая направляющая луча (граница сектора -60°)
+	var right_end = eye_pos + boundary_right_dir * max_range
+	if space_state:
+		var q_right = PhysicsRayQueryParameters3D.create(eye_pos, right_end)
+		q_right.exclude = exclude_rids
+		q_right.collide_with_bodies = true
+		q_right.collide_with_areas = false
+		var hit_right = space_state.intersect_ray(q_right)
+		if not hit_right.is_empty():
+			right_end = hit_right.position
+			if boundary_right_marker:
+				boundary_right_marker.visible = true
+				boundary_right_marker.global_position = hit_right.position + hit_right.normal * 0.08
+		elif boundary_right_marker:
+			boundary_right_marker.visible = false
+	elif boundary_right_marker:
+		boundary_right_marker.visible = false
+		
+	_render_cylinder_beam(boundary_right_root, eye_pos, right_end, 0.012)
+
+func _render_cylinder_beam(root: Node3D, start_pos: Vector3, end_pos: Vector3, thickness: float):
+	if not root:
+		return
+	var dist = start_pos.distance_to(end_pos)
+	if dist < 0.1:
+		root.visible = false
+		return
+		
+	root.visible = true
+	var mid = (start_pos + end_pos) * 0.5
+	root.global_position = mid
+	
+	var dir = (end_pos - start_pos).normalized()
+	if abs(dir.y) > 0.98:
+		root.look_at(root.global_position + dir, Vector3.RIGHT)
+	else:
+		root.look_at(root.global_position + dir, Vector3.UP)
+		
+	root.rotate_object_local(Vector3.RIGHT, deg_to_rad(90.0))
+	root.scale = Vector3(thickness, dist, thickness)
+
+func _hide_boundary_visuals():
+	if boundary_left_root:
+		boundary_left_root.visible = false
+	if boundary_right_root:
+		boundary_right_root.visible = false
+	if boundary_left_marker:
+		boundary_left_marker.visible = false
+	if boundary_right_marker:
+		boundary_right_marker.visible = false
+
 func _end_firing():
 	if laser_root:
 		laser_root.visible = false
+	_hide_boundary_visuals()
 	if eye_material:
 		eye_material.emission = EYE_COLOR_IDLE
 		eye_material.emission_energy_multiplier = 3.5
