@@ -228,7 +228,7 @@ func _process(_delta):
 		var blood_surf = is_sliding and is_on_blood
 		blood_buff_label.visible = blood_surf
 		if blood_surf:
-			blood_buff_label.text = "★ BLOOD SURF (MOMENTUM +5%) ★"
+			blood_buff_label.text = "★ BLOOD SURF (MOMENTUM +4%) ★"
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
@@ -465,7 +465,7 @@ func handle_jump() -> bool:
 			time_on_ground = 0.0
 			prev_air_time = 0.0
 			if skills and skills.has_method("add_combat_momentum"):
-				skills.add_combat_momentum(0.05)
+				skills.add_combat_momentum(0.04)
 				
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0

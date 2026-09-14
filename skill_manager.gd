@@ -99,16 +99,16 @@ func _process(delta):
 	# Combat Momentum: источники роста в реальном времени
 	var gained_momentum_continuous: bool = false
 	if is_instance_valid(player):
-		# 1. Активный кровавый сёрф (слайд по луже крови): +0.05 к моментуму/сек
+		# 1. Активный кровавый сёрф (слайд по луже крови): +0.04 к моментуму/сек
 		if player.is_sliding and player.is_on_blood:
-			add_combat_momentum(0.05 * delta)
+			add_combat_momentum(0.04 * delta)
 			gained_momentum_continuous = true
 			
-		# 2. Нахождение в воздухе на высокой скорости (не coyote-time, скорость >= WALK_SPEED): +0.02 к моментуму/сек
+		# 2. Нахождение в воздухе на высокой скорости (не coyote-time, скорость >= WALK_SPEED): +0.015 к моментуму/сек
 		var horiz_spd = Vector2(player.velocity.x, player.velocity.z).length()
 		var in_air_speed = not player.is_on_floor() and player.coyote_timer <= 0.0 and horiz_spd >= player.WALK_SPEED
 		if in_air_speed:
-			add_combat_momentum(0.02 * delta)
+			add_combat_momentum(0.015 * delta)
 			gained_momentum_continuous = true
 			
 	if not gained_momentum_continuous:
