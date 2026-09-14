@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cb5k2x4v8m1op"]
+[gd_scene format=3 uid="uid://cb5k2x4v8m1op"]
 
 [ext_resource type="PackedScene" uid="uid://ba6hrp5v4fg0f" path="res://player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://rkw44u1bvqo3" path="res://enemy.tscn" id="2_enemy"]
@@ -18,496 +18,430 @@ sky = SubResource("Sky_arena")
 ambient_light_source = 3
 ambient_light_energy = 0.55
 
-[node name="TestArena" type="Node3D"]
+[node name="TestArena" type="Node3D" unique_id=247403531]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1014781510]
 environment = SubResource("Environment_arena")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=975917614]
 transform = Transform3D(0.919416, 0.148242, -0.364277, 0, 0.926241, 0.376932, 0.393285, -0.346558, 0.851601, 0, 45, -80)
 shadow_enabled = true
 
-[node name="NavigationRegion3D" type="NavigationRegion3D" parent="."]
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=502573079]
 navigation_mesh = ExtResource("4_navmesh")
 
-[node name="Zone1_Runway" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone1_Runway" type="Node3D" parent="NavigationRegion3D" unique_id=4347508]
 
-[node name="Z1_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1728805485]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 30)
 use_collision = true
 size = Vector3(16, 1, 30)
 
-[node name="Z1_SouthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_SouthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1083134291]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 45.5)
 use_collision = true
 size = Vector3(16, 11, 1)
 
-[node name="Z1_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1101970577]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 5, 30)
 use_collision = true
 size = Vector3(1, 11, 30)
 
-[node name="Z1_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1890040458]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5, 38)
 use_collision = true
 size = Vector3(1, 11, 14)
 
-[node name="Z1_TransitionWest" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_TransitionWest" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=901660434]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 5, 15)
 use_collision = true
 size = Vector3(3, 11, 1)
 
-[node name="Z1_TransitionEast" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_TransitionEast" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=113132078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 5, 15)
 use_collision = true
 size = Vector3(3, 11, 1)
 
-[node name="Z1_SpeedRamp" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway"]
+[node name="Z1_SpeedRamp" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=316343154]
 transform = Transform3D(1, 0, 0, 0, 0.996195, 0.0871557, 0, -0.0871557, 0.996195, 0, 0.3, 34)
 use_collision = true
 size = Vector3(8, 0.6, 6)
 
-[node name="Zone2_WallrunCorridor" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone2_WallrunCorridor" type="Node3D" parent="NavigationRegion3D" unique_id=1454426267]
 
-[node name="Z2_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor"]
+[node name="Z2_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=960584581]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -5)
 use_collision = true
 size = Vector3(10, 1, 40)
 
-[node name="Z2_WallrunWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor"]
+[node name="Z2_WallrunWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1993895801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 5, -5)
 use_collision = true
 size = Vector3(1, 11, 40)
 
-[node name="Z2_WallrunEast" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor"]
+[node name="Z2_WallrunEast" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=954308322]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 5, -5)
 use_collision = true
 size = Vector3(1, 11, 40)
 
-[node name="Z2_WallrunRailWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor"]
+[node name="Z2_WallrunRailWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1925604214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 3.5, -5)
 use_collision = true
 size = Vector3(1.6, 0.5, 24)
 
-[node name="Z2_CrossBeamPerch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor"]
+[node name="Z2_CrossBeamPerch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=968191822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -18)
 use_collision = true
 size = Vector3(10, 0.8, 3)
 
-[node name="Zone3_GrandArena" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone3_GrandArena" type="Node3D" parent="NavigationRegion3D" unique_id=394210067]
 
-[node name="Z3_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1883540524]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -50)
 use_collision = true
 size = Vector3(40, 1, 50)
 
-[node name="Z3_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=784013423]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 5.5, -25)
 use_collision = true
 size = Vector3(15, 11, 1)
 
-[node name="Z3_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=479249405]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 5.5, -25)
 use_collision = true
 size = Vector3(15, 11, 1)
 
-[node name="Z3_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1457444321]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 5.5, -50)
 use_collision = true
 size = Vector3(1, 11, 50)
 
-[node name="Z3_EastWallNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_EastWallNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=667626350]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -64)
 use_collision = true
 size = Vector3(1, 11, 22)
 
-[node name="Z3_EastWallSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_EastWallSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=816447845]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 5.5, -36)
 use_collision = true
 size = Vector3(1, 11, 22)
 
-[node name="Z3_EastBalconyRailing" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_EastBalconyRailing" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=853325173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0.6, -50)
 use_collision = true
 size = Vector3(1, 1.2, 6)
 
-[node name="Z3_PillarWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_PillarWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1289187769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
 use_collision = true
 size = Vector3(4, 8, 4)
 
-[node name="Z3_PillarEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_PillarEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=6877742]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
 use_collision = true
 size = Vector3(4, 8, 4)
 
-[node name="Z3_WallrunFlank" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_WallrunFlank" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=2020779545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.5, -58)
 use_collision = true
 size = Vector3(1, 9, 16)
 
-[node name="Z3_SniperNest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_SniperNest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1909356843]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2.5, -55)
 use_collision = true
 size = Vector3(8, 5, 8)
 
-[node name="Z3_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=316873893]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 5.5, -75)
 use_collision = true
 size = Vector3(13, 11, 1)
 
-[node name="Z3_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena"]
+[node name="Z3_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=115772895]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 5.5, -75)
 use_collision = true
 size = Vector3(13, 11, 1)
 
-[node name="Zone4_VerticalSector" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone4_VerticalSector" type="Node3D" parent="NavigationRegion3D" unique_id=1704989696]
 
-[node name="Z4_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=333282612]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -100)
 use_collision = true
 size = Vector3(26, 1, 50)
 
-[node name="Z4_WestWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_WestWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=957765030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 9, -100)
 use_collision = true
 size = Vector3(1, 18, 50)
 
-[node name="Z4_EastWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_EastWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1175256906]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 9, -100)
 use_collision = true
 size = Vector3(1, 18, 50)
 
-[node name="Z4_Tier1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_Tier1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=797238789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -84)
 use_collision = true
 size = Vector3(6, 3, 6)
 
-[node name="Z4_Tier2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_Tier2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=396623451]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -94)
 use_collision = true
 size = Vector3(6, 7, 6)
 
-[node name="Z4_Tier3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_Tier3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1014844014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.5, -105)
 use_collision = true
 size = Vector3(6, 11, 6)
 
-[node name="Z4_HighOverlookBridge" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_HighOverlookBridge" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=84311640]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -116)
 use_collision = true
 size = Vector3(14, 15, 6)
 
-[node name="Z4_WallrunPanelWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_WallrunPanelWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1644308774]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -94)
 use_collision = true
 size = Vector3(1, 10, 12)
 
-[node name="Z4_WallrunPanelEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_WallrunPanelEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=371208683]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 10, -105)
 use_collision = true
 size = Vector3(1, 10, 12)
 
-[node name="Z4_PortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_PortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1795527078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 6, -125)
 use_collision = true
 size = Vector3(6, 12, 1)
 
-[node name="Z4_PortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector"]
+[node name="Z4_PortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=339264974]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 6, -125)
 use_collision = true
 size = Vector3(6, 12, 1)
 
-[node name="Zone5_CQCBunker" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone5_CQCBunker" type="Node3D" parent="NavigationRegion3D" unique_id=235943515]
 
-[node name="Z5_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1396201212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -150)
 use_collision = true
 size = Vector3(24, 1, 50)
 
-[node name="Z5_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=816254724]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 4, -150)
 use_collision = true
 size = Vector3(1, 8, 50)
 
-[node name="Z5_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=2039612357]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 4, -150)
 use_collision = true
 size = Vector3(1, 8, 50)
 
-[node name="Z5_BaffleWall1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_BaffleWall1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1069375513]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -135)
 use_collision = true
 size = Vector3(14, 8, 1)
 
-[node name="Z5_BaffleWall2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_BaffleWall2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=687066934]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, -145)
 use_collision = true
 size = Vector3(14, 8, 1)
 
-[node name="Z5_LaneDivider" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_LaneDivider" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=850021582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -155)
 use_collision = true
 size = Vector3(1, 8, 12)
 
-[node name="Z5_FinalPortalWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker"]
+[node name="Z5_FinalPortalWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1547996306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -165)
 use_collision = true
 size = Vector3(14, 8, 1)
 
-[node name="Zone6_TransitPlaza" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone6_TransitPlaza" type="Node3D" parent="NavigationRegion3D" unique_id=7986891]
 
-[node name="Z6_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza"]
+[node name="Z6_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1815123284]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, -0.5, -185)
 use_collision = true
 size = Vector3(38, 1, 20)
 
-[node name="Z6_NorthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza"]
+[node name="Z6_NorthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1068929497]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 5, -195.5)
 use_collision = true
 size = Vector3(38, 11, 1)
 
-[node name="Z6_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza"]
+[node name="Z6_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=529049662]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 5, -185)
 use_collision = true
 size = Vector3(1, 11, 20)
 
-[node name="Z6_SouthWallInner" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza"]
+[node name="Z6_SouthWallInner" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1706940947]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 5, -175.5)
 use_collision = true
 size = Vector3(17, 11, 1)
 
-[node name="Z6_CenterPillar" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza"]
+[node name="Z6_CenterPillar" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1050000866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3, -185)
 use_collision = true
 size = Vector3(4, 6, 4)
 
-[node name="Zone7_ReturnHighway" type="Node3D" parent="NavigationRegion3D"]
+[node name="Zone7_ReturnHighway" type="Node3D" parent="NavigationRegion3D" unique_id=331881257]
 
-[node name="Z7_FloorSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_FloorSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=2136364831]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, -0.5, -135)
 use_collision = true
 size = Vector3(12, 1, 80)
 
-[node name="Z7_FloorMidBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_FloorMidBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=83911465]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3.5, -50)
 use_collision = true
 size = Vector3(12, 1, 90)
 
-[node name="Z7_RampUp" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_RampUp" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=726749781]
 transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 1.5, -95)
 use_collision = true
 size = Vector3(12, 1, 24)
 
-[node name="Z7_RampDownToStart" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_RampDownToStart" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=1537201131]
 transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 1.5, 5)
 use_collision = true
 size = Vector3(12, 1, 24)
 
-[node name="Z7_FloorLoopReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_FloorLoopReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=473126135]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, -0.5, 25)
 use_collision = true
 size = Vector3(16, 1, 16)
 
-[node name="Z7_OuterEastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway"]
+[node name="Z7_OuterEastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=1959394211]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 7, -85)
 use_collision = true
 size = Vector3(1, 15, 220)
 
-[node name="NavigationLinks" type="Node3D" parent="NavigationRegion3D"]
+[node name="NavigationLinks" type="Node3D" parent="NavigationRegion3D" unique_id=1259737955]
 
-[node name="NavLink_Z4_Ground_To_Tier1" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z4_Ground_To_Tier1" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=1507708302]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -78)
 end_position = Vector3(0, 3, -5)
-bidirectional = true
 
-[node name="NavLink_Z4_Tier1_To_Tier2" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z4_Tier1_To_Tier2" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=265327031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.4, -85)
 end_position = Vector3(-5, 4, -7)
-bidirectional = true
 
-[node name="NavLink_Z4_Tier2_To_Tier3" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z4_Tier2_To_Tier3" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=2016564265]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.4, -95.5)
 end_position = Vector3(9, 4, -7.5)
-bidirectional = true
 
-[node name="NavLink_Z4_Tier3_To_Apex" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z4_Tier3_To_Apex" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=1161044040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.4, -106.5)
 end_position = Vector3(-4, 4, -8)
-bidirectional = true
 
-[node name="NavLink_Z3_Ground_To_Sniper" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z3_Ground_To_Sniper" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=1761526863]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.4, -55)
 end_position = Vector3(3, 5, 0)
-bidirectional = true
 
-[node name="NavLink_Z3_To_Z7_Balcony" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks"]
+[node name="NavLink_Z3_To_Z7_Balcony" type="NavigationLink3D" parent="NavigationRegion3D/NavigationLinks" unique_id=650167060]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.5, 0.4, -50)
 end_position = Vector3(4, 4, 0)
-bidirectional = true
 
-[node name="BloodPools" type="Node3D" parent="."]
+[node name="BloodPools" type="Node3D" parent="." unique_id=1368887158]
 
-[node name="Pool_Z1_Start" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z1_Start" parent="BloodPools" unique_id=967069064 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 27)
 
-[node name="Pool_Z2_Corridor" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z2_Corridor" parent="BloodPools" unique_id=1749136872 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -5)
 
-[node name="Pool_Z3_Center" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z3_Center" parent="BloodPools" unique_id=1839532346 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -45)
 
-[node name="Pool_Z3_Flank" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z3_Flank" parent="BloodPools" unique_id=1898091319 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.05, -60)
 
-[node name="Pool_Z4_Base" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z4_Base" parent="BloodPools" unique_id=113707323 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -78)
 
-[node name="Pool_Z4_High" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z4_High" parent="BloodPools" unique_id=1602605495 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.05, -105)
 
-[node name="Pool_Z5_Bend1" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z5_Bend1" parent="BloodPools" unique_id=687531345 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.05, -140)
 
-[node name="Pool_Z5_Bend2" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z5_Bend2" parent="BloodPools" unique_id=2138644061 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.05, -152)
 
-[node name="Pool_Z6_Plaza" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z6_Plaza" parent="BloodPools" unique_id=1647674414 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.05, -185)
 
-[node name="Pool_Z7_Overlook" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z7_Overlook" parent="BloodPools" unique_id=907998135 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.05, -50)
 
-[node name="Pool_Z7_ReturnSlide" parent="BloodPools" instance=ExtResource("3_blood_pool")]
+[node name="Pool_Z7_ReturnSlide" parent="BloodPools" unique_id=496056635 instance=ExtResource("3_blood_pool")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.05, 18)
 
-[node name="Player" parent="." instance=ExtResource("1_player")]
+[node name="Player" parent="." unique_id=814342954 instance=ExtResource("1_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 40)
 
-[node name="Enemies" type="Node3D" parent="."]
+[node name="Enemies" type="Node3D" parent="." unique_id=1764034594]
 
-[node name="Enemy_Z1_1" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 25)
+[node name="Enemy_Z1_Intro" parent="Enemies" unique_id=1101970501 instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 22)
 
-[node name="Enemy_Z1_2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, 20)
-
-[node name="Enemy_Z1_3" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, 16)
-
-[node name="Enemy_Ranged_Z1" parent="Enemies" instance=ExtResource("5_enemy_ranged")]
+[node name="Enemy_Ranged_Z1" parent="Enemies" unique_id=1831814518 instance=ExtResource("5_enemy_ranged")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.5, 18)
 
-[node name="Enemy_Z2_Entrance" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 8)
+[node name="Enemy_Z2_Corridor" parent="Enemies" unique_id=1454426201 instance=ExtResource("2_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
 
-[node name="Enemy_Z2_Mid1" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 1.5, -2)
-
-[node name="Enemy_Z2_Mid2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 1.5, -10)
-
-[node name="Enemy_Z2_Perch" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -18)
-
-[node name="Enemy_Z3_Center1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z3_Center1" parent="Enemies" unique_id=1204938242 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -35)
 
-[node name="Enemy_Ranged_Z3_1" parent="Enemies" instance=ExtResource("5_enemy_ranged")]
+[node name="Enemy_Ranged_Z3_1" parent="Enemies" unique_id=1287923938 instance=ExtResource("5_enemy_ranged")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.5, -36)
 
-[node name="Enemy_Z3_Center2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5, -45)
-
-[node name="Enemy_Ranged_Z3_2" parent="Enemies" instance=ExtResource("5_enemy_ranged")]
+[node name="Enemy_Ranged_Z3_2" parent="Enemies" unique_id=643461228 instance=ExtResource("5_enemy_ranged")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -48)
 
-[node name="Enemy_Z3_Center3" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, -52)
-
-[node name="Enemy_Flyer_Z3" parent="Enemies" instance=ExtResource("6_enemy_flyer")]
+[node name="Enemy_Flyer_Z3" parent="Enemies" unique_id=1068010745 instance=ExtResource("6_enemy_flyer")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.5, -42)
 
-[node name="Enemy_Z3_PillarWest" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z3_PillarWest" parent="Enemies" unique_id=1269417194 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1.5, -40)
 
-[node name="Enemy_Z3_PillarEast" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 1.5, -40)
-
-[node name="Enemy_Z3_Flank" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.5, -60)
-
-[node name="Enemy_Z3_Sniper1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z3_Sniper1" parent="Enemies" unique_id=633830920 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 5.5, -53)
 
-[node name="Enemy_Z3_Sniper2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 5.5, -57)
-
-[node name="Enemy_Z4_Ground" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z4_Ground" parent="Enemies" unique_id=1258655100 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -78)
 
-[node name="Enemy_Z4_Tier1" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
+[node name="Enemy_Flyer_Z4" parent="Enemies" unique_id=187623025 instance=ExtResource("6_enemy_flyer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, -88)
 
-[node name="Enemy_Flyer_Z4" parent="Enemies" instance=ExtResource("6_enemy_flyer")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.0, -88)
-
-[node name="Enemy_Z4_Tier2" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z4_Tier2" parent="Enemies" unique_id=1419754520 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.5, -94)
 
-[node name="Enemy_Z4_Tier3" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.5, -105)
-
-[node name="Enemy_Z4_Apex1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z4_Apex1" parent="Enemies" unique_id=2070458772 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 15.5, -116)
 
-[node name="Enemy_Z4_Apex2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 15.5, -116)
-
-[node name="Enemy_Z5_Entrance" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z5_Entrance" parent="Enemies" unique_id=1342825606 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -128)
 
-[node name="Enemy_Z5_Bend1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z5_Bend1" parent="Enemies" unique_id=640668598 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -138)
 
-[node name="Enemy_Z5_Choke1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z5_Choke1" parent="Enemies" unique_id=1030619236 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1.5, -148)
 
-[node name="Enemy_Z5_Choke2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 1.5, -152)
-
-[node name="Enemy_Z5_Killbox1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z5_Killbox1" parent="Enemies" unique_id=619192715 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -168)
 
-[node name="Enemy_Z5_Killbox2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -170)
-
-[node name="Enemy_Z6_PlazaWest" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z6_PlazaWest" parent="Enemies" unique_id=1323160834 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -182)
 
-[node name="Enemy_Z6_PlazaCenter" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.5, -190)
-
-[node name="Enemy_Z6_PlazaEast" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.5, -185)
-
-[node name="Enemy_Z6_HighwayGate" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z6_HighwayGate" parent="Enemies" unique_id=207630836 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1.5, -180)
 
-[node name="Enemy_Z7_HighwaySouth" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z7_HighwaySouth" parent="Enemies" unique_id=2058853936 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 1.5, -145)
 
-[node name="Enemy_Z7_RampApproach" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 1.5, -110)
-
-[node name="Enemy_Z7_OverlookSniper1" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z7_OverlookSniper1" parent="Enemies" unique_id=930231798 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 4.5, -65)
 
-[node name="Enemy_Z7_OverlookSniper2" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 4.5, -40)
-
-[node name="Enemy_Z7_SlideReturn" parent="Enemies" instance=ExtResource("2_enemy")]
+[node name="Enemy_Z7_SlideReturn" parent="Enemies" unique_id=464038317 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.5, 12)
-
-[node name="Enemy_Z7_LoopJunction" parent="Enemies" instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, 28)
