@@ -68,6 +68,7 @@ var is_inflated: bool = false
 var was_killed_by_melee: bool = false
 var was_killed_by_shockwave: bool = false
 var last_damage_weapon: String = ""
+var last_headshot_bonus_frame: int = -1
 var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
 var slow_factor: float = 1.0
@@ -1191,6 +1192,13 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	
 	if is_headshot:
 		print("[%s] HEADSHOT! Damage: %d | Remaining HP: %d" % [name, amount, max(0, health)])
+		var cur_frame = Engine.get_process_frames()
+		if cur_frame != last_headshot_bonus_frame:
+			last_headshot_bonus_frame = cur_frame
+			var player_node = get_tree().get_first_node_in_group("player")
+			if is_instance_valid(player_node) and "skills" in player_node and is_instance_valid(player_node.skills):
+				player_node.skills.add_bpm(1.5)
+				print("[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.skills.bpm)
 	
 	# Задержка реакции перед контратакой после получения любого урона (telegraph window)
 	hit_reaction_timer = reaction_delay

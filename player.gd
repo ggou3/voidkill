@@ -210,6 +210,9 @@ func _input(event):
 		skills.trigger_slam()
 	if event.is_action_pressed("melee") and not event.is_echo():
 		perform_melee()
+	if event.is_action_pressed("debug_max_bpm") or (event is InputEventKey and event.pressed and not event.is_echo() and (event.keycode == KEY_T or event.physical_keycode == KEY_T)):
+		if skills and skills.has_method("force_max_bpm"):
+			skills.force_max_bpm()
 
 func _process(_delta):
 	if is_dead:

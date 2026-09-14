@@ -188,6 +188,11 @@ func _update_momentum_hud(delta: float):
 	momentum_label.add_theme_color_override("font_color", active_color)
 	momentum_label.modulate.a = momentum_display_alpha
 
+func force_max_bpm():
+	bpm = MAX_BPM
+	time_since_bpm_gain = 0.0
+	print("[DEBUG] Max BPM (%.1f) forced via 'T' key! Peak delay set to 5.0s." % MAX_BPM)
+
 func add_bpm(amount: float):
 	if amount <= 0.0:
 		return
