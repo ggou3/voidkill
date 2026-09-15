@@ -86,6 +86,12 @@ emission_enabled = true
 emission = Color(0.2, 0.55, 1, 1)
 emission_energy_multiplier = 2.2
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z4_Trim"]
+albedo_color = Color(0.12, 0.15, 0.2, 1)
+metallic = 0.5
+roughness = 0.4
+
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z5_Floor"]
 albedo_color = Color(0.15, 0.08, 0.08, 1)
 roughness = 0.85
@@ -657,23 +663,479 @@ material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 18, 50)
 
+[node name="Z4_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 0.4, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.6, 0.8, 50)
+
+[node name="Z4_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 0.4, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.6, 0.8, 50)
+
+[node name="Z4_WestPlinthStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.35, 0.8, -100)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z4_EastPlinthStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.35, 0.8, -100)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z4_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 9, -75.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(6, 18, 1)
+
+[node name="Z4_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 9, -75.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(6, 18, 1)
+
+[node name="Z4_SouthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, -75.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(14, 6, 1)
+
+[node name="Z4_SouthPortalNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -75.4)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(14, 0.3, 0.3)
+
+[node name="Z4_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 9, -124.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(7, 18, 1)
+
+[node name="Z4_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 9, -124.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(7, 18, 1)
+
+[node name="Z4_NorthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, -124.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(12, 6, 1)
+
+[node name="Z4_NorthPortalNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -124.4)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(12, 0.3, 0.3)
+
+[node name="Z4_RibW_83" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -83)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_83_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -83)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibW_91" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -91)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_91_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -91)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibW_99" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -99)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_99_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -99)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibW_107" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -107)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_107_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -107)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibW_115" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -115)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_115_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -115)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibW_123" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -123)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibW_123_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -123)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_83" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -83)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_83_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -83)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_91" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -91)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_91_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -91)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_99" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -99)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_99_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -99)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_107" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -107)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_107_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000032]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -107)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_115" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -115)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_115_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -115)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_RibE_123" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -123)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.8, 18, 1.4)
+
+[node name="Z4_RibE_123_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -123)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.85, 16, 0.2)
+
+[node name="Z4_CeilingGirder1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -83)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(26, 1, 1.2)
+
+[node name="Z4_CeilingGirder1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -83)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z4_CeilingGirder2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -99)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(26, 1, 1.2)
+
+[node name="Z4_CeilingGirder2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -99)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z4_CeilingGirder3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -115)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(26, 1, 1.2)
+
+[node name="Z4_CeilingGirder3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -115)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
+[node name="Z4_WestMidConduit" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 9.2, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.2, 0.2, 48)
+
+[node name="Z4_WestMidNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9.2, -100)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z4_EastMidConduit" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 9.2, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.2, 0.2, 48)
+
+[node name="Z4_EastMidNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9.2, -100)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z4_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 17.8, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.4, 0.4, 50)
+
+[node name="Z4_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 17.8, -100)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.4, 0.4, 50)
+
+[node name="Z4_Tier1_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -84)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(6.6, 0.8, 6.6)
+
 [node name="Z4_Tier1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=797238789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -84)
-material = SubResource("Mat_Z4_Tier")
+material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 3, 6)
 
+[node name="Z4_Tier1_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.02, -81.1)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier1_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.02, -86.9)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier1_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 3.02, -84)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier1_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 3.02, -84)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier1_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 1.5, -86.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 3, 0.3)
+
+[node name="Z4_Tier1_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 1.5, -86.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 3, 0.3)
+
+[node name="Z4_Tier1_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 1.5, -81.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 3, 0.3)
+
+[node name="Z4_Tier1_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 1.5, -81.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 3, 0.3)
+
+[node name="Z4_Tier2_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.4, -94)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(6.6, 0.8, 6.6)
+
 [node name="Z4_Tier2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=396623451]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -94)
-material = SubResource("Mat_Z4_Tier")
+material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 7, 6)
 
+[node name="Z4_Tier2_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.02, -91.1)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier2_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.02, -96.9)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier2_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 7.02, -94)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier2_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000062]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 7.02, -94)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier2_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.05, 3.5, -96.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 7, 0.3)
+
+[node name="Z4_Tier2_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95, 3.5, -96.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 7, 0.3)
+
+[node name="Z4_Tier2_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.05, 3.5, -91.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 7, 0.3)
+
+[node name="Z4_Tier2_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95, 3.5, -91.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 7, 0.3)
+
+[node name="Z4_Tier3_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.4, -105)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(6.6, 0.8, 6.6)
+
 [node name="Z4_Tier3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1014844014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.5, -105)
-material = SubResource("Mat_Z4_Tier")
+material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 11, 6)
+
+[node name="Z4_Tier3_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.02, -102.1)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier3_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000069]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.02, -107.9)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(6, 0.05, 0.2)
+
+[node name="Z4_Tier3_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 11.02, -105)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier3_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000071]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9, 11.02, -105)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.2, 0.05, 5.6)
+
+[node name="Z4_Tier3_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000072]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 5.5, -107.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 11, 0.3)
+
+[node name="Z4_Tier3_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05, 5.5, -107.95)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 11, 0.3)
+
+[node name="Z4_Tier3_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 5.5, -102.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 11, 0.3)
+
+[node name="Z4_Tier3_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000075]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05, 5.5, -102.05)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.3, 11, 0.3)
+
+[node name="Z4_HighOverlookBridge_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(14.6, 0.8, 6.6)
 
 [node name="Z4_HighOverlookBridge" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=84311640]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -116)
@@ -681,29 +1143,198 @@ material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(14, 15, 6)
 
+[node name="Z4_BridgeEdgeSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.02, -113.1)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(14, 0.05, 0.2)
+
+[node name="Z4_BridgeEdgeNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000078]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.02, -118.9)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(14, 0.05, 0.2)
+
+[node name="Z4_BridgeParapetWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 15.6, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.4, 1.2, 5.6)
+
+[node name="Z4_BridgeParapetEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 15.6, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = true
+size = Vector3(0.4, 1.2, 5.6)
+
+[node name="Z4_ApexPylonWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 16.5, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.8, 3, 0.8)
+
+[node name="Z4_ApexPylonEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000082]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 16.5, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(0.8, 3, 0.8)
+
+[node name="Z4_ApexCrownArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.8, -116)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(11.8, 0.6, 0.8)
+
+[node name="Z4_ApexCrownNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.4, -116)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(4, 0.2, 0.6)
+
 [node name="Z4_WallrunPanelWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1644308774]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -94)
-material = SubResource("Mat_Z4_Tier")
+material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 10, 12)
+
+[node name="Z4_WallrunW_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 13.15, -94)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.2, 0.3, 12.2)
+
+[node name="Z4_WallrunW_BottomCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 2.85, -94)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.2, 0.3, 12.2)
+
+[node name="Z4_WallrunW_GuideMid" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 8, -94)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.4, 11.6)
+
+[node name="Z4_WallrunW_GuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 5, -94)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.2, 11.6)
+
+[node name="Z4_WallrunW_GuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 11, -94)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.2, 11.6)
+
+[node name="Z4_WallrunW_ArmSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000090]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 8, -90)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(2.8, 0.8, 0.8)
+
+[node name="Z4_WallrunW_ArmNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 8, -98)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(2.8, 0.8, 0.8)
 
 [node name="Z4_WallrunPanelEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=371208683]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 10, -105)
-material = SubResource("Mat_Z4_Tier")
+material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 10, 12)
 
-[node name="Z4_PortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1795527078]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 6, -125)
-material = SubResource("Mat_Z4_Wall")
-use_collision = true
-size = Vector3(6, 12, 1)
+[node name="Z4_WallrunE_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 15.15, -105)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.2, 0.3, 12.2)
 
-[node name="Z4_PortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=339264974]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 6, -125)
-material = SubResource("Mat_Z4_Wall")
-use_collision = true
-size = Vector3(6, 12, 1)
+[node name="Z4_WallrunE_BottomCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 4.85, -105)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.2, 0.3, 12.2)
+
+[node name="Z4_WallrunE_GuideMid" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 10, -105)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.4, 11.6)
+
+[node name="Z4_WallrunE_GuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000095]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 7, -105)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.2, 11.6)
+
+[node name="Z4_WallrunE_GuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 13, -105)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(0.1, 0.2, 11.6)
+
+[node name="Z4_WallrunE_ArmSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000097]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.4, 10, -101)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(2.8, 0.8, 0.8)
+
+[node name="Z4_WallrunE_ArmNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000098]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.4, 10, -109)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(2.8, 0.8, 0.8)
+
+[node name="Z4_Tank_SW1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.6, -77.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.8, 3.2, 1.8)
+
+[node name="Z4_Tank_SW1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 2, -76.5)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(1.2, 0.3, 0.2)
+
+[node name="Z4_Tank_SE1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.6, -77.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.8, 3.2, 1.8)
+
+[node name="Z4_Tank_SE1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 2, -76.5)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(1.2, 0.3, 0.2)
+
+[node name="Z4_Tank_NW1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.6, -122.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.8, 3.2, 1.8)
+
+[node name="Z4_Tank_NW1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 2, -123.5)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(1.2, 0.3, 0.2)
+
+[node name="Z4_Tank_NE1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.6, -122.5)
+material = SubResource("Mat_Z4_Trim")
+use_collision = false
+size = Vector3(1.8, 3.2, 1.8)
+
+[node name="Z4_Tank_NE1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 2, -123.5)
+material = SubResource("Mat_Z4_Tier")
+use_collision = false
+size = Vector3(1.2, 0.3, 0.2)
+
 
 [node name="Zone5_CQCBunker" type="Node3D" parent="NavigationRegion3D" unique_id=235943515]
 
