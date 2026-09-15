@@ -47,6 +47,12 @@ emission_enabled = true
 emission = Color(0.15, 0.9, 1, 1)
 emission_energy_multiplier = 2.5
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z2_Trim"]
+albedo_color = Color(0.18, 0.2, 0.24, 1)
+metallic = 0.55
+roughness = 0.4
+
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z3_Floor"]
 albedo_color = Color(0.1, 0.1, 0.12, 1)
 roughness = 0.65
@@ -208,6 +214,78 @@ material = SubResource("Mat_Z2_Floor")
 use_collision = true
 size = Vector3(10, 1, 40)
 
+[node name="Z2_WestFloorGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.85, 0.02, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.1, 0.05, 40)
+
+[node name="Z2_EastFloorGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.85, 0.02, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.1, 0.05, 40)
+
+[node name="Z2_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.4, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.2, 0.8, 40)
+
+[node name="Z2_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 0.4, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.2, 0.8, 40)
+
+[node name="Z2_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 10.3, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.2, 0.4, 40)
+
+[node name="Z2_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 10.3, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.2, 0.4, 40)
+
+[node name="Z2_WestSpeedGuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 2, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.05, 0.2, 40)
+
+[node name="Z2_WestSpeedGuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 6, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.05, 0.2, 40)
+
+[node name="Z2_WestBeltHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 6, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.15, 0.4, 40)
+
+[node name="Z2_EastSpeedGuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 2, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.05, 0.2, 40)
+
+[node name="Z2_EastSpeedGuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 6, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.05, 0.2, 40)
+
+[node name="Z2_EastBeltHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 6, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.15, 0.4, 40)
+
 [node name="Z2_WallrunWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1993895801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 5, -5)
 material = SubResource("Mat_Z2_Wall")
@@ -220,17 +298,299 @@ material = SubResource("Mat_Z2_Wall")
 use_collision = true
 size = Vector3(1, 11, 40)
 
+[node name="Z2_PilasterW_p11" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, 11)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterW_p11_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, 11)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterW_p3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, 3)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterW_p3_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, 3)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterW_m5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterW_m5_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterW_m13" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -13)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterW_m13_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -13)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterW_m21" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -21)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterW_m21_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -21)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterE_p11" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, 11)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterE_p11_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, 11)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterE_p3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, 3)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterE_p3_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, 3)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterE_m5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterE_m5_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterE_m13" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -13)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterE_m13_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -13)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
+[node name="Z2_PilasterE_m21" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -21)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.1, 11, 1.2)
+
+[node name="Z2_PilasterE_m21_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000032]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -21)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.12, 9, 0.15)
+
 [node name="Z2_WallrunRailWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1925604214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 3.5, -5)
-material = SubResource("Mat_Z2_Neon")
+material = SubResource("Mat_Z2_Trim")
 use_collision = true
 size = Vector3(1.6, 0.5, 24)
 
+[node name="Z2_RailGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.42, 3.5, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(0.08, 0.48, 24)
+
+[node name="Z2_RailBracket1" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, 5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
+[node name="Z2_RailBracket2" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, 1)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
+[node name="Z2_RailBracket3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -3)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
+[node name="Z2_RailBracket4" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -7)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
+[node name="Z2_RailBracket5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -11)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
+[node name="Z2_RailBracket6" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -15)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.8, 1.2, 0.6)
+
 [node name="Z2_CrossBeamPerch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=968191822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -18)
-material = SubResource("Mat_Z2_Neon")
+material = SubResource("Mat_Z2_Trim")
 use_collision = true
 size = Vector3(10, 0.8, 3)
+
+[node name="Z2_PerchGlowFront" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -16.45)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(10, 0.78, 0.1)
+
+[node name="Z2_PerchGlowBack" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -19.55)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(10, 0.78, 0.1)
+
+[node name="Z2_CeilingTruss1" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 11)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10, 0.6, 0.8)
+
+[node name="Z2_CeilingTruss1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, 11)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(2, 0.15, 0.4)
+
+[node name="Z2_CeilingTruss2" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 3)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10, 0.6, 0.8)
+
+[node name="Z2_CeilingTruss2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, 3)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(2, 0.15, 0.4)
+
+[node name="Z2_CeilingTruss3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10, 0.6, 0.8)
+
+[node name="Z2_CeilingTruss3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(2, 0.15, 0.4)
+
+[node name="Z2_CeilingTruss4" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -13)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10, 0.6, 0.8)
+
+[node name="Z2_CeilingTruss4_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -13)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(2, 0.15, 0.4)
+
+[node name="Z2_CeilingTruss5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -21)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10, 0.6, 0.8)
+
+[node name="Z2_CeilingTruss5_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -21)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(2, 0.15, 0.4)
+
+[node name="Z2_PortalN_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 5, 14.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.6, 11, 0.8)
+
+[node name="Z2_PortalN_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 5, 14.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.6, 11, 0.8)
+
+[node name="Z2_PortalN_Arch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 14.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10.2, 0.8, 0.8)
+
+[node name="Z2_PortalN_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.7, 14.5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(8, 0.2, 0.2)
+
+[node name="Z2_PortalS_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 5, -24.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.6, 11, 0.8)
+
+[node name="Z2_PortalS_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 5, -24.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(0.6, 11, 0.8)
+
+[node name="Z2_PortalS_Arch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -24.5)
+material = SubResource("Mat_Z2_Trim")
+use_collision = false
+size = Vector3(10.2, 0.8, 0.8)
+
+[node name="Z2_PortalS_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.7, -24.5)
+material = SubResource("Mat_Z2_Neon")
+use_collision = false
+size = Vector3(8, 0.2, 0.2)
 
 [node name="Zone3_GrandArena" type="Node3D" parent="NavigationRegion3D" unique_id=394210067]
 
