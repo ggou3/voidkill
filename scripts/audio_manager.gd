@@ -31,7 +31,8 @@ var sound_durations: Dictionary = {
 	"slide": 1.5,
 	"dry_fire": 0.08,
 	"rail_shot": 0.32,
-	"needle_shot": 0.06
+	"needle_shot": 0.06,
+	"parry_deflect": 0.22
 }
 
 var external_sounds: Dictionary = {}
@@ -244,6 +245,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["dry_fire"] = _gen_dry_fire()
 	sound_buffers["rail_shot"] = _gen_rail_shot()
 	sound_buffers["needle_shot"] = _gen_needle_shot()
+	sound_buffers["parry_deflect"] = _gen_parry_deflect()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -757,4 +759,28 @@ func _gen_player_heal() -> PackedVector2Array:
 		arr[i] = Vector2(s, s)
 	return arr
 
+# 17. "parry_deflect" — звонкий металлический клэнг/рикошет парирования
+func _gen_parry_deflect() -> PackedVector2Array:
+	var dur = sound_durations.get("parry_deflect", 0.22)
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p1: float = 0.0
+	var p2: float = 0.0
+	var p3: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Яркий металлический звон: 1850 Гц + 3700 Гц
+		p1 += TAU * 1850.0 * dt
+		p2 += TAU * 3700.0 * dt
+		# Низкочастотный ударный щелчок
+		p3 += TAU * 160.0 * exp(-35.0 * t) * dt
+		var ping = (sin(p1) * 0.6 + sin(p2) * 0.35) * exp(-16.0 * t)
+		var punch = sin(p3) * 0.7 * exp(-28.0 * t)
+		var spark = randf_range(-1.0, 1.0) * 0.25 * exp(-45.0 * t)
+		var s = clampf((ping + punch + spark) * 1.2, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
 

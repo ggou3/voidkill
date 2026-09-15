@@ -967,6 +967,98 @@ func spawn_cone_shockwave_vfx(from_pos: Vector3, aim_dir: Vector3, range_val: fl
 	fade_tween.tween_property(mat, "albedo_color:a", 0.0, 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	fade_tween.chain().tween_callback(mesh_inst.queue_free)
 
+func _check_and_deflect_projectiles(from_pos: Vector3, aim_dir: Vector3, is_shockwave: bool) -> bool:
+	var projectiles = get_tree().get_nodes_in_group("enemy_projectile")
+	if projectiles.is_empty():
+		return false
+		
+	var check_range = cone_melee_range if is_shockwave else 3.8
+	var check_angle = cone_melee_angle if is_shockwave else 90.0
+	var min_cos = cos(deg_to_rad(check_angle * 0.5))
+	var space_state = get_world_3d().direct_space_state
+	
+	var deflected_any = false
+	
+	for proj in projectiles:
+		if not is_instance_valid(proj) or proj.is_queued_for_deletion():
+			continue
+		if ("is_destroyed" in proj and proj.is_destroyed) or ("is_deflected" in proj and proj.is_deflected):
+			continue
+			
+		var to_proj = proj.global_position - from_pos
+		var dist = to_proj.length()
+		if dist > check_range:
+			continue
+			
+		# Проверка угла: вблизи (до 1.8м) захватываем всё перед игроком, на дистанции — по конусу
+		var dir_to_proj = to_proj / max(0.001, dist)
+		var dot = aim_dir.dot(dir_to_proj)
+		if dist > 1.8 and dot < min_cos:
+			continue
+			
+		# Проверка Line of Sight: снаряд не должен быть за сплошной стеной
+		if space_state:
+			var ray = PhysicsRayQueryParameters3D.create(from_pos, proj.global_position)
+			ray.exclude = [self, proj]
+			var occ = space_state.intersect_ray(ray)
+			if not occ.is_empty() and not occ.collider.is_in_group("enemy"):
+				continue
+				
+		# Отражаем снаряд по вектору взгляда игрока (aim_dir)
+		if proj.has_method("deflect"):
+			proj.deflect(aim_dir, 27.0, 24)
+			_spawn_deflect_flash(proj.global_position)
+			_spawn_deflect_feedback(proj.global_position)
+			deflected_any = true
+			
+	if deflected_any:
+		AudioManager.play_sound("parry_deflect")
+		head.trigger_melee_impact(false)
+		head.add_recoil(0.08, 0.4)
+		
+	return deflected_any
+
+func _spawn_deflect_flash(pos: Vector3):
+	var scene_root = get_tree().current_scene if (get_tree() and get_tree().current_scene) else get_parent()
+	if not scene_root:
+		return
+	var flash = MeshInstance3D.new()
+	var sphere = SphereMesh.new()
+	sphere.radius = 0.35
+	sphere.height = 0.7
+	flash.mesh = sphere
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.25, 0.95, 1.0, 0.9)
+	flash.material_override = mat
+	scene_root.add_child(flash)
+	flash.global_position = pos
+	var tween = flash.create_tween().set_parallel(true)
+	tween.tween_property(flash, "scale", Vector3(3.5, 3.5, 3.5), 0.2).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(flash.queue_free)
+
+func _spawn_deflect_feedback(pos: Vector3):
+	var scene_root = get_tree().current_scene if (get_tree() and get_tree().current_scene) else get_parent()
+	if not scene_root:
+		return
+	var label = Label3D.new()
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test = true
+	label.outline_size = 8
+	label.outline_modulate = Color.BLACK
+	label.text = "PARRY!"
+	label.modulate = Color(0.2, 0.95, 1.0, 1.0)
+	label.font_size = 36
+	scene_root.add_child(label)
+	label.global_position = pos + Vector3(0.0, 0.3, 0.0)
+	var tween = label.create_tween().set_parallel(true)
+	tween.tween_property(label, "global_position", pos + Vector3(0.0, 1.2, 0.0), 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.chain().tween_callback(label.queue_free)
+
 func perform_melee():
 	if melee_timer > 0.0 or is_dead or skills.is_slamming:
 		return
@@ -1007,6 +1099,9 @@ func perform_melee():
 	
 	var space_state = get_world_3d().direct_space_state
 	var from_pos = head.camera.global_position
+	
+	# Парирование/отражение вражеских снарядов (Deflect/Parry)
+	_check_and_deflect_projectiles(from_pos, aim_dir, is_cone_shockwave)
 	
 	if is_cone_shockwave:
 		# Визуальный эффект конуса ударной волны
