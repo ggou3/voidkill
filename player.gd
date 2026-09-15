@@ -1006,9 +1006,10 @@ func _check_and_deflect_projectiles(from_pos: Vector3, aim_dir: Vector3, is_shoc
 				
 		# Отражаем снаряд по вектору взгляда игрока (aim_dir)
 		if proj.has_method("deflect"):
-			proj.deflect(aim_dir, 27.0, 24)
-			_spawn_deflect_flash(proj.global_position)
-			_spawn_deflect_feedback(proj.global_position)
+			var orig_pos = proj.global_position
+			proj.deflect(aim_dir, 27.0, 24, from_pos)
+			_spawn_deflect_flash(orig_pos)
+			_spawn_deflect_feedback(orig_pos)
 			deflected_any = true
 			
 	if deflected_any:

@@ -74,24 +74,71 @@ func _on_area_entered(area: Area3D):
 			var target = area if area.is_in_group("enemy") else area.get_parent()
 			_handle_impact(target, global_position)
 
-func deflect(new_dir: Vector3, new_speed: float = 27.0, new_damage: int = 24):
+func deflect(new_dir: Vector3 = Vector3.ZERO, new_speed: float = 27.0, new_damage: int = 24, origin_pos: Vector3 = Vector3.ZERO):
 	if is_destroyed or is_deflected:
 		return
 	is_deflected = true
-	direction = new_dir.normalized()
+	
+	# 1. Гарантированный вектор прицела камеры игрока на момент парирования
+	var aim_dir = new_dir
+	var cam = get_viewport().get_camera_3d() if get_viewport() else null
+	
+	if aim_dir == Vector3.ZERO or aim_dir.length_squared() < 0.001:
+		if is_instance_valid(cam):
+			aim_dir = -cam.global_transform.basis.z.normalized()
+		else:
+			var player = get_tree().get_first_node_in_group("player")
+			if is_instance_valid(player) and "head" in player and is_instance_valid(player.head):
+				aim_dir = player.head.get_aim_direction()
+				
+	direction = aim_dir.normalized()
 	speed = new_speed if new_speed > 0.0 else speed * 1.5
 	damage = new_damage if new_damage > 0 else damage * 2
 	lifetime = 6.0
 	
-	# Смещаем снаряд чуть вперед по новому направлению, чтобы он не застрял рядом с игроком
-	global_position += direction * 0.45
+	# 2. Точка запуска: выставляем снаряд строго на оптическую ось прицела перед камерой
+	var launch_origin = origin_pos
+	if launch_origin == Vector3.ZERO:
+		if is_instance_valid(cam):
+			launch_origin = cam.global_position
+		else:
+			var player = get_tree().get_first_node_in_group("player")
+			if is_instance_valid(player) and "head" in player and is_instance_valid(player.head):
+				launch_origin = player.head.camera.global_position
+			else:
+				launch_origin = global_position
+				
+	var target_launch_pos = launch_origin + direction * 0.75
+	var direct_space = get_world_3d().direct_space_state if get_world_3d() else null
+	if direct_space:
+		var ray_query = PhysicsRayQueryParameters3D.create(launch_origin, target_launch_pos)
+		var p = get_tree().get_first_node_in_group("player")
+		var excl: Array[RID] = [get_rid()]
+		if is_instance_valid(p) and p is CollisionObject3D:
+			excl.append(p.get_rid())
+		ray_query.exclude = excl
+		ray_query.collide_with_bodies = true
+		ray_query.collide_with_areas = false
+		var close_hit = direct_space.intersect_ray(ray_query)
+		if not close_hit.is_empty():
+			if close_hit.collider.is_in_group("enemy"):
+				_handle_impact(close_hit.collider, close_hit.position)
+				return
+			else:
+				target_launch_pos = close_hit.position - direction * 0.05
+				
+	global_position = target_launch_pos
 	
-	# Переводим в группу отражённых снарядов игрока
+	# Ориентируем ноду по вектору полёта
+	var up_vec = Vector3.UP if abs(direction.y) < 0.99 else Vector3.FORWARD
+	look_at(global_position + direction, up_vec)
+	
+	# 3. Переводим в группу отражённых снарядов игрока
 	remove_from_group("enemy_projectile")
 	add_to_group("player_projectile")
 	
 	_apply_deflected_visuals()
-	print("[DEFLECT] Projectile parried! New speed: %.1f, New dmg: %d, Dir: %s" % [speed, damage, direction])
+	print("[DEFLECT] Projectile parried! New speed: %.1f, New dmg: %d, Dir: %s, Pos: %s" % [speed, damage, direction, global_position])
 
 func _apply_deflected_visuals():
 	var mesh_inst: MeshInstance3D = get_node_or_null("MeshInstance3D")
