@@ -112,9 +112,9 @@ func _apply_movement(_target_vel: Vector3, _delta: float):
 	# Статичная турель никогда не перемещается
 	velocity = Vector3.ZERO
 
-func take_damage(amount: int, knockback: Vector3 = Vector3.ZERO, source_is_melee: bool = false, is_needle_damage: bool = false, is_headshot: bool = false, custom_hit_pos: Vector3 = Vector3.ZERO, chain_depth: int = 0):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
 	# Тяжёлая стационарная огневая точка защищена от физического отбрасывания
-	super.take_damage(amount, Vector3.ZERO, source_is_melee, is_needle_damage, is_headshot, custom_hit_pos, chain_depth)
+	super.take_damage(amount, Vector3.ZERO, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
 func die():
 	_reset_telegraph()
