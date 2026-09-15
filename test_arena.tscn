@@ -145,6 +145,17 @@ roughness = 0.6
 albedo_color = Color(0.3, 0.31, 0.34, 1)
 roughness = 0.55
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z7_GoldNeon"]
+albedo_color = Color(1, 0.85, 0.4, 1)
+emission_enabled = true
+emission = Color(1, 0.85, 0.4, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="StandardMaterial3D" id="Mat_Z7_Trim"]
+albedo_color = Color(0.18, 0.2, 0.22, 1)
+metallic = 0.7
+roughness = 0.35
+
 [sub_resource type="PrismMesh" id="PrismMesh_monolith"]
 size = Vector3(3, 8, 3)
 
@@ -2840,6 +2851,666 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 7, -85)
 material = SubResource("Mat_Z7_Wall")
 use_collision = true
 size = Vector3(1, 15, 220)
+
+[node name="Z7_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.15, 14.25, -85)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.3, 0.5, 220)
+
+[node name="Z7_EastPlinthSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 0.4, -145)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.2, 0.8, 100)
+
+[node name="Z7_EastPlinthBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 4.4, -45)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.2, 0.8, 100)
+
+[node name="Z7_EastPlinthReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 0.4, 15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.2, 0.8, 20)
+
+[node name="Z7_EastWall_GuideLowSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 2.2, -145)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 100)
+
+[node name="Z7_EastWall_GuideHighSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 4.2, -145)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 100)
+
+[node name="Z7_EastWall_GuideLowBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 6.2, -45)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 100)
+
+[node name="Z7_EastWall_GuideHighBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 8.2, -45)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 100)
+
+[node name="Z7_EastWall_GuideLowReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 2.2, 15)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 20)
+
+[node name="Z7_EastWall_GuideHighReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 4.2, 15)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 20)
+
+[node name="Z7_PilasterEast_Rib_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -191)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -191)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -175)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -159)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -159)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -143)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -143)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -127)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -127)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -111)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -111)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -95)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -95)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_8" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -79)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_8" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -79)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_9" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -63)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_9" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -63)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_10" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -47)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_10" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -47)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_11" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -31)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_11" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000032]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -31)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_12" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_12" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -15)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_13" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, 1)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_13" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, 1)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_PilasterEast_Rib_14" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, 17)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.24, 14.5, 1)
+
+[node name="Z7_PilasterEast_Neon_14" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, 17)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 13, 0.2)
+
+[node name="Z7_Gantry_Beam_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -175)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -143)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -143)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -143)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -143)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -111)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -111)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -111)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -111)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -79)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -79)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -79)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -79)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -47)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -47)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -47)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -47)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000062]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -15)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_Gantry_Beam_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, 17)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.8, 1)
+
+[node name="Z7_Gantry_PylonW_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, 17)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.5, 7, 0.8)
+
+[node name="Z7_Gantry_Lum_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, 17)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(4, 0.25, 0.8)
+
+[node name="Z7_Gantry_Lamp_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, 17)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.6, 0.08, 0.4)
+
+[node name="Z7_WestBarrier_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.45, -140)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.3, 0.9, 70)
+
+[node name="Z7_WestBarrier_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 0.6, -140)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 70)
+
+[node name="Z7_WestBarrier_Post_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000069]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.45, 1.1, 0.5)
+
+[node name="Z7_WestBarrier_Post_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -159)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.45, 1.1, 0.5)
+
+[node name="Z7_WestBarrier_Post_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000071]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -143)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.45, 1.1, 0.5)
+
+[node name="Z7_WestBarrier_Post_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000072]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -127)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.45, 1.1, 0.5)
+
+[node name="Z7_WestBarrier_Post_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -111)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.45, 1.1, 0.5)
+
+[node name="Z7_BalconyRailing_South" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.8, -85)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.3, 0.6, 20)
+
+[node name="Z7_BalconyRailing_South_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000075]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.75, -85)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 20)
+
+[node name="Z7_BalconyRailing_North" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.8, -15)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.3, 0.6, 20)
+
+[node name="Z7_BalconyRailing_North_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.75, -15)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 20)
+
+[node name="Z7_BalconyOverlook_Curb" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000078]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.3, -50)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.3, 0.6, 44)
+
+[node name="Z7_BalconyOverlook_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.45, -50)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.04, 0.12, 44)
+
+[node name="Z7_Gate_Lintel" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 7.5, -175)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.4, 0.8, 0.8)
+
+[node name="Z7_Gate_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 7.4, -174.9)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(10, 0.15, 0.05)
+
+[node name="Z7_Gate_FloorChevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000082]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, -173)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.4)
+
+[node name="Z7_Gate_FloorChevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, -170)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3, 0.04, 0.4)
+
+[node name="Z7_Overlook_CanopyBeam" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 8.5, -50)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(12.2, 0.6, 1.2)
+
+[node name="Z7_Overlook_CanopyNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000085]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 8.2, -50)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(11.8, 0.1, 0.2)
+
+[node name="Z7_Overlook_Terminal" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.6, 5, -50)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.6, 2, 2)
+
+[node name="Z7_Overlook_TerminalScreen" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000087]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.25, 5.2, -50)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.08, 0.9, 1.4)
+
+[node name="Z7_Overlook_PoolFrameN" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.02, -48.2)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.3)
+
+[node name="Z7_Overlook_PoolFrameS" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.02, -51.8)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.3)
+
+[node name="Z7_Overlook_PoolFrameW" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000090]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.2, 4.02, -50)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.3, 0.04, 3.6)
+
+[node name="Z7_Overlook_PoolFrameE" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000091]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.8, 4.02, -50)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.3, 0.04, 3.6)
+
+[node name="Z7_RampUp_ThresholdFoot" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.03, -107)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(10, 0.06, 0.6)
+
+[node name="Z7_RampUp_ThresholdCrest" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.03, -83)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(10, 0.06, 0.6)
+
+[node name="Z7_RampUp_Chevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000094]
+transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 1.03, -99)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.4)
+
+[node name="Z7_RampUp_Chevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000095]
+transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 2.03, -91)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.4)
+
+[node name="Z7_RampDown_ThresholdCrest" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000096]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.03, -7)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(10, 0.06, 0.6)
+
+[node name="Z7_RampDown_ThresholdFoot" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000097]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.03, 17)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(10, 0.06, 0.6)
+
+[node name="Z7_RampDown_Chevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000098]
+transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 2.03, 1)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.4)
+
+[node name="Z7_RampDown_Chevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000099]
+transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 1.03, 9)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(4, 0.04, 0.4)
+
+[node name="Z7_Return_PoolFrameN" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000100]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.02, 16.5)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.2, 0.04, 0.25)
+
+[node name="Z7_Return_PoolFrameS" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000101]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.02, 19.5)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(3.2, 0.04, 0.25)
+
+[node name="Z7_Return_GuideStrip1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000102]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.02, 23)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.3, 0.04, 6)
+
+[node name="Z7_Return_GuideStrip2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000103]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.02, 25)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(6, 0.04, 0.3)
+
+[node name="Z7_ReturnPortal_ColW" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000104]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, 21)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.8, 8, 0.8)
+
+[node name="Z7_ReturnPortal_ColE" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, 29)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.8, 8, 0.8)
+
+[node name="Z7_ReturnPortal_Lintel" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 8, 25)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(0.8, 0.8, 8.8)
+
+[node name="Z7_ReturnPortal_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000107]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.9, 25)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(0.9, 0.15, 8)
+
+[node name="Z7_Return_SouthCap" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2, 33.1)
+material = SubResource("Mat_Z7_Wall")
+use_collision = false
+size = Vector3(16, 4, 0.4)
+
+[node name="Z7_Return_SouthTrim" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000109]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 4.1, 33.1)
+material = SubResource("Mat_Z7_Trim")
+use_collision = false
+size = Vector3(16, 0.3, 0.5)
+
+[node name="Z7_Return_SouthNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000110]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3.9, 32.85)
+material = SubResource("Mat_Z7_GoldNeon")
+use_collision = false
+size = Vector3(15, 0.15, 0.05)
 
 [node name="NavigationLinks" type="Node3D" parent="NavigationRegion3D" unique_id=1259737955]
 
