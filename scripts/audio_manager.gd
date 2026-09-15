@@ -33,7 +33,8 @@ var sound_durations: Dictionary = {
 	"rail_shot": 0.32,
 	"needle_shot": 0.06,
 	"parry_deflect": 0.22,
-	"shield_block": 0.22
+	"shield_block": 0.22,
+	"bomber_tick": 0.045
 }
 
 var external_sounds: Dictionary = {}
@@ -248,6 +249,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["needle_shot"] = _gen_needle_shot()
 	sound_buffers["parry_deflect"] = _gen_parry_deflect()
 	sound_buffers["shield_block"] = _gen_shield_block()
+	sound_buffers["bomber_tick"] = _gen_bomber_tick()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -811,3 +813,24 @@ func _gen_shield_block() -> PackedVector2Array:
 		var s = clampf((metallic + thud + spark) * 1.1, -0.95, 0.95)
 		arr[i] = Vector2(s, s)
 	return arr
+
+# 19. "bomber_tick" — резкий высокочастотный электронный тик/сигнал таймера детонации
+func _gen_bomber_tick() -> PackedVector2Array:
+	var dur = sound_durations.get("bomber_tick", 0.045)
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Высокий пронзительный щелчок (1800 -> 1200 Гц)
+		var freq = 1200.0 + 600.0 * exp(-60.0 * t)
+		p += TAU * freq * dt
+		var tone = sin(p) * exp(-45.0 * t)
+		var click = randf_range(-1.0, 1.0) * exp(-120.0 * t) * 0.4
+		var s = clampf((tone + click) * 0.9, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
+

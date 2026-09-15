@@ -1,0 +1,118 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemy_bomber.gd" id="1_bomber"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bomber"]
+radius = 0.32
+height = 1.15
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.3
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.32
+height = 1.15
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.09, 0.04, 0.04, 1)
+metallic = 0.35
+roughness = 0.65
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.12, 0.05, 0.05, 1)
+metallic = 0.5
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
+emission_enabled = true
+emission = Color(1, 0.15, 0.05, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_eyes"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_harness"]
+size = Vector3(0.44, 0.44, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_harness"]
+albedo_color = Color(0.18, 0.18, 0.2, 1)
+metallic = 0.8
+roughness = 0.4
+
+[sub_resource type="SphereMesh" id="SphereMesh_core"]
+radius = 0.18
+height = 0.36
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_core"]
+albedo_color = Color(0.85, 0.1, 0.05, 1)
+emission_enabled = true
+emission = Color(1, 0.15, 0.05, 1)
+emission_energy_multiplier = 0.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 28.0
+
+[node name="EnemyBomber" type="CharacterBody3D" groups=["enemy", "enemy_bomber"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_bomber")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.32, 0)
+shape = SubResource("CapsuleShape3D_bomber")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape3D_head")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.32, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="HeadMesh" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48, 0)
+radius = 0.28
+radial_segments = 16
+rings = 8
+material = SubResource("StandardMaterial3D_head")
+
+[node name="Eyes" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.16, 0, 0, 0, 0.07, 0, 0, 0, 0.07, 0, 0.48, -0.26)
+mesh = SubResource("BoxMesh_eyes")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="ChestHarness" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -0.28)
+mesh = SubResource("BoxMesh_harness")
+surface_material_override/0 = SubResource("StandardMaterial3D_harness")
+
+[node name="CoreMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -0.32)
+mesh = SubResource("SphereMesh_core")
+surface_material_override/0 = SubResource("StandardMaterial3D_core")
+
+[node name="CoreLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, -0.42)
+light_color = Color(1, 0.2, 0.05, 1)
+light_energy = 0.6
+omni_range = 3.5
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.5
+path_desired_distance = 0.8
+avoidance_enabled = false
+radius = 0.3
+neighbor_distance = 3.0
+max_neighbors = 3
+time_horizon_agents = 1.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("SphereShape3D_detection")
