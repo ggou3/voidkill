@@ -106,6 +106,12 @@ emission_enabled = true
 emission = Color(1, 0.15, 0.1, 1)
 emission_energy_multiplier = 3.0
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z5_Trim"]
+albedo_color = Color(0.16, 0.12, 0.12, 1)
+metallic = 0.6
+roughness = 0.4
+
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z6_Floor"]
 albedo_color = Color(0.1, 0.14, 0.12, 1)
 roughness = 0.7
@@ -1356,11 +1362,287 @@ material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(1, 8, 50)
 
+[node name="Z5_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000009]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 0.4, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.5, 0.8, 50)
+
+[node name="Z5_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000010]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 0.4, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.5, 0.8, 50)
+
+[node name="Z5_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000011]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 7.8, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.5, 0.4, 50)
+
+[node name="Z5_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 7.8, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.5, 0.4, 50)
+
+[node name="Z5_WestBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.85, 4, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.3, 0.3, 48)
+
+[node name="Z5_WestRedWire" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 4, -150)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z5_EastBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000015]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.85, 4, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.3, 0.3, 48)
+
+[node name="Z5_EastRedWire" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 4, -150)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.1, 0.1, 48)
+
+[node name="Z5_EntranceJambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 4, -125.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1, 8, 1)
+
+[node name="Z5_EntranceJambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000002]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 4, -125.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1, 8, 1)
+
+[node name="Z5_EntranceLintel" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000003]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -125.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(14, 1, 1)
+
+[node name="Z5_EntranceGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.9, -125.4)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(12, 0.2, 0.2)
+
+[node name="Z5_ExitJambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 4, -174.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.8, 8, 1)
+
+[node name="Z5_ExitJambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000006]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.8, 4, -174.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.8, 8, 1)
+
+[node name="Z5_ExitLintel" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000007]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 7.5, -174.5)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(7.4, 1, 1)
+
+[node name="Z5_ExitGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000008]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 6.9, -174.4)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(6, 0.2, 0.2)
+
+[node name="Z5_PilasterW_129" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -129)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_129_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -129)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterW_137" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -137)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_137_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -137)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterW_145" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -145)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_145_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -145)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterW_153" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000023]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -153)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_153_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000024]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -153)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterW_161" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -161)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_161_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -161)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterW_169" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000027]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -169)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterW_169_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -169)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_129" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -129)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_129_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000030]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -129)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_137" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -137)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_137_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000032]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -137)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_145" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -145)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_145_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -145)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_153" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -153)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_153_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -153)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_161" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -161)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_161_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -161)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
+[node name="Z5_PilasterE_169" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -169)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(0.6, 8, 1.2)
+
+[node name="Z5_PilasterE_169_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -169)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.65, 6, 0.15)
+
 [node name="Z5_BaffleWall1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1069375513]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -135)
 material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+
+[node name="Z5_Baffle1_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -135)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(14.2, 0.8, 1.4)
+
+[node name="Z5_Baffle1_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 7.8, -135)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(14.2, 0.4, 1.4)
+
+[node name="Z5_Baffle1_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000043]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 4, -135)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1, 8, 1.4)
+
+[node name="Z5_Baffle1_JambE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3.5, -135)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(1.05, 4, 0.2)
+
+[node name="Z5_Baffle1_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000045]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -134.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
+
+[node name="Z5_Baffle1_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000046]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -135.55)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
 
 [node name="Z5_BaffleWall2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=687066934]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, -145)
@@ -1368,17 +1650,245 @@ material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
 
+[node name="Z5_Baffle2_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000047]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.4, -145)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(14.2, 0.8, 1.4)
+
+[node name="Z5_Baffle2_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 7.8, -145)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(14.2, 0.4, 1.4)
+
+[node name="Z5_Baffle2_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 4, -145)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1, 8, 1.4)
+
+[node name="Z5_Baffle2_JambW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3.5, -145)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(1.05, 4, 0.2)
+
+[node name="Z5_Baffle2_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000051]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3.5, -144.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
+
+[node name="Z5_Baffle2_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000052]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3.5, -145.55)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
+
 [node name="Z5_LaneDivider" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=850021582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -155)
-material = SubResource("Mat_Z5_RedGlow")
+material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(1, 8, 12)
+
+[node name="Z5_LaneDivider_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000053]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.4, -155)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1.4, 0.8, 12.2)
+
+[node name="Z5_LaneDivider_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 7.8, -155)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(1.4, 0.4, 12.2)
+
+[node name="Z5_LaneDivider_PillarS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000055]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -149)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1.4, 8, 1)
+
+[node name="Z5_LaneDivider_GlowS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3.5, -148.9)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.2, 4, 1.05)
+
+[node name="Z5_LaneDivider_PillarN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000057]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -161)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1.4, 8, 1)
+
+[node name="Z5_LaneDivider_GlowN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3.5, -161.1)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.2, 4, 1.05)
+
+[node name="Z5_LaneDivider_StripW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 3.5, -155)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.1, 0.25, 11)
+
+[node name="Z5_LaneDivider_StripE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000060]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.45, 3.5, -155)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.1, 0.25, 11)
 
 [node name="Z5_FinalPortalWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1547996306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -165)
 material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+
+[node name="Z5_FinalWall_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -165)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(14.2, 0.8, 1.4)
+
+[node name="Z5_FinalWall_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000062]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 7.8, -165)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(14.2, 0.4, 1.4)
+
+[node name="Z5_FinalWall_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000063]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 4, -165)
+material = SubResource("Mat_Z5_Trim")
+use_collision = true
+size = Vector3(1, 8, 1.4)
+
+[node name="Z5_FinalWall_JambE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000064]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3.5, -165)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(1.05, 4, 0.2)
+
+[node name="Z5_FinalWall_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000065]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -164.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
+
+[node name="Z5_FinalWall_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000066]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -165.55)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(13, 0.25, 0.1)
+
+[node name="Z5_Bulkhead1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000067]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -131)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(24, 0.8, 1)
+
+[node name="Z5_Bulkhead1_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.05, -131)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(2, 0.2, 0.5)
+
+[node name="Z5_Bulkhead2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000069]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -139)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(24, 0.8, 1)
+
+[node name="Z5_Bulkhead2_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.05, -139)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(2, 0.2, 0.5)
+
+[node name="Z5_Bulkhead3" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000071]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -149)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(24, 0.8, 1)
+
+[node name="Z5_Bulkhead3_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000072]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 7.05, -149)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(2, 0.2, 0.5)
+
+[node name="Z5_Bulkhead4" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000073]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -159)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(24, 0.8, 1)
+
+[node name="Z5_Bulkhead4_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 7.05, -159)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(2, 0.2, 0.5)
+
+[node name="Z5_Bulkhead5" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000075]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -169)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(24, 0.8, 1)
+
+[node name="Z5_Bulkhead5_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000076]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.05, -169)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(2, 0.2, 0.5)
+
+[node name="Z5_VentTrunkW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 6.8, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.5, 0.5, 48)
+
+[node name="Z5_VentTrunkE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000078]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 6.8, -150)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(0.5, 0.5, 48)
+
+[node name="Z5_Terminal_SW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.2, -127)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(1, 2.4, 1)
+
+[node name="Z5_Terminal_SW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000080]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.8, -126.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.6, 0.2, 0.1)
+
+[node name="Z5_Terminal_NW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000081]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.2, -173)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(1, 2.4, 1)
+
+[node name="Z5_Terminal_NW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000082]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.8, -172.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.6, 0.2, 0.1)
+
+[node name="Z5_Terminal_SE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000083]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.2, -127)
+material = SubResource("Mat_Z5_Trim")
+use_collision = false
+size = Vector3(1, 2.4, 1)
+
+[node name="Z5_Terminal_SE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.8, -126.45)
+material = SubResource("Mat_Z5_RedGlow")
+use_collision = false
+size = Vector3(0.6, 0.2, 0.1)
 
 [node name="Zone6_TransitPlaza" type="Node3D" parent="NavigationRegion3D" unique_id=7986891]
 
