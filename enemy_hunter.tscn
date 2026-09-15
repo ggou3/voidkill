@@ -1,0 +1,139 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemy_hunter.gd" id="1_hunter"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hunter"]
+radius = 0.38
+height = 1.35
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.35
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.38
+height = 1.35
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.025, 0.028, 0.035, 1)
+metallic = 0.75
+roughness = 0.32
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.035, 0.038, 0.045, 1)
+metallic = 0.8
+roughness = 0.28
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
+albedo_color = Color(0.88, 0.95, 1, 1)
+emission_enabled = true
+emission = Color(0.88, 0.95, 1, 1)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_eyes"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vein"]
+albedo_color = Color(0.85, 0.95, 1, 1)
+emission_enabled = true
+emission = Color(0.85, 0.95, 1, 1)
+emission_energy_multiplier = 1.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_vein_central"]
+size = Vector3(0.06, 0.85, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vein_rib"]
+size = Vector3(0.28, 0.05, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vein_spine"]
+size = Vector3(0.06, 0.95, 0.04)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vein_shoulder"]
+size = Vector3(0.42, 0.05, 0.05)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 35.0
+
+[node name="EnemyHunter" type="CharacterBody3D" groups=["enemy", "enemy_hunter"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_hunter")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)
+shape = SubResource("CapsuleShape3D_hunter")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape3D_head")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="HeadMesh" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.58, 0)
+radius = 0.34
+radial_segments = 16
+rings = 8
+material = SubResource("StandardMaterial3D_head")
+
+[node name="Eyes" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.22, 0, 0, 0, 0.09, 0, 0, 0, 0.09, 0, 0.58, -0.32)
+mesh = SubResource("BoxMesh_eyes")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="VeinChestCentral" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, -0.39)
+mesh = SubResource("BoxMesh_vein_central")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinChestRibL" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.966, 0.259, 0, -0.259, 0.966, 0, 0, 0, 1, -0.2, 0.1, -0.36)
+mesh = SubResource("BoxMesh_vein_rib")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinChestRibR" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.966, -0.259, 0, 0.259, 0.966, 0, 0, 0, 1, 0.2, 0.1, -0.36)
+mesh = SubResource("BoxMesh_vein_rib")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinSpine" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0.39)
+mesh = SubResource("BoxMesh_vein_spine")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinShoulderL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.22, 0)
+mesh = SubResource("BoxMesh_vein_shoulder")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinShoulderR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.22, 0)
+mesh = SubResource("BoxMesh_vein_shoulder")
+surface_material_override/0 = SubResource("StandardMaterial3D_vein")
+
+[node name="VeinLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -0.45)
+light_color = Color(0.82, 0.94, 1, 1)
+light_energy = 1.0
+omni_range = 4.5
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.5
+path_desired_distance = 0.8
+avoidance_enabled = false
+radius = 0.3
+neighbor_distance = 3.0
+max_neighbors = 3
+time_horizon_agents = 1.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("SphereShape3D_detection")

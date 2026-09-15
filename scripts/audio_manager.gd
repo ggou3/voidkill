@@ -34,7 +34,8 @@ var sound_durations: Dictionary = {
 	"needle_shot": 0.06,
 	"parry_deflect": 0.22,
 	"shield_block": 0.22,
-	"bomber_tick": 0.045
+	"bomber_tick": 0.045,
+	"hunter_awaken": 0.35
 }
 
 var external_sounds: Dictionary = {}
@@ -250,6 +251,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["parry_deflect"] = _gen_parry_deflect()
 	sound_buffers["shield_block"] = _gen_shield_block()
 	sound_buffers["bomber_tick"] = _gen_bomber_tick()
+	sound_buffers["hunter_awaken"] = _gen_hunter_awaken()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -833,4 +835,31 @@ func _gen_bomber_tick() -> PackedVector2Array:
 		var s = clampf((tone + click) * 0.9, -0.95, 0.95)
 		arr[i] = Vector2(s, s)
 	return arr
+
+# 20. "hunter_awaken" — зловещий низкий металлический гул пробуждения Охотника
+func _gen_hunter_awaken() -> PackedVector2Array:
+	var dur = sound_durations.get("hunter_awaken", 0.35)
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p1: float = 0.0
+	var p2: float = 0.0
+	var p3: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Восходящий металлический резонанс от 95 до 220 Гц с суб-басом
+		var f1 = 95.0 + 125.0 * (t / dur)
+		var f2 = f1 * 2.5
+		p1 += TAU * f1 * dt
+		p2 += TAU * f2 * dt
+		p3 += TAU * 48.0 * dt
+		var bass = sin(p3) * 0.55
+		var mid = (sin(p1) * 0.45 + sin(p2) * 0.25)
+		var env = sin((t / dur) * PI) * exp(-1.2 * t)
+		var s = clampf((bass + mid) * env * 1.3, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
+
 
