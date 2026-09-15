@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://enemy_shield.tscn" id="7_xw7hd"]
 [ext_resource type="PackedScene" path="res://enemy_bomber.tscn" id="8_bomber"]
 [ext_resource type="PackedScene" path="res://enemy_hunter.tscn" id="9_hunter"]
+[ext_resource type="PackedScene" path="res://enemy_turret.tscn" id="10_turret"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_arena"]
 
@@ -3372,3 +3373,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.331278, 4.5, -39.53317)
 
 [node name="Enemy_Hunter_Z10" parent="Enemies" unique_id=131631272 instance=ExtResource("9_hunter")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.062317, 4.5, -35.888042)
+
+[node name="Enemy_Turret_Z1_Portal" parent="Enemies" unique_id=1800000001 instance=ExtResource("10_turret")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.6, 0.7, 14)
+
+[node name="Enemy_Turret_Z2_Exit" parent="Enemies" unique_id=1800000002 instance=ExtResource("10_turret")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.6, 0.7, -25.5)
+
+[node name="Enemy_Turret_Z5_Gate" parent="Enemies" unique_id=1800000003 instance=ExtResource("10_turret")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 0.7, -126.5)
+
+[node name="Enemy_Turret_Z6_Entry" parent="Enemies" unique_id=1800000004 instance=ExtResource("10_turret")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.7, -176.2)
+
