@@ -60,8 +60,8 @@ func start_lunge():
 	# Блокировка LUNGE
 	pass
 
-func _process(delta: float):
-	super._process(delta)
+func _physics_process(delta: float):
+	super._physics_process(delta)
 	if current_state == State.DEAD:
 		return
 		

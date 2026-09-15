@@ -6,6 +6,7 @@
 [ext_resource type="NavigationMesh" path="res://test_arena_navmesh.tres" id="4_navmesh"]
 [ext_resource type="PackedScene" path="res://enemy_ranged.tscn" id="5_enemy_ranged"]
 [ext_resource type="PackedScene" path="res://enemy_flyer.tscn" id="6_enemy_flyer"]
+[ext_resource type="PackedScene" path="res://enemy_shield.tscn" id="7_xw7hd"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_arena"]
 
@@ -36,11 +37,6 @@ emission_energy_multiplier = 1.8
 albedo_color = Color(0.12, 0.13, 0.15, 1)
 roughness = 0.7
 
-[sub_resource type="StandardMaterial3D" id="Mat_Z2_Wall"]
-albedo_color = Color(0.14, 0.16, 0.19, 1)
-metallic = 0.35
-roughness = 0.5
-
 [sub_resource type="StandardMaterial3D" id="Mat_Z2_Neon"]
 albedo_color = Color(0.15, 0.9, 1, 1)
 emission_enabled = true
@@ -52,6 +48,10 @@ albedo_color = Color(0.18, 0.2, 0.24, 1)
 metallic = 0.55
 roughness = 0.4
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z2_Wall"]
+albedo_color = Color(0.14, 0.16, 0.19, 1)
+metallic = 0.35
+roughness = 0.5
 
 [sub_resource type="StandardMaterial3D" id="Mat_Z3_Floor"]
 albedo_color = Color(0.1, 0.1, 0.12, 1)
@@ -77,7 +77,6 @@ albedo_color = Color(0.24, 0.22, 0.2, 1)
 metallic = 0.25
 roughness = 0.6
 
-
 [sub_resource type="StandardMaterial3D" id="Mat_Z4_Floor"]
 albedo_color = Color(0.08, 0.1, 0.15, 1)
 roughness = 0.7
@@ -86,17 +85,16 @@ roughness = 0.7
 albedo_color = Color(0.11, 0.15, 0.22, 1)
 roughness = 0.6
 
-[sub_resource type="StandardMaterial3D" id="Mat_Z4_Tier"]
-albedo_color = Color(0.2, 0.55, 1, 1)
-emission_enabled = true
-emission = Color(0.2, 0.55, 1, 1)
-emission_energy_multiplier = 2.2
-
 [sub_resource type="StandardMaterial3D" id="Mat_Z4_Trim"]
 albedo_color = Color(0.12, 0.15, 0.2, 1)
 metallic = 0.5
 roughness = 0.4
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z4_Tier"]
+albedo_color = Color(0.2, 0.55, 1, 1)
+emission_enabled = true
+emission = Color(0.2, 0.55, 1, 1)
+emission_energy_multiplier = 2.2
 
 [sub_resource type="StandardMaterial3D" id="Mat_Z5_Floor"]
 albedo_color = Color(0.15, 0.08, 0.08, 1)
@@ -106,17 +104,16 @@ roughness = 0.85
 albedo_color = Color(0.22, 0.1, 0.1, 1)
 roughness = 0.8
 
-[sub_resource type="StandardMaterial3D" id="Mat_Z5_RedGlow"]
-albedo_color = Color(1, 0.15, 0.1, 1)
-emission_enabled = true
-emission = Color(1, 0.15, 0.1, 1)
-emission_energy_multiplier = 3.0
-
 [sub_resource type="StandardMaterial3D" id="Mat_Z5_Trim"]
 albedo_color = Color(0.16, 0.12, 0.12, 1)
 metallic = 0.6
 roughness = 0.4
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z5_RedGlow"]
+albedo_color = Color(1, 0.15, 0.1, 1)
+emission_enabled = true
+emission = Color(1, 0.15, 0.1, 1)
+emission_energy_multiplier = 3.0
 
 [sub_resource type="StandardMaterial3D" id="Mat_Z6_Floor"]
 albedo_color = Color(0.1, 0.14, 0.12, 1)
@@ -126,16 +123,16 @@ roughness = 0.7
 albedo_color = Color(0.15, 0.2, 0.18, 1)
 roughness = 0.6
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z6_Trim"]
+albedo_color = Color(0.12, 0.17, 0.14, 1)
+metallic = 0.55
+roughness = 0.38
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z6_Emerald"]
 albedo_color = Color(0.15, 1, 0.65, 1)
 emission_enabled = true
 emission = Color(0.15, 1, 0.65, 1)
 emission_energy_multiplier = 3.0
-
-[sub_resource type="StandardMaterial3D" id="Mat_Z6_Trim"]
-albedo_color = Color(0.12, 0.17, 0.14, 1)
-metallic = 0.55
-roughness = 0.38
 
 [sub_resource type="StandardMaterial3D" id="Mat_Z7_Floor"]
 albedo_color = Color(0.25, 0.26, 0.28, 1)
@@ -145,26 +142,26 @@ roughness = 0.6
 albedo_color = Color(0.3, 0.31, 0.34, 1)
 roughness = 0.55
 
+[sub_resource type="StandardMaterial3D" id="Mat_Z7_Trim"]
+albedo_color = Color(0.18, 0.2, 0.22, 1)
+metallic = 0.7
+roughness = 0.35
+
 [sub_resource type="StandardMaterial3D" id="Mat_Z7_GoldNeon"]
 albedo_color = Color(1, 0.85, 0.4, 1)
 emission_enabled = true
 emission = Color(1, 0.85, 0.4, 1)
 emission_energy_multiplier = 3.5
 
-[sub_resource type="StandardMaterial3D" id="Mat_Z7_Trim"]
-albedo_color = Color(0.18, 0.2, 0.22, 1)
-metallic = 0.7
-roughness = 0.35
-
 [sub_resource type="PrismMesh" id="PrismMesh_monolith"]
 size = Vector3(3, 8, 3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_arch"]
-size = Vector3(8, 1, 2)
 
 [sub_resource type="SphereMesh" id="SphereMesh_beacon"]
 radius = 0.8
 height = 1.6
+
+[sub_resource type="BoxMesh" id="BoxMesh_arch"]
+size = Vector3(8, 1, 2)
 
 [node name="TestArena" type="Node3D" unique_id=247403531]
 
@@ -182,3335 +179,2921 @@ navigation_mesh = ExtResource("4_navmesh")
 
 [node name="Z1_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1728805485]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 30)
-material = SubResource("Mat_Z1_Floor")
 use_collision = true
 size = Vector3(16, 1, 30)
+material = SubResource("Mat_Z1_Floor")
 
 [node name="Z1_SouthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1083134291]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 45.5)
-material = SubResource("Mat_Z1_Wall")
 use_collision = true
 size = Vector3(16, 11, 1)
+material = SubResource("Mat_Z1_Wall")
 
 [node name="Z1_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1101970577]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.5, 5, 30)
-material = SubResource("Mat_Z1_Wall")
 use_collision = true
 size = Vector3(1, 11, 30)
+material = SubResource("Mat_Z1_Wall")
 
 [node name="Z1_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=1890040458]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 5, 38)
-material = SubResource("Mat_Z1_Wall")
 use_collision = true
 size = Vector3(1, 11, 14)
+material = SubResource("Mat_Z1_Wall")
 
 [node name="Z1_TransitionWest" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=901660434]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 5, 15)
-material = SubResource("Mat_Z1_Wall")
 use_collision = true
 size = Vector3(3, 11, 1)
+material = SubResource("Mat_Z1_Wall")
 
 [node name="Z1_TransitionEast" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=113132078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 5, 15)
-material = SubResource("Mat_Z1_Wall")
 use_collision = true
 size = Vector3(3, 11, 1)
+material = SubResource("Mat_Z1_Wall")
 
 [node name="Z1_SpeedRamp" type="CSGBox3D" parent="NavigationRegion3D/Zone1_Runway" unique_id=316343154]
 transform = Transform3D(1, 0, 0, 0, 0.996195, 0.0871557, 0, -0.0871557, 0.996195, 0, 0.3, 34)
-material = SubResource("Mat_Z1_Ramp")
 use_collision = true
 size = Vector3(8, 0.6, 6)
+material = SubResource("Mat_Z1_Ramp")
 
 [node name="Zone2_WallrunCorridor" type="Node3D" parent="NavigationRegion3D" unique_id=1454426267]
 
 [node name="Z2_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=960584581]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -5)
-material = SubResource("Mat_Z2_Floor")
 use_collision = true
 size = Vector3(10, 1, 40)
+material = SubResource("Mat_Z2_Floor")
 
 [node name="Z2_WestFloorGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.85, 0.02, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.1, 0.05, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_EastFloorGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.85, 0.02, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.1, 0.05, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 0.4, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.2, 0.8, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 0.4, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.2, 0.8, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 10.3, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.2, 0.4, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 10.3, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.2, 0.4, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_WestSpeedGuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 2, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.05, 0.2, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_WestSpeedGuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 6, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.05, 0.2, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_WestBeltHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.9, 6, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.15, 0.4, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_EastSpeedGuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 2, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.05, 0.2, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_EastSpeedGuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 6, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.05, 0.2, 40)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_EastBeltHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.9, 6, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.15, 0.4, 40)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_WallrunWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1993895801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 5, -5)
-material = SubResource("Mat_Z2_Wall")
 use_collision = true
 size = Vector3(1, 11, 40)
+material = SubResource("Mat_Z2_Wall")
 
 [node name="Z2_WallrunEast" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=954308322]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 5, -5)
-material = SubResource("Mat_Z2_Wall")
 use_collision = true
 size = Vector3(1, 11, 40)
+material = SubResource("Mat_Z2_Wall")
 
 [node name="Z2_PilasterW_p11" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, 11)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterW_p11_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, 11)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterW_p3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, 3)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterW_p3_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, 3)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterW_m5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterW_m5_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterW_m13" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -13)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterW_m13_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -13)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterW_m21" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.95, 5, -21)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterW_m21_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.92, 5, -21)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterE_p11" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, 11)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterE_p11_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, 11)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterE_p3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, 3)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterE_p3_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, 3)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterE_m5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterE_m5_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterE_m13" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -13)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterE_m13_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -13)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PilasterE_m21" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.95, 5, -21)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.1, 11, 1.2)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PilasterE_m21_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.92, 5, -21)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.12, 9, 0.15)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_WallrunRailWest" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=1925604214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.2, 3.5, -5)
-material = SubResource("Mat_Z2_Trim")
 use_collision = true
 size = Vector3(1.6, 0.5, 24)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.42, 3.5, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(0.08, 0.48, 24)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_RailBracket1" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, 5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailBracket2" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, 1)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailBracket3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -3)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailBracket4" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -7)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailBracket5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -11)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_RailBracket6" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.6, 2.6, -15)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.8, 1.2, 0.6)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CrossBeamPerch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=968191822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -18)
-material = SubResource("Mat_Z2_Trim")
 use_collision = true
 size = Vector3(10, 0.8, 3)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PerchGlowFront" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -16.45)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(10, 0.78, 0.1)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PerchGlowBack" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.5, -19.55)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(10, 0.78, 0.1)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_CeilingTruss1" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 11)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10, 0.6, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CeilingTruss1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, 11)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(2, 0.15, 0.4)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_CeilingTruss2" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 3)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10, 0.6, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CeilingTruss2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, 3)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(2, 0.15, 0.4)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_CeilingTruss3" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10, 0.6, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CeilingTruss3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(2, 0.15, 0.4)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_CeilingTruss4" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -13)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10, 0.6, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CeilingTruss4_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -13)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(2, 0.15, 0.4)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_CeilingTruss5" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000050]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -21)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10, 0.6, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_CeilingTruss5_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.85, -21)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(2, 0.15, 0.4)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PortalN_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 5, 14.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.6, 11, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalN_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 5, 14.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.6, 11, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalN_Arch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, 14.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10.2, 0.8, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalN_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.7, 14.5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(8, 0.2, 0.2)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Z2_PortalS_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 5, -24.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.6, 11, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalS_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 5, -24.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(0.6, 11, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalS_Arch" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.2, -24.5)
-material = SubResource("Mat_Z2_Trim")
-use_collision = false
 size = Vector3(10.2, 0.8, 0.8)
+material = SubResource("Mat_Z2_Trim")
 
 [node name="Z2_PortalS_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone2_WallrunCorridor" unique_id=760000059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.7, -24.5)
-material = SubResource("Mat_Z2_Neon")
-use_collision = false
 size = Vector3(8, 0.2, 0.2)
+material = SubResource("Mat_Z2_Neon")
 
 [node name="Zone3_GrandArena" type="Node3D" parent="NavigationRegion3D" unique_id=394210067]
 
 [node name="Z3_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1883540524]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -50)
-material = SubResource("Mat_Z3_Floor")
 use_collision = true
 size = Vector3(40, 1, 50)
+material = SubResource("Mat_Z3_Floor")
 
 [node name="Z3_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1457444321]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.5, 8, -50)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(1, 16, 50)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_EastWallNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=667626350]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 8, -64)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(1, 16, 22)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_EastWallSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=816447845]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 8, -36)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(1, 16, 22)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_EastBalconyArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 12, -50)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(1, 8, 6)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_EastBalconyRailing" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=853325173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.5, 0.6, -50)
-material = SubResource("Mat_Z3_Gold")
 use_collision = true
 size = Vector3(1, 1.2, 6)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=784013423]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 8, -25)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(15, 16, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=479249405]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 8, -25)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(15, 16, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_SouthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -25)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(10, 8, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=316873893]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 8, -75)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(13, 16, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=115772895]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 8, -75)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(13, 16, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_NorthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -75)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_PillarWest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1289187769]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(4, 8, 4)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_PillarWestBase" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0.4, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(4.6, 0.8, 4.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PillarWestCap" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 7.7, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(4.6, 0.6, 4.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PillarWestNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 4, -40)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.4, 6, 4.1)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PillarEast" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=6877742]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(4, 8, 4)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_PillarEastBase" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.4, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(4.6, 0.8, 4.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PillarEastCap" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 7.7, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(4.6, 0.6, 4.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PillarEastNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 4, -40)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.4, 6, 4.1)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_SniperNest" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=1909356843]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2.5, -55)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(8, 5, 8)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_SniperPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0.4, -55)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(8.6, 0.8, 8.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_SniperParapetFront" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 5.4, -51.2)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(7.6, 0.8, 0.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_SniperParapetInner" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 5.4, -55)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.4, 0.8, 7.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_SniperCornerGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.2, 5.5, -51.2)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.5, 1, 0.5)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_WallrunFlank" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=2020779545]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -58)
-material = SubResource("Mat_Z3_Wall")
 use_collision = true
 size = Vector3(1, 8, 16)
+material = SubResource("Mat_Z3_Wall")
 
 [node name="Z3_WallrunPylonS" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.2, -50)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(1.6, 8.4, 1.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_WallrunPylonN" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4.2, -66)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(1.6, 8.4, 1.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_WallrunGuideStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 4, -58)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(1.05, 0.3, 14)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_WestNicheFrame" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 4, -50)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 8, 6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_WestNicheNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 7.8, -50)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.5, 0.4, 5.6)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_32" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -32)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_32_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -32)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_40" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_40_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -40)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_48" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -48)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_48_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -48)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_56" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -56)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_56_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -56)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_64" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -64)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_64_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -64)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonW_72" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.6, 8, -72)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonW_72_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 8, -72)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonE_32" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -32)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonE_32_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -32)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonE_40" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -40)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonE_40_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -40)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonE_64" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -64)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonE_64_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -64)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_PylonE_72" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 8, -72)
-material = SubResource("Mat_Z3_Trim")
 use_collision = true
 size = Vector3(0.8, 16, 1.4)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PylonE_72_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 8, -72)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.85, 12, 0.2)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_CeilingArch1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -32)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(40, 1, 1.2)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_CeilingArch1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -32)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_CeilingArch2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -50)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(40, 1, 1.2)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_CeilingArch2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -50)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_CeilingArch3" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.5, -64)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(40, 1, 1.2)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_CeilingArch3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.1, -64)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_WestCorniceMid" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.7, 8, -50)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(0.6, 0.4, 50)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_WestCorniceTop" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.7, 15.8, -50)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(0.6, 0.4, 50)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PipeRunWest1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.4, 2.8, -50)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(0.2, 0.2, 46)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_PipeRunWest2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.4, 3.2, -50)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(0.15, 0.15, 46)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_Crate_SW1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 0.7, -27.5)
-material = SubResource("Mat_Z3_Crate")
-use_collision = false
 size = Vector3(1.6, 1.4, 1.6)
+material = SubResource("Mat_Z3_Crate")
 
 [node name="Z3_Crate_SW2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000050]
 transform = Transform3D(0.965926, 0, 0.258819, 0, 1, 0, -0.258819, 0, 0.965926, -17.5, 1.9, -27.5)
-material = SubResource("Mat_Z3_Crate")
-use_collision = false
 size = Vector3(1.2, 1, 1.2)
+material = SubResource("Mat_Z3_Crate")
 
 [node name="Z3_Crate_SE1" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 0.7, -27.5)
-material = SubResource("Mat_Z3_Crate")
-use_collision = false
 size = Vector3(1.6, 1.4, 1.6)
+material = SubResource("Mat_Z3_Crate")
 
 [node name="Z3_Crate_SE2" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000052]
 transform = Transform3D(0.965926, 0, -0.258819, 0, 1, 0, 0.258819, 0, 0.965926, 17.5, 1.9, -27.5)
-material = SubResource("Mat_Z3_Crate")
-use_collision = false
 size = Vector3(1.2, 1, 1.2)
+material = SubResource("Mat_Z3_Crate")
 
 [node name="Z3_Terminal_NW" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 1.1, -72.5)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(2.4, 2.2, 1.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_Terminal_NW_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.5, 1.6, -72.5)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(2, 0.3, 1.65)
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Z3_Terminal_NE" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 1.1, -72.5)
-material = SubResource("Mat_Z3_Trim")
-use_collision = false
 size = Vector3(2.4, 2.2, 1.6)
+material = SubResource("Mat_Z3_Trim")
 
 [node name="Z3_Terminal_NE_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone3_GrandArena" unique_id=730000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.5, 1.6, -72.5)
-material = SubResource("Mat_Z3_Gold")
-use_collision = false
 size = Vector3(2, 0.3, 1.65)
-
+material = SubResource("Mat_Z3_Gold")
 
 [node name="Zone4_VerticalSector" type="Node3D" parent="NavigationRegion3D" unique_id=1704989696]
 
 [node name="Z4_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=333282612]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -100)
-material = SubResource("Mat_Z4_Floor")
 use_collision = true
 size = Vector3(26, 1, 50)
+material = SubResource("Mat_Z4_Floor")
 
 [node name="Z4_WestWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=957765030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.5, 9, -100)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 18, 50)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_EastWallHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1175256906]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.5, 9, -100)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 18, 50)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 0.4, -100)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.6, 0.8, 50)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 0.4, -100)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.6, 0.8, 50)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WestPlinthStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.35, 0.8, -100)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_EastPlinthStrip" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.35, 0.8, -100)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_SouthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 9, -75.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(6, 18, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_SouthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 9, -75.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(6, 18, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_SouthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, -75.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(14, 6, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_SouthPortalNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -75.4)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(14, 0.3, 0.3)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_NorthPortalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 9, -124.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(7, 18, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_NorthPortalEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 9, -124.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(7, 18, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_NorthPortalArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, -124.5)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(12, 6, 1)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_NorthPortalNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -124.4)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(12, 0.3, 0.3)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_83" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -83)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_83_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -83)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_91" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -91)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_91_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -91)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_99" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -99)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_99_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -99)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_107" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -107)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_107_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -107)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_115" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -115)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_115_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -115)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibW_123" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9, -123)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibW_123_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 9, -123)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_83" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -83)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_83_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -83)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_91" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -91)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_91_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -91)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_99" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -99)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_99_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -99)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_107" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -107)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_107_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -107)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_115" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -115)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_115_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -115)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_RibE_123" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9, -123)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.8, 18, 1.4)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_RibE_123_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 9, -123)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.85, 16, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_CeilingGirder1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -83)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(26, 1, 1.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_CeilingGirder1_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -83)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_CeilingGirder2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -99)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(26, 1, 1.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_CeilingGirder2_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -99)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_CeilingGirder3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.5, -115)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(26, 1, 1.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_CeilingGirder3_Lum" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.9, -115)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WestMidConduit" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 9.2, -100)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.2, 0.2, 48)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WestMidNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.6, 9.2, -100)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_EastMidConduit" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 9.2, -100)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.2, 0.2, 48)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_EastMidNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.6, 9.2, -100)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.7, 17.8, -100)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.4, 0.4, 50)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.7, 17.8, -100)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.4, 0.4, 50)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier1_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -84)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(6.6, 0.8, 6.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=797238789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -84)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 3, 6)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_Tier1_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000050]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.02, -81.1)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier1_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.02, -86.9)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier1_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.9, 3.02, -84)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier1_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9, 3.02, -84)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier1_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 1.5, -86.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 3, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier1_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 1.5, -86.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 3, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier1_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.05, 1.5, -81.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 3, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier1_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.05, 1.5, -81.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 3, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier2_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.4, -94)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(6.6, 0.8, 6.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier2" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=396623451]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3.5, -94)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 7, 6)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_Tier2_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.02, -91.1)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier2_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000060]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 7.02, -96.9)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier2_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000061]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.9, 7.02, -94)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier2_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000062]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.1, 7.02, -94)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier2_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000063]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.05, 3.5, -96.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 7, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier2_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95, 3.5, -96.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 7, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier2_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.05, 3.5, -91.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 7, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier2_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.95, 3.5, -91.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 7, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier3_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.4, -105)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(6.6, 0.8, 6.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier3" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1014844014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 5.5, -105)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(6, 11, 6)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_Tier3_EdgeFront" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.02, -102.1)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier3_EdgeBack" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 11.02, -107.9)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(6, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier3_EdgeWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000070]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1, 11.02, -105)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier3_EdgeEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000071]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9, 11.02, -105)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.2, 0.05, 5.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tier3_CornerNW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000072]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 5.5, -107.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 11, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier3_CornerNE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000073]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05, 5.5, -107.95)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 11, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier3_CornerSW" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000074]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.95, 5.5, -102.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 11, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tier3_CornerSE" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000075]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.05, 5.5, -102.05)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.3, 11, 0.3)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_HighOverlookBridge_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -116)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(14.6, 0.8, 6.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_HighOverlookBridge" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=84311640]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -116)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(14, 15, 6)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_BridgeEdgeSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.02, -113.1)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(14, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_BridgeEdgeNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15.02, -118.9)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(14, 0.05, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_BridgeParapetWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 15.6, -116)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.4, 1.2, 5.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_BridgeParapetEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.8, 15.6, -116)
-material = SubResource("Mat_Z4_Trim")
 use_collision = true
 size = Vector3(0.4, 1.2, 5.6)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_ApexPylonWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.5, 16.5, -116)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.8, 3, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_ApexPylonEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 16.5, -116)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(0.8, 3, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_ApexCrownArch" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000083]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.8, -116)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(11.8, 0.6, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_ApexCrownNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000084]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.4, -116)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(4, 0.2, 0.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunPanelWest" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=1644308774]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 8, -94)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 10, 12)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_WallrunW_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000085]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 13.15, -94)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.2, 0.3, 12.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunW_BottomCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.5, 2.85, -94)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.2, 0.3, 12.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunW_GuideMid" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000087]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 8, -94)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.4, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunW_GuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000088]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 5, -94)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.2, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunW_GuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000089]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.95, 11, -94)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.2, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunW_ArmSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000090]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 8, -90)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(2.8, 0.8, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunW_ArmNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000091]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.4, 8, -98)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(2.8, 0.8, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunPanelEast" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=371208683]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 10, -105)
-material = SubResource("Mat_Z4_Wall")
 use_collision = true
 size = Vector3(1, 10, 12)
+material = SubResource("Mat_Z4_Wall")
 
 [node name="Z4_WallrunE_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000092]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 15.15, -105)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.2, 0.3, 12.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunE_BottomCap" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 4.85, -105)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.2, 0.3, 12.2)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunE_GuideMid" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000094]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 10, -105)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.4, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunE_GuideLow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000095]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 7, -105)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.2, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunE_GuideHigh" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.95, 13, -105)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(0.1, 0.2, 11.6)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_WallrunE_ArmSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.4, 10, -101)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(2.8, 0.8, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_WallrunE_ArmNorth" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000098]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.4, 10, -109)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(2.8, 0.8, 0.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tank_SW1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000099]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.6, -77.5)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.8, 3.2, 1.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tank_SW1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000100]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 2, -76.5)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(1.2, 0.3, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tank_SE1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.6, -77.5)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.8, 3.2, 1.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tank_SE1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000102]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 2, -76.5)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(1.2, 0.3, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tank_NW1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.6, -122.5)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.8, 3.2, 1.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tank_NW1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000104]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 2, -123.5)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(1.2, 0.3, 0.2)
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Z4_Tank_NE1" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000105]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.6, -122.5)
-material = SubResource("Mat_Z4_Trim")
-use_collision = false
 size = Vector3(1.8, 3.2, 1.8)
+material = SubResource("Mat_Z4_Trim")
 
 [node name="Z4_Tank_NE1_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone4_VerticalSector" unique_id=740000106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 2, -123.5)
-material = SubResource("Mat_Z4_Tier")
-use_collision = false
 size = Vector3(1.2, 0.3, 0.2)
-
+material = SubResource("Mat_Z4_Tier")
 
 [node name="Zone5_CQCBunker" type="Node3D" parent="NavigationRegion3D" unique_id=235943515]
 
 [node name="Z5_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1396201212]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, -150)
-material = SubResource("Mat_Z5_Floor")
 use_collision = true
 size = Vector3(24, 1, 50)
+material = SubResource("Mat_Z5_Floor")
 
 [node name="Z5_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=816254724]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 4, -150)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(1, 8, 50)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_EastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=2039612357]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 4, -150)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(1, 8, 50)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 0.4, -150)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.5, 0.8, 50)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EastPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 0.4, -150)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.5, 0.8, 50)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 7.8, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.5, 0.4, 50)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 7.8, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.5, 0.4, 50)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_WestBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.85, 4, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.3, 0.3, 48)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_WestRedWire" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.75, 4, -150)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_EastBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.85, 4, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.3, 0.3, 48)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EastRedWire" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.75, 4, -150)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.1, 0.1, 48)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_EntranceJambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.5, 4, -125.5)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EntranceJambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.5, 4, -125.5)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EntranceLintel" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -125.5)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(14, 1, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_EntranceGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.9, -125.4)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(12, 0.2, 0.2)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_ExitJambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2, 4, -174.5)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.8, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_ExitJambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.8, 4, -174.5)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.8, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_ExitLintel" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 7.5, -174.5)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(7.4, 1, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_ExitGlow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 6.9, -174.4)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(6, 0.2, 0.2)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_129" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -129)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_129_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -129)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_137" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -137)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_137_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -137)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_145" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -145)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_145_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -145)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_153" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -153)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_153_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -153)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_161" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -161)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_161_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -161)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterW_169" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7, 4, -169)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterW_169_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.6, 4, -169)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_129" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -129)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_129_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -129)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_137" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -137)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_137_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -137)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_145" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -145)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_145_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -145)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_153" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -153)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_153_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -153)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_161" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -161)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_161_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -161)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_PilasterE_169" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.7, 4, -169)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(0.6, 8, 1.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_PilasterE_169_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 4, -169)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.65, 6, 0.15)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_BaffleWall1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1069375513]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -135)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_Baffle1_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -135)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(14.2, 0.8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle1_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 7.8, -135)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(14.2, 0.4, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle1_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 4, -135)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1, 8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle1_JambE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3.5, -135)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(1.05, 4, 0.2)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Baffle1_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -134.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Baffle1_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -135.55)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_BaffleWall2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=687066934]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 4, -145)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_Baffle2_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.4, -145)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(14.2, 0.8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle2_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 7.8, -145)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(14.2, 0.4, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle2_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 4, -145)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1, 8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Baffle2_JambW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000050]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3.5, -145)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(1.05, 4, 0.2)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Baffle2_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3.5, -144.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Baffle2_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 3.5, -145.55)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_LaneDivider" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=850021582]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -155)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(1, 8, 12)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_LaneDivider_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.4, -155)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1.4, 0.8, 12.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_LaneDivider_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 7.8, -155)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(1.4, 0.4, 12.2)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_LaneDivider_PillarS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -149)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1.4, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_LaneDivider_GlowS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3.5, -148.9)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.2, 4, 1.05)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_LaneDivider_PillarN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 4, -161)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1.4, 8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_LaneDivider_GlowN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 3.5, -161.1)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.2, 4, 1.05)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_LaneDivider_StripW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.55, 3.5, -155)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.1, 0.25, 11)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_LaneDivider_StripE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000060]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.45, 3.5, -155)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.1, 0.25, 11)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_FinalPortalWall" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=1547996306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 4, -165)
-material = SubResource("Mat_Z5_Wall")
 use_collision = true
 size = Vector3(14, 8, 1)
+material = SubResource("Mat_Z5_Wall")
 
 [node name="Z5_FinalWall_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000061]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0.4, -165)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(14.2, 0.8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_FinalWall_TopCap" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000062]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 7.8, -165)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(14.2, 0.4, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_FinalWall_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000063]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 4, -165)
-material = SubResource("Mat_Z5_Trim")
 use_collision = true
 size = Vector3(1, 8, 1.4)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_FinalWall_JambE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3.5, -165)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(1.05, 4, 0.2)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_FinalWall_StripeS" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -164.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_FinalWall_StripeN" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.5, -165.55)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(13, 0.25, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Bulkhead1" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -131)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(24, 0.8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Bulkhead1_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.05, -131)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(2, 0.2, 0.5)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Bulkhead2" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -139)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(24, 0.8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Bulkhead2_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000070]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.05, -139)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(2, 0.2, 0.5)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Bulkhead3" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000071]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -149)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(24, 0.8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Bulkhead3_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000072]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 7.05, -149)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(2, 0.2, 0.5)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Bulkhead4" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000073]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -159)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(24, 0.8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Bulkhead4_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000074]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 7.05, -159)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(2, 0.2, 0.5)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Bulkhead5" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000075]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.5, -169)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(24, 0.8, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Bulkhead5_Lamp" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.05, -169)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(2, 0.2, 0.5)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_VentTrunkW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 6.8, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.5, 0.5, 48)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_VentTrunkE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.5, 6.8, -150)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(0.5, 0.5, 48)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Terminal_SW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.2, -127)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(1, 2.4, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Terminal_SW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.8, -126.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.6, 0.2, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Terminal_NW" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.2, -173)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(1, 2.4, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Terminal_NW_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.8, -172.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.6, 0.2, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Z5_Terminal_SE" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000083]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.2, -127)
-material = SubResource("Mat_Z5_Trim")
-use_collision = false
 size = Vector3(1, 2.4, 1)
+material = SubResource("Mat_Z5_Trim")
 
 [node name="Z5_Terminal_SE_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone5_CQCBunker" unique_id=750000084]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 1.8, -126.45)
-material = SubResource("Mat_Z5_RedGlow")
-use_collision = false
 size = Vector3(0.6, 0.2, 0.1)
+material = SubResource("Mat_Z5_RedGlow")
 
 [node name="Zone6_TransitPlaza" type="Node3D" parent="NavigationRegion3D" unique_id=7986891]
 
 [node name="Z6_Floor" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1815123284]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, -0.5, -185)
-material = SubResource("Mat_Z6_Floor")
 use_collision = true
 size = Vector3(44, 1, 20)
+material = SubResource("Mat_Z6_Floor")
 
 [node name="Z6_NorthWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1068929497]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5, -195.5)
-material = SubResource("Mat_Z6_Wall")
 use_collision = true
 size = Vector3(45, 11, 1)
+material = SubResource("Mat_Z6_Wall")
 
 [node name="Z6_WestWall" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=529049662]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 5, -185)
-material = SubResource("Mat_Z6_Wall")
 use_collision = true
 size = Vector3(1, 11, 20)
+material = SubResource("Mat_Z6_Wall")
 
 [node name="Z6_SouthWallInner" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1706940947]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 5, -175.5)
-material = SubResource("Mat_Z6_Wall")
 use_collision = true
 size = Vector3(17, 11, 1)
+material = SubResource("Mat_Z6_Wall")
 
 [node name="Z6_SouthWallOuter" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5, -175.5)
-material = SubResource("Mat_Z6_Wall")
 use_collision = true
 size = Vector3(8, 11, 1)
+material = SubResource("Mat_Z6_Wall")
 
 [node name="Z6_CenterPillar" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=1050000866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 5.8, -185)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(4.4, 0.8, 4.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_ColNW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 3, -186.8)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 6, 0.8)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_ColSW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 3, -183.2)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 6, 0.8)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_ColNE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 3, -186.8)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 6, 0.8)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_ColSE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 3, -183.2)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 6, 0.8)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_BeaconPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 6.2, -185)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1.8, 0.3, 1.8)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_BeaconRing" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 6.35, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.4, 0.1, 1.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_CanopyTrim" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 5.8, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(4.6, 0.2, 4.6)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_Underlight" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 5.35, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(2.2, 0.1, 2.2)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_GlowNW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 3, -186.8)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 5, 0.2)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_GlowSW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 3, -183.2)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 5, 0.2)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_GlowNE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 3, -186.8)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 5, 0.2)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_GlowSE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 3, -183.2)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 5, 0.2)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_Rotunda_BaseNW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.4, -186.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1.1, 0.8, 1.1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_BaseSW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.2, 0.4, -183.2)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1.1, 0.8, 1.1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_BaseNE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 0.4, -186.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1.1, 0.8, 1.1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_Rotunda_BaseSE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 0.4, -183.2)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1.1, 0.8, 1.1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PortalBunker_JambW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 5, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 10, 1.2)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PortalBunker_JambE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.4, 5, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.8, 10, 1.2)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PortalBunker_Lintel" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 9.6, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(8.6, 1.2, 1.2)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PortalBunker_GlowW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6, 5, -174.4)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.15, 8, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PortalBunker_GlowE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.4, 5, -174.4)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.15, 8, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PortalBunker_GlowHeader" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.5, 9, -174.4)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(7, 0.25, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_GateHwy_TowerW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 5.5, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(1.2, 11, 1.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_GateHwy_TowerE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.2, 5.5, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(1.2, 11, 1.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_GateHwy_Arch" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 9.8, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(13.8, 1.6, 1.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_GateHwy_GlowW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.6, 5.5, -174.3)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 9, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_GateHwy_GlowE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.2, 5.5, -174.3)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.2, 9, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_GateHwy_Signboard" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 9, -174.3)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(11, 0.45, 0.15)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_GateHwy_ThresholdStripe" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, -175)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(12, 0.04, 0.5)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_NorthPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.4, -195)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(44, 0.8, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_NorthTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10.7, -195)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(44, 0.6, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_NorthMidBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.5, -195)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(44, 0.3, 0.25)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_NorthNeonLine" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.7, -194.85)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(44, 0.15, 0.1)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_WestPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0.4, -185)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(0.4, 0.8, 20)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_WestTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 10.7, -185)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.4, 0.6, 20)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_WestMidBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 5.5, -185)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.25, 0.3, 20)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_WestNeonLine" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.85, 5.7, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.1, 0.15, 20)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_SouthInnerPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 0.4, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(17, 0.8, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthInnerTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 10.7, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(17, 0.6, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthInnerMidBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 5.5, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(17, 0.3, 0.25)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthInnerNeonLine" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.5, 5.7, -175.15)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(17, 0.15, 0.1)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_SouthOuterPlinth" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.4, -175)
-material = SubResource("Mat_Z6_Trim")
 use_collision = true
 size = Vector3(8, 0.8, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthOuterTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 10.7, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(8, 0.6, 0.4)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthOuterMidBelt" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.5, -175)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(8, 0.3, 0.25)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_SouthOuterNeonLine" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.7, -175.15)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(8, 0.15, 0.1)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterN_m8" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 5.5, -194.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterN_m8_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 5.5, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterN_0" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -194.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterN_0_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000050]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterN_8" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 5.5, -194.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterN_8_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 5.5, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterN_16" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.5, -194.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterN_16_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.5, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterN_24" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 5.5, -194.8)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterN_24_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 5.5, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterW_191" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.8, 5.5, -191)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.5, 11, 1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterW_191_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 5.5, -191)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.12, 9, 0.18)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterW_185" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.8, 5.5, -185)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.5, 11, 1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterW_185_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000060]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 5.5, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.12, 9, 0.18)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterW_179" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000061]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.8, 5.5, -179)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.5, 11, 1)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterW_179_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000062]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.5, 5.5, -179)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.12, 9, 0.18)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterS_m8" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000063]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 5.5, -175.2)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterS_m8_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 5.5, -174.9)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterS_0" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -175.2)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterS_0_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -174.9)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_PilasterS_16" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.5, -175.2)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(1, 11, 0.5)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_PilasterS_16_Glow" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.5, -174.9)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.18, 9, 0.12)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss1" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10.4, -179)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(44, 0.7, 0.7)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_CeilingTruss1_LampW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000070]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 10, -179)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss1_LampM" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000071]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10, -179)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss1_LampE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000072]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 10, -179)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss2" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000073]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10.4, -187)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(44, 0.7, 0.7)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_CeilingTruss2_LampW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000074]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 10, -187)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss2_LampM" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000075]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10, -187)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss2_LampE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 10, -187)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss3" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10.4, -194.5)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(44, 0.7, 0.7)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_CeilingTruss3_LampW" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 10, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss3_LampM" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 10, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_CeilingTruss3_LampE" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 10, -194.5)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(1.6, 0.2, 0.4)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_TerminalWest" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 1.2, -182)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.9, 2.4, 2.2)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_TerminalWest_Screen" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.7, 1.6, -182)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.1, 0.8, 1.6)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_TerminalWest_Conduit" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000083]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 0.2, -182)
-material = SubResource("Mat_Z6_Trim")
-use_collision = false
 size = Vector3(0.9, 0.4, 3.6)
+material = SubResource("Mat_Z6_Trim")
 
 [node name="Z6_FloorGuide_EntranceToHub" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000084]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.8, 0.02, -180)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.3, 0.04, 10)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_FloorGuide_HubToHighway" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000085]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.02, -185)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(16, 0.04, 0.3)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Z6_FloorGuide_HighwayTurn" type="CSGBox3D" parent="NavigationRegion3D/Zone6_TransitPlaza" unique_id=770000086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 0.02, -180)
-material = SubResource("Mat_Z6_Emerald")
-use_collision = false
 size = Vector3(0.3, 0.04, 10)
+material = SubResource("Mat_Z6_Emerald")
 
 [node name="Zone7_ReturnHighway" type="Node3D" parent="NavigationRegion3D" unique_id=331881257]
 
 [node name="Z7_FloorSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=2136364831]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, -0.5, -135)
-material = SubResource("Mat_Z7_Floor")
 use_collision = true
 size = Vector3(12, 1, 80)
+material = SubResource("Mat_Z7_Floor")
 
 [node name="Z7_FloorMidBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=83911465]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 3.5, -50)
-material = SubResource("Mat_Z7_Floor")
 use_collision = true
 size = Vector3(12, 1, 90)
+material = SubResource("Mat_Z7_Floor")
 
 [node name="Z7_RampUp" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=726749781]
 transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 1.5, -95)
-material = SubResource("Mat_Z7_Floor")
 use_collision = true
 size = Vector3(12, 1, 24)
+material = SubResource("Mat_Z7_Floor")
 
 [node name="Z7_RampDownToStart" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=1537201131]
 transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 1.5, 5)
-material = SubResource("Mat_Z7_Floor")
 use_collision = true
 size = Vector3(12, 1, 24)
+material = SubResource("Mat_Z7_Floor")
 
 [node name="Z7_FloorLoopReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=473126135]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, -0.5, 25)
-material = SubResource("Mat_Z7_Floor")
 use_collision = true
 size = Vector3(16, 1, 16)
+material = SubResource("Mat_Z7_Floor")
 
 [node name="Z7_OuterEastWall" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=1959394211]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 7, -85)
-material = SubResource("Mat_Z7_Wall")
 use_collision = true
 size = Vector3(1, 15, 220)
+material = SubResource("Mat_Z7_Wall")
 
 [node name="Z7_EastTopCornice" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.15, 14.25, -85)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.3, 0.5, 220)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_EastPlinthSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000002]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 0.4, -145)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.2, 0.8, 100)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_EastPlinthBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000003]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 4.4, -45)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.2, 0.8, 100)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_EastPlinthReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000004]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1, 0.4, 15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.2, 0.8, 20)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_EastWall_GuideLowSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000005]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 2.2, -145)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 100)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_EastWall_GuideHighSouth" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 4.2, -145)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 100)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_EastWall_GuideLowBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 6.2, -45)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 100)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_EastWall_GuideHighBalcony" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000008]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 8.2, -45)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 100)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_EastWall_GuideLowReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 2.2, 15)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 20)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_EastWall_GuideHighReturn" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.98, 4.2, 15)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 20)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -191)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -191)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000013]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000014]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -175)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000015]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -159)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000016]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -159)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000017]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -143)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000018]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -143)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -127)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000020]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -127)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -111)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000022]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -111)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000023]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -95)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -95)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_8" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000025]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -79)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_8" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000026]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -79)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_9" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -63)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_9" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000028]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -63)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_10" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -47)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_10" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -47)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_11" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000031]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -31)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_11" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000032]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -31)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_12" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000033]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, -15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_12" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000034]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, -15)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_13" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000035]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, 1)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_13" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000036]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, 1)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_PilasterEast_Rib_14" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000037]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.88, 7.25, 17)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.24, 14.5, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_PilasterEast_Neon_14" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000038]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 7.25, 17)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 13, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000041]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000042]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -175)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000043]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -143)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000044]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -143)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -143)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000046]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -143)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000047]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -111)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000048]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -111)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000049]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -111)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000050]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -111)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000051]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -79)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -79)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000053]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -79)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000054]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -79)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -47)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000056]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -47)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000057]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -47)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000058]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -47)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000059]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, -15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000060]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, -15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000061]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, -15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_6" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000062]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, -15)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gantry_Beam_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000063]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.8, 17)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.8, 1)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_PylonW_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000064]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.2, 10, 17)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.5, 7, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lum_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000065]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.3, 17)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(4, 0.25, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gantry_Lamp_7" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, 17)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.6, 0.08, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_WestBarrier_Base" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000067]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.45, -140)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.3, 0.9, 70)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_WestBarrier_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000068]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 0.6, -140)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 70)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_WestBarrier_Post_1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.45, 1.1, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_WestBarrier_Post_2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000070]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -159)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.45, 1.1, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_WestBarrier_Post_3" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000071]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -143)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.45, 1.1, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_WestBarrier_Post_4" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000072]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -127)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.45, 1.1, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_WestBarrier_Post_5" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000073]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 0.55, -111)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.45, 1.1, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_BalconyRailing_South" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000074]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.8, -85)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.3, 0.6, 20)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_BalconyRailing_South_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000075]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.75, -85)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 20)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_BalconyRailing_North" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.8, -15)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.3, 0.6, 20)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_BalconyRailing_North_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.75, -15)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 20)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_BalconyOverlook_Curb" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000078]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.15, 4.3, -50)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.3, 0.6, 44)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_BalconyOverlook_Strip" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.28, 4.45, -50)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.04, 0.12, 44)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gate_Lintel" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000080]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 7.5, -175)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.4, 0.8, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Gate_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 7.4, -174.9)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(10, 0.15, 0.05)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gate_FloorChevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, -173)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Gate_FloorChevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000083]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.02, -170)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_CanopyBeam" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000084]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 8.5, -50)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(12.2, 0.6, 1.2)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Overlook_CanopyNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000085]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 8.2, -50)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(11.8, 0.1, 0.2)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_Terminal" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000086]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.6, 5, -50)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.6, 2, 2)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Overlook_TerminalScreen" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000087]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.25, 5.2, -50)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.08, 0.9, 1.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_PoolFrameN" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000088]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.02, -48.2)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.3)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_PoolFrameS" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000089]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.02, -51.8)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.3)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_PoolFrameW" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000090]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.2, 4.02, -50)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.3, 0.04, 3.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Overlook_PoolFrameE" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000091]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.8, 4.02, -50)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.3, 0.04, 3.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampUp_ThresholdFoot" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000092]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.03, -107)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(10, 0.06, 0.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampUp_ThresholdCrest" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 4.03, -83)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(10, 0.06, 0.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampUp_Chevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000094]
 transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 1.03, -99)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampUp_Chevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000095]
 transform = Transform3D(1, 0, 0, 0, 0.984808, -0.173648, 0, 0.173648, 0.984808, 26, 2.03, -91)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampDown_ThresholdCrest" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000096]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 4.03, -7)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(10, 0.06, 0.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampDown_ThresholdFoot" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000097]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.03, 17)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(10, 0.06, 0.6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampDown_Chevron1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000098]
 transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 2.03, 1)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_RampDown_Chevron2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000099]
 transform = Transform3D(1, 0, 0, 0, 0.984808, 0.173648, 0, -0.173648, 0.984808, 20, 1.03, 9)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(4, 0.04, 0.4)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Return_PoolFrameN" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000100]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.02, 16.5)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.2, 0.04, 0.25)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Return_PoolFrameS" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000101]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.02, 19.5)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(3.2, 0.04, 0.25)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Return_GuideStrip1" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000102]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.02, 23)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.3, 0.04, 6)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Return_GuideStrip2" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000103]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0.02, 25)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(6, 0.04, 0.3)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_ReturnPortal_ColW" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000104]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, 21)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.8, 8, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_ReturnPortal_ColE" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000105]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 4, 29)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.8, 8, 0.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_ReturnPortal_Lintel" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 8, 25)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(0.8, 0.8, 8.8)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_ReturnPortal_Neon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000107]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 7.9, 25)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(0.9, 0.15, 8)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="Z7_Return_SouthCap" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000108]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 2, 33.1)
-material = SubResource("Mat_Z7_Wall")
-use_collision = false
 size = Vector3(16, 4, 0.4)
+material = SubResource("Mat_Z7_Wall")
 
 [node name="Z7_Return_SouthTrim" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000109]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 4.1, 33.1)
-material = SubResource("Mat_Z7_Trim")
-use_collision = false
 size = Vector3(16, 0.3, 0.5)
+material = SubResource("Mat_Z7_Trim")
 
 [node name="Z7_Return_SouthNeon" type="CSGBox3D" parent="NavigationRegion3D/Zone7_ReturnHighway" unique_id=780000110]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3.9, 32.85)
-material = SubResource("Mat_Z7_GoldNeon")
-use_collision = false
 size = Vector3(15, 0.15, 0.05)
+material = SubResource("Mat_Z7_GoldNeon")
 
 [node name="NavigationLinks" type="Node3D" parent="NavigationRegion3D" unique_id=1259737955]
 
@@ -3681,10 +3264,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 40)
 [node name="Enemies" type="Node3D" parent="." unique_id=1764034594]
 
 [node name="Enemy_Z1_Intro" parent="Enemies" unique_id=1101970501 instance=ExtResource("2_enemy")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, 22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -17.355217)
 
 [node name="Enemy_Ranged_Z1" parent="Enemies" unique_id=1831814518 instance=ExtResource("5_enemy_ranged")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1.5, 18)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1305294, 1.5, -23.521393)
 
 [node name="Enemy_Z2_Corridor" parent="Enemies" unique_id=1454426201 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -6)
@@ -3745,3 +3328,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 4.5, -65)
 
 [node name="Enemy_Z7_SlideReturn" parent="Enemies" unique_id=464038317 instance=ExtResource("2_enemy")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.5, 12)
+
+[node name="Enemy_Shield_Z3_1" parent="Enemies" unique_id=1500000001 instance=ExtResource("7_xw7hd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1.5, -38)
+
+[node name="Enemy_Shield_Z3_2" parent="Enemies" unique_id=1500000002 instance=ExtResource("7_xw7hd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -50)
+
+[node name="Enemy_Shield_Z6_1" parent="Enemies" unique_id=1500000003 instance=ExtResource("7_xw7hd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1.5, -184)
+
+[node name="Enemy_Shield_Z6_2" parent="Enemies" unique_id=1500000004 instance=ExtResource("7_xw7hd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.5, -182)
+
