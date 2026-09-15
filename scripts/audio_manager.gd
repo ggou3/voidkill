@@ -32,7 +32,8 @@ var sound_durations: Dictionary = {
 	"dry_fire": 0.08,
 	"rail_shot": 0.32,
 	"needle_shot": 0.06,
-	"parry_deflect": 0.22
+	"parry_deflect": 0.22,
+	"shield_block": 0.22
 }
 
 var external_sounds: Dictionary = {}
@@ -246,6 +247,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["rail_shot"] = _gen_rail_shot()
 	sound_buffers["needle_shot"] = _gen_needle_shot()
 	sound_buffers["parry_deflect"] = _gen_parry_deflect()
+	sound_buffers["shield_block"] = _gen_shield_block()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -784,3 +786,28 @@ func _gen_parry_deflect() -> PackedVector2Array:
 		arr[i] = Vector2(s, s)
 	return arr
 
+# 18. "shield_block" — тяжёлый металлический лязг и глухой удар рикошета в щит
+func _gen_shield_block() -> PackedVector2Array:
+	var dur = sound_durations.get("shield_block", 0.22)
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p1: float = 0.0
+	var p2: float = 0.0
+	var p3: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		# Тяжёлый металлический звон: 950 Гц + 1420 Гц с быстрым затуханием
+		p1 += TAU * 950.0 * dt
+		p2 += TAU * 1420.0 * dt
+		# Низкочастотный глухой удар в стальную плиту (220 -> 55 Гц)
+		var freq = 55.0 + 165.0 * exp(-20.0 * t)
+		p3 += TAU * freq * dt
+		var metallic = (sin(p1) * 0.5 + sin(p2) * 0.3) * exp(-14.0 * t)
+		var thud = sin(p3) * 0.8 * exp(-18.0 * t)
+		var spark = randf_range(-1.0, 1.0) * 0.3 * exp(-35.0 * t)
+		var s = clampf((metallic + thud + spark) * 1.1, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
