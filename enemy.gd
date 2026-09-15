@@ -472,7 +472,8 @@ func _process_attack(delta):
 	
 	# Атакуем по кулдауну с учетом задержки реакции после получения урона
 	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
-		perform_attack()
+		if is_inside_tree() and current_state == State.ATTACK:
+			perform_attack()
 		attack_timer = attack_cooldown
 
 func perform_attack():
