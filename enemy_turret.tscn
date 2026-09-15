@@ -1,0 +1,198 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemy_turret.gd" id="1_turret"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_collision"]
+height = 1.35
+radius = 0.48
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.34
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 28.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dark_metal"]
+albedo_color = Color(0.12, 0.12, 0.14, 1)
+metallic = 0.75
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_orange_armor"]
+albedo_color = Color(0.82, 0.42, 0.08, 1)
+metallic = 0.45
+roughness = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.18, 0.18, 0.2, 1)
+metallic = 0.6
+roughness = 0.45
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
+emission_enabled = true
+emission = Color(1, 0.48, 0.08, 1)
+emission_energy_multiplier = 3.2
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base_plinth"]
+top_radius = 0.52
+bottom_radius = 0.56
+height = 0.28
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base_ring"]
+top_radius = 0.42
+bottom_radius = 0.46
+height = 0.18
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_base_pillar"]
+top_radius = 0.26
+bottom_radius = 0.26
+height = 0.28
+
+[sub_resource type="BoxMesh" id="BoxMesh_base_bolt"]
+size = Vector3(0.12, 0.14, 0.12)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_turret_body"]
+top_radius = 0.38
+bottom_radius = 0.42
+height = 0.55
+
+[sub_resource type="BoxMesh" id="BoxMesh_side_armor"]
+size = Vector3(0.08, 0.42, 0.46)
+
+[sub_resource type="BoxMesh" id="BoxMesh_eyes"]
+size = Vector3(0.24, 0.08, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_barrel_mount"]
+size = Vector3(0.22, 0.2, 0.24)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_barrel"]
+top_radius = 0.075
+bottom_radius = 0.075
+height = 0.65
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_muzzle_brake"]
+top_radius = 0.11
+bottom_radius = 0.11
+height = 0.12
+
+[node name="EnemyTurret" type="CharacterBody3D" groups=["enemy", "enemy_turret"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_turret")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
+shape = SubResource("CylinderShape3D_collision")
+
+[node name="BaseMount" type="Node3D" parent="."]
+
+[node name="BasePlinth" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.54, 0)
+mesh = SubResource("CylinderMesh_base_plinth")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="BaseRing" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.34, 0)
+mesh = SubResource("CylinderMesh_base_ring")
+surface_material_override/0 = SubResource("StandardMaterial3D_orange_armor")
+
+[node name="BasePillar" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+mesh = SubResource("CylinderMesh_base_pillar")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="BaseBolt1" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.44, -0.45, 0)
+mesh = SubResource("BoxMesh_base_bolt")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="BaseBolt2" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.44, -0.45, 0)
+mesh = SubResource("BoxMesh_base_bolt")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="BaseBolt3" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, 0.44)
+mesh = SubResource("BoxMesh_base_bolt")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="BaseBolt4" type="MeshInstance3D" parent="BaseMount"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, -0.44)
+mesh = SubResource("BoxMesh_base_bolt")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+mesh = SubResource("CylinderMesh_turret_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_orange_armor")
+
+[node name="SideArmorLeft" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.966, 0, 0.259, 0, 1, 0, -0.259, 0, 0.966, -0.38, 0.18, 0)
+mesh = SubResource("BoxMesh_side_armor")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="SideArmorRight" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.966, 0, -0.259, 0, 1, 0, 0.259, 0, 0.966, 0.38, 0.18, 0)
+mesh = SubResource("BoxMesh_side_armor")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="HeadMesh" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+radius = 0.32
+radial_segments = 16
+rings = 8
+material = SubResource("StandardMaterial3D_head")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape3D_head")
+
+[node name="Eyes" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, -0.28)
+mesh = SubResource("BoxMesh_eyes")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="TurretLight" type="OmniLight3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.1)
+light_color = Color(1, 0.48, 0.08, 1)
+light_energy = 1.2
+omni_range = 3.0
+
+[node name="BarrelPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.35, -0.15)
+
+[node name="BarrelMount" type="MeshInstance3D" parent="BarrelPivot"]
+mesh = SubResource("BoxMesh_barrel_mount")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="TurretBarrel" type="MeshInstance3D" parent="BarrelPivot"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.36)
+mesh = SubResource("CylinderMesh_barrel")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark_metal")
+
+[node name="MuzzleBrake" type="MeshInstance3D" parent="BarrelPivot"]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 0, -0.66)
+mesh = SubResource("CylinderMesh_muzzle_brake")
+surface_material_override/0 = SubResource("StandardMaterial3D_orange_armor")
+
+[node name="MuzzlePoint" type="Marker3D" parent="BarrelPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.74)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.5
+path_desired_distance = 0.8
+avoidance_enabled = false
+radius = 0.3
+neighbor_distance = 3.0
+max_neighbors = 3
+time_horizon_agents = 1.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("SphereShape3D_detection")

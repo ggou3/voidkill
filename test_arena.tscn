@@ -3362,7 +3362,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1.5, -181)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
 
 [node name="Enemy_Hunter_Z7" parent="Enemies" unique_id=1700000002 instance=ExtResource("9_hunter")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 4.5, -45)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.11614, 4.499999, -44.52698)
 
+[node name="Enemy_Hunter_Z8" parent="Enemies" unique_id=1432562803 instance=ExtResource("9_hunter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.181265, 4.5, -41.521465)
 
+[node name="Enemy_Hunter_Z9" parent="Enemies" unique_id=1228339649 instance=ExtResource("9_hunter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.331278, 4.5, -39.53317)
 
+[node name="Enemy_Hunter_Z10" parent="Enemies" unique_id=131631272 instance=ExtResource("9_hunter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.062317, 4.5, -35.888042)
