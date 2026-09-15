@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://enemy_flyer.tscn" id="6_enemy_flyer"]
 [ext_resource type="PackedScene" path="res://enemy_shield.tscn" id="7_xw7hd"]
 [ext_resource type="PackedScene" path="res://enemy_bomber.tscn" id="8_bomber"]
+[ext_resource type="PackedScene" path="res://enemy_hunter.tscn" id="9_hunter"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_arena"]
 
@@ -3356,5 +3357,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.5, -183)
 
 [node name="Enemy_Bomber_Z6_2" parent="Enemies" unique_id=1600000005 instance=ExtResource("8_bomber")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1.5, -181)
+
+[node name="Enemy_Hunter_Z4" parent="Enemies" unique_id=1700000001 instance=ExtResource("9_hunter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -84)
+
+[node name="Enemy_Hunter_Z7" parent="Enemies" unique_id=1700000002 instance=ExtResource("9_hunter")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 4.5, -45)
+
 
 
