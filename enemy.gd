@@ -476,6 +476,8 @@ func _process_attack(delta):
 		attack_timer = attack_cooldown
 
 func perform_attack():
+	if not is_inside_tree() or current_state == State.DEAD:
+		return
 	if not is_instance_valid(target_player):
 		return
 		
@@ -1443,6 +1445,7 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 
 func die():
 	current_state = State.DEAD
+	attack_timer = 999999.0
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
 	

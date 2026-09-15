@@ -400,7 +400,7 @@ func _maintain_hover_height(delta: float, target_horiz_vel: Vector3):
 	velocity.z = lerp(velocity.z, final_target.z + knockback_velocity.z, min(1.0, acceleration * delta))
 	velocity.y = lerp(velocity.y, final_target.y + knockback_velocity.y, min(1.0, 6.0 * delta))
 
-func _process_combat_triggers(delta: float):
+func _process_combat_triggers(_delta: float):
 	if attack_cooldown_timer > 0.0 or not is_instance_valid(target_player):
 		return
 		
@@ -838,7 +838,7 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
-func add_needle(is_blood_needle: bool = false):
+func add_needle(_is_blood_needle: bool = false):
 	needle_count += 1
 	needle_timers.append(6.0)
 

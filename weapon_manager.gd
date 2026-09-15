@@ -696,7 +696,7 @@ func _fire_anvil_piston():
 		spawn_piston_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, false)
 		print("[ANVIL PISTON] Air blast (no surface or enemy in range)")
 
-func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, surface_normal: Vector3):
+func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_normal: Vector3):
 	var player_node = get_parent()
 	if not is_instance_valid(player_node):
 		return
@@ -848,7 +848,7 @@ func _fire_injector_inflate():
 	head.trigger_muzzle_flash(false)
 	AudioManager.play_sound("injector_shot")
 	
-	var aim_dir = head.get_aim_direction()
+	var _aim_dir = head.get_aim_direction()
 	var start_pos = head.get_muzzle_position()
 	var ray = head.get_aim_raycast(0.0)
 	var hit_pos = ray.to_global(ray.target_position)

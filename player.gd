@@ -811,7 +811,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 		return
 	var old_health = health
 	health = min(max_health, health + amount)
-	var gained = health - old_health
+	var _gained = health - old_health
 	_update_health_display(true)
 	AudioManager.play_sound("player_heal")
 	_spawn_heal_feedback(amount, is_melee_bonus)

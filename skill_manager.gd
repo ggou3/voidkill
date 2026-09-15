@@ -339,7 +339,7 @@ func trigger_slam():
 	if not player.is_on_floor() and not is_slamming and slam_timer <= 0:
 		is_slamming = true
 
-func process_slam(delta, vel: Vector3) -> Vector3:
+func process_slam(_delta, vel: Vector3) -> Vector3:
 	if not is_slamming: return vel
 	
 	slam_ray.force_shapecast_update()
