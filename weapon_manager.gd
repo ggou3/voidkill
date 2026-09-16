@@ -447,10 +447,8 @@ func _fire_anvil_piston():
 		if col:
 			if col.is_in_group("enemy_head") or col.name == "HeadHitbox":
 				direct_target = col.get_meta("enemy") if col.has_meta("enemy") else col.get_parent()
-			elif col.has_method("take_damage"):
-				direct_target = col
-			elif col.get_parent() and col.get_parent().has_method("take_damage"):
-				direct_target = col.get_parent()
+			else:
+				direct_target = GameTypes.resolve_damageable(col)
 				
 	if direct_target and is_instance_valid(direct_target) and not ("current_state" in direct_target and direct_target.current_state == direct_target.State.DEAD):
 		enemies_in_cone.append({
@@ -519,7 +517,7 @@ func _fire_anvil_piston():
 		var occ_res = space_state.intersect_ray(occ_ray)
 		if not occ_res.is_empty():
 			var occ_col = occ_res.collider
-			if occ_col != e and not occ_col.is_in_group("enemy") and not (occ_col.get_parent() and occ_col.get_parent().is_in_group("enemy")):
+			if occ_col != e and GameTypes.resolve_enemy(occ_col) == null:
 				continue # Перекрыто сплошной стеной
 				
 		enemies_in_cone.append({
@@ -558,11 +556,8 @@ func _fire_anvil_piston():
 			var rel_height = clamp((contact_y - feet_y) / max(0.1, total_height), 0.0, 1.0)
 			
 			# Определение, находится ли враг на земле
-			var target_on_floor: bool = false
-			if target.has_method("is_on_floor"):
-				target_on_floor = target.is_on_floor()
-			elif target.get_parent() and target.get_parent().has_method("is_on_floor"):
-				target_on_floor = target.get_parent().is_on_floor()
+			var target_body = GameTypes.resolve_damageable(target)
+			var target_on_floor: bool = target_body.is_on_floor() if (target_body and target_body.has_method("is_on_floor")) else false
 				
 			# Условие подброса: точка контакта в нижних ~25-30% капсулы (rel_height <= 0.28, уровень ног)
 			# И враг обязательно стоит на земле (is_on_floor == true).
@@ -661,7 +656,7 @@ func _fire_anvil_piston():
 				var splash_res = space_state.intersect_ray(splash_occ)
 				if not splash_res.is_empty():
 					var occ_col = splash_res.collider
-					if occ_col != e and not occ_col.is_in_group("enemy") and not (occ_col.get_parent() and occ_col.get_parent().is_in_group("enemy")):
+					if occ_col != e and GameTypes.resolve_enemy(occ_col) == null:
 						continue # Перекрыто препятствием
 						
 				splash_enemies.append({
@@ -863,10 +858,8 @@ func _fire_injector_inflate():
 					target = hit.get_meta("enemy")
 				elif hit.get_parent():
 					target = hit.get_parent()
-			elif hit.has_method("take_damage"):
-				target = hit
-			elif hit.get_parent() and hit.get_parent().has_method("take_damage"):
-				target = hit.get_parent()
+			else:
+				target = GameTypes.resolve_damageable(hit)
 				
 			if target != null and target.has_method("inflate"):
 				target.inflate()
@@ -962,7 +955,7 @@ func _fire_caliber_piercing_shot():
 		if col:
 			if col.is_in_group("enemy") or col.is_in_group("enemy_head") or col.name == "HeadHitbox":
 				is_enemy_or_part = true
-			elif col.has_method("take_damage") or (col.get_parent() and col.get_parent().has_method("take_damage")):
+			elif GameTypes.resolve_damageable(col) != null:
 				is_enemy_or_part = true
 				
 		if is_enemy_or_part:
@@ -1054,11 +1047,8 @@ func _fire_caliber_piercing_shot():
 			continue
 			
 		var is_headshot = item["is_headshot"]
-		var is_airborne: bool = false
-		if target.has_method("is_on_floor"):
-			is_airborne = not target.is_on_floor()
-		elif target.get_parent() and target.get_parent().has_method("is_on_floor"):
-			is_airborne = not target.get_parent().is_on_floor()
+		var target_body = GameTypes.resolve_damageable(target)
+		var is_airborne: bool = not target_body.is_on_floor() if (target_body and target_body.has_method("is_on_floor")) else false
 			
 		var total_mult = 1.0
 		if is_headshot and is_airborne:
@@ -1224,10 +1214,8 @@ func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 						target = hit.get_meta("enemy")
 					elif hit.get_parent():
 						target = hit.get_parent()
-				elif hit.has_method("take_damage"):
-					target = hit
-				elif hit.get_parent() and hit.get_parent().has_method("take_damage"):
-					target = hit.get_parent()
+				else:
+					target = GameTypes.resolve_damageable(hit)
 					
 				if target != null and target.has_method("take_damage"):
 					var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
@@ -1290,10 +1278,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 						target = hit.get_meta("enemy")
 					elif hit.get_parent():
 						target = hit.get_parent()
-				elif hit.has_method("take_damage"):
-					target = hit
-				elif hit.get_parent() and hit.get_parent().has_method("take_damage"):
-					target = hit.get_parent()
+				else:
+					target = GameTypes.resolve_damageable(hit)
 					
 				if target != null and target.has_method("take_damage"):
 					directly_hit_target = target
@@ -1301,11 +1287,8 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					var knockback_vector = flat_dir * float(w.get("knockback", 4.5))
 					knockback_vector.y = float(w.get("upward_kick", 0.0))
 					
-					var is_airborne: bool = false
-					if target.has_method("is_on_floor"):
-						is_airborne = not target.is_on_floor()
-					elif target.get_parent() and target.get_parent().has_method("is_on_floor"):
-						is_airborne = not target.get_parent().is_on_floor()
+					var target_body = GameTypes.resolve_damageable(target)
+					var is_airborne: bool = not target_body.is_on_floor() if (target_body and target_body.has_method("is_on_floor")) else false
 						
 					var base_dmg = float(w.get("damage", 70))
 					var hs_mult = float(w.get("headshot_multiplier", 1.0)) if is_headshot else 1.0
@@ -1325,10 +1308,11 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					var final_multiplier: float = 1.0
 					var needle_count: int = 0
 					if weapon_idx == 1:
-						if "needle_count" in target:
+						var enemy_node = GameTypes.resolve_enemy(target)
+						if enemy_node and "needle_count" in enemy_node:
+							needle_count = enemy_node.needle_count
+						elif "needle_count" in target:
 							needle_count = target.needle_count
-						elif target.get_parent() and "needle_count" in target.get_parent():
-							needle_count = target.get_parent().needle_count
 						final_multiplier = 1.0 + min(needle_count, 15) * 0.04
 					
 					var final_dmg = int(round(base_dmg * total_mult * final_multiplier))

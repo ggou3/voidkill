@@ -70,8 +70,8 @@ func _on_area_entered(area: Area3D):
 	if is_destroyed:
 		return
 	if is_deflected:
-		if area.is_in_group("enemy") or (area.get_parent() and area.get_parent().is_in_group("enemy")):
-			var target = area if area.is_in_group("enemy") else area.get_parent()
+		var target = GameTypes.resolve_enemy(area)
+		if target:
 			_handle_impact(target, global_position)
 
 func deflect(new_dir: Vector3 = Vector3.ZERO, new_speed: float = 27.0, new_damage: int = 24, origin_pos: Vector3 = Vector3.ZERO):
@@ -172,22 +172,15 @@ func _handle_impact(collider: Node, hit_pos: Vector3):
 	if is_instance_valid(collider):
 		var target: Node = collider
 		if is_deflected:
-			var enemy_target: Node = null
-			if target.is_in_group("enemy") and target.has_method("take_damage"):
-				enemy_target = target
-			elif target.get_parent() and target.get_parent().is_in_group("enemy") and target.get_parent().has_method("take_damage"):
-				enemy_target = target.get_parent()
-				
-			if enemy_target:
+			var enemy_target: Node = GameTypes.resolve_enemy(target)
+			if enemy_target and enemy_target.has_method("take_damage"):
 				var impact_impulse = direction * 15.0 + Vector3.UP * 2.5
 				enemy_target.take_damage(damage, impact_impulse, hit_pos, false, false, false, false, -1, "deflect")
 		else:
-			if target.is_in_group("player") or target.has_method("take_damage"):
+			var damageable_target: Node = GameTypes.resolve_damageable(target)
+			if damageable_target and (damageable_target.is_in_group("player") or damageable_target.has_method("take_damage")):
 				var impact_impulse = direction * 5.0 + Vector3.UP * 1.5
-				target.take_damage(damage, impact_impulse, hit_pos)
-			elif target.get_parent() and (target.get_parent().is_in_group("player") or target.get_parent().has_method("take_damage")):
-				var impact_impulse = direction * 5.0 + Vector3.UP * 1.5
-				target.get_parent().take_damage(damage, impact_impulse, hit_pos)
+				damageable_target.take_damage(damage, impact_impulse, hit_pos)
 				
 	_spawn_impact_vfx(hit_pos)
 	queue_free()

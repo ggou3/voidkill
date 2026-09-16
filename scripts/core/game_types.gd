@@ -41,15 +41,36 @@ const LAYER_ENEMY_HITBOX: int = 1 << 4   # Слой 5 (значение 16) - з
 const DEBUG_ENABLED: bool = false
 
 ## Разрешает узел, способный принимать урон (метод take_damage).
-## Проверяет сначала сам коллайдер, затем его непосредственного родителя (например, Area3D HeadHitbox у врага).
+## Проверяет сначала сам коллайдер, затем его метаданные "enemy", затем его родителя (например, Area3D HeadHitbox у врага).
 ## Возвращает найденный Node с методом take_damage либо null.
 static func resolve_damageable(collider: Node) -> Node:
 	if not is_instance_valid(collider):
 		return null
 	if collider.has_method("take_damage"):
 		return collider
+	if collider.has_meta("enemy"):
+		var meta_enemy = collider.get_meta("enemy")
+		if is_instance_valid(meta_enemy) and meta_enemy is Node and meta_enemy.has_method("take_damage"):
+			return meta_enemy
 	var parent: Node = collider.get_parent()
 	if is_instance_valid(parent) and parent.has_method("take_damage"):
+		return parent
+	return null
+
+## Разрешает узел врага (находится в группе "enemy").
+## Проверяет сначала сам узел, затем его метаданные "enemy", затем его родителя (например, Area3D HeadHitbox у врага).
+## Возвращает найденный Node в группе "enemy" либо null.
+static func resolve_enemy(node: Node) -> Node:
+	if not is_instance_valid(node):
+		return null
+	if node.is_in_group("enemy"):
+		return node
+	if node.has_meta("enemy"):
+		var meta_enemy = node.get_meta("enemy")
+		if is_instance_valid(meta_enemy) and meta_enemy is Node and meta_enemy.is_in_group("enemy"):
+			return meta_enemy
+	var parent: Node = node.get_parent()
+	if is_instance_valid(parent) and parent.is_in_group("enemy"):
 		return parent
 	return null
 

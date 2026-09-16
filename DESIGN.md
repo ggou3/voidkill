@@ -515,7 +515,7 @@
   footstep, enemy_hit, enemy_death, reload, slide (зацикленный, тихий).
   Архитектура позволяет заменить процедурные звуки на настоящие файлы позже без переписывания
   вызовов `play_sound()`.
-- **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), статический метод `resolve_damageable(collider)` для унифицированного поиска узла с `take_damage` (сам коллайдер или его родитель, например `HeadHitbox`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`.
+- **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), статические методы `resolve_damageable(collider)` и `resolve_enemy(node)` для надёжного и унифицированного разрешения узлов целей с `take_damage` и проверкой принадлежности к врагам (включая дочерние хитбоксы `HeadHitbox` и метаданные `"enemy"`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
 

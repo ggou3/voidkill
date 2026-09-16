@@ -1351,10 +1351,8 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		var target: Node = null
 		if other.is_in_group("enemy_head") or other.name == "HeadHitbox":
 			target = other.get_meta("enemy") if other.has_meta("enemy") else other.get_parent()
-		elif other.has_method("take_damage"):
-			target = other
-		elif other.get_parent() and other.get_parent().has_method("take_damage"):
-			target = other.get_parent()
+		else:
+			target = GameTypes.resolve_damageable(other)
 		if target and target != self and target.has_method("take_damage"):
 			var next_depth = slam_chain_depth + 1
 			var next_mult: float = 1.0

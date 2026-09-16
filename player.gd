@@ -1246,10 +1246,11 @@ func perform_melee():
 				raw_eff_dmg = int(round(speed_base_dmg * dmg_factor))
 				
 			var needle_count: int = 0
-			if "needle_count" in e:
+			var enemy_node = GameTypes.resolve_enemy(e)
+			if enemy_node and "needle_count" in enemy_node:
+				needle_count = enemy_node.needle_count
+			elif "needle_count" in e:
 				needle_count = e.needle_count
-			elif e.get_parent() and "needle_count" in e.get_parent():
-				needle_count = e.get_parent().needle_count
 			
 			var final_multiplier: float = 1.0 + min(needle_count, 15) * 0.04
 			var eff_dmg: int = int(round(float(raw_eff_dmg) * final_multiplier))
@@ -1318,17 +1319,20 @@ func perform_melee():
 					break
 					
 		var hit_anything = false
-		if hit_collider and hit_collider.has_method("take_damage"):
+		var damageable_target = GameTypes.resolve_damageable(hit_collider)
+		if damageable_target and damageable_target.has_method("take_damage"):
+			hit_collider = damageable_target
 			hit_anything = true
 			AudioManager.play_sound("melee_hit")
 			var enemy_cur_hp: int = hit_collider.health if "health" in hit_collider else 100
 			var enemy_max_hp: int = hit_collider.max_health if "max_health" in hit_collider else 100
 			
 			var needle_count: int = 0
-			if "needle_count" in hit_collider:
+			var enemy_node = GameTypes.resolve_enemy(hit_collider)
+			if enemy_node and "needle_count" in enemy_node:
+				needle_count = enemy_node.needle_count
+			elif "needle_count" in hit_collider:
 				needle_count = hit_collider.needle_count
-			elif hit_collider.get_parent() and "needle_count" in hit_collider.get_parent():
-				needle_count = hit_collider.get_parent().needle_count
 				
 			var final_multiplier: float = 1.0 + min(needle_count, 15) * 0.04
 			var is_execute: bool = (float(enemy_cur_hp) <= float(enemy_max_hp) * execute_health_threshold)

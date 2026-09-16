@@ -547,11 +547,8 @@ func _cast_laser_and_damage(eye_pos: Vector3, _delta: float):
 			beam_end = hit.position
 			var collider = hit.collider
 			if is_instance_valid(collider):
-				var target: Node = collider
-				if not target.is_in_group("player") and target.get_parent() and target.get_parent().is_in_group("player"):
-					target = target.get_parent()
-					
-				if target.is_in_group("player") or target.has_method("take_damage"):
+				var target: Node = GameTypes.resolve_damageable(collider)
+				if target and (target.is_in_group("player") or target.has_method("take_damage")):
 					if laser_tick_timer <= 0.0:
 						laser_tick_timer = tick_interval
 						var push = current_beam_dir * 2.5 + Vector3.UP * 0.8
