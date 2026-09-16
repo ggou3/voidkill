@@ -515,6 +515,9 @@
   footstep, enemy_hit, enemy_death, reload, slide (зацикленный, тихий).
   Архитектура позволяет заменить процедурные звуки на настоящие файлы позже без переписывания
   вызовов `play_sound()`.
+- **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `RISING`, `HIGH`, `OVERDRIVE`), именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), статический метод `resolve_damageable(collider)` для унифицированного поиска узла с `take_damage` (сам коллайдер или его родитель, например `HeadHitbox`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`.
+  - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
+  - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
 
 ### Игрок (`player.gd`, ~700 строк — структурирован по функциям, не требует рефакторинга на
 текущем этапе, но следить за ростом при добавлении новых систем)
