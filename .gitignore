@@ -1,24 +1,132 @@
-# Godot 4+ specific ignores
+# ==============================================================================
+# Godot Engine (Godot 4+)
+# ==============================================================================
+# Godot 4 cache and imported assets
 .godot/
 
-# Godot-specific ignores
+# Godot 3 legacy import cache (if opened in older versions)
 .import/
+
+# Export presets & configuration (may contain private keys, passwords, or local paths)
 export.cfg
 export_presets.cfg
 
-# Imported translations (automatically generated from CSV files)
+# Automatically generated imported translations
 *.translation
 
-# Mono-specific ignores
+# Mono / C# specific (if C# is used in future)
 .mono/
 data_*/
 mono_crash.*.json
+[Bb]in/
+[Oo]bj/
+*.csproj.user
 
 # Installed export templates
 templates/
 
-# Crash logs
+# Engine crash logs and dumps
 crash_*.txt
+*.dmp
 
-# Android build cache and exports
+# Android build cache and source exports
 android/
+
+# ==============================================================================
+# Build Outputs & Executables
+# ==============================================================================
+build/
+builds/
+bin/
+exports/
+dist/
+release/
+
+# Standalone exported packages & binaries
+*.pck
+*.apk
+*.aab
+*.exe
+*.i386
+*.x86
+*.x86_64
+*.arm64
+*.dmg
+*.pkg
+*.app/
+*.iso
+
+# ==============================================================================
+# Keystores, Certificates & Secrets
+# ==============================================================================
+*.keystore
+*.jks
+*.p12
+*.cer
+*.key
+*.pem
+*.mobileprovision
+
+# ==============================================================================
+# IDEs & Code Editors
+# ==============================================================================
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains (Rider, CLion, IntelliJ, etc.)
+.idea/
+*.iml
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosv
+*.sln.docstates
+
+# ==============================================================================
+# Operating System Artifacts
+# ==============================================================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ==============================================================================
+# Temporary Files, Logs & Diagnostics
+# ==============================================================================
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+out.txt
+tmp/
+temp/
+
+# ==============================================================================
+# AI Assistants & Local Tools Cache
+# ==============================================================================
+.gemini/
+.agy/
