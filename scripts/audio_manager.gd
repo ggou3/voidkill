@@ -35,7 +35,8 @@ var sound_durations: Dictionary = {
 	"parry_deflect": 0.22,
 	"shield_block": 0.22,
 	"bomber_tick": 0.045,
-	"hunter_awaken": 0.35
+	"hunter_awaken": 0.35,
+	"stalker_reveal": 0.30
 }
 
 var external_sounds: Dictionary = {}
@@ -252,6 +253,7 @@ func _generate_all_procedural_sounds():
 	sound_buffers["shield_block"] = _gen_shield_block()
 	sound_buffers["bomber_tick"] = _gen_bomber_tick()
 	sound_buffers["hunter_awaken"] = _gen_hunter_awaken()
+	sound_buffers["stalker_reveal"] = _gen_stalker_reveal()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -859,6 +861,28 @@ func _gen_hunter_awaken() -> PackedVector2Array:
 		var mid = (sin(p1) * 0.45 + sin(p2) * 0.25)
 		var env = sin((t / dur) * PI) * exp(-1.2 * t)
 		var s = clampf((bass + mid) * env * 1.3, -0.95, 0.95)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# 21. "stalker_reveal" — призрачный фазовый шелест/свист демаскировки Соглядатая
+func _gen_stalker_reveal() -> PackedVector2Array:
+	var dur = sound_durations.get("stalker_reveal", 0.30)
+	var samples = int(dur * MIX_RATE)
+	var arr = PackedVector2Array()
+	arr.resize(samples)
+	var dt = 1.0 / MIX_RATE
+	var p1: float = 0.0
+	var p2: float = 0.0
+	
+	for i in range(samples):
+		var t = float(i) * dt
+		var f1 = 280.0 + 580.0 * pow(t / dur, 1.5)
+		var f2 = f1 * 1.5 + sin(t * 45.0) * 35.0
+		p1 += TAU * f1 * dt
+		p2 += TAU * f2 * dt
+		var osc = (sin(p1) * 0.55 + sin(p2) * 0.45)
+		var env = sin((t / dur) * PI) * (0.8 + 0.2 * sin(t * 60.0))
+		var s = clampf(osc * env * 0.75, -0.95, 0.95)
 		arr[i] = Vector2(s, s)
 	return arr
 
