@@ -1,3 +1,4 @@
+class_name EnemyShield
 extends "res://enemy.gd"
 
 ## Враг "Щитоносец" (Shield Enemy).

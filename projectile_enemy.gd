@@ -1,3 +1,4 @@
+class_name ProjectileEnemy
 extends Area3D
 
 @export var speed: float = 18.0
@@ -138,7 +139,7 @@ func deflect(new_dir: Vector3 = Vector3.ZERO, new_speed: float = 27.0, new_damag
 	add_to_group("player_projectile")
 	
 	_apply_deflected_visuals()
-	print("[DEFLECT] Projectile parried! New speed: %.1f, New dmg: %d, Dir: %s, Pos: %s" % [speed, damage, direction, global_position])
+	GameTypes.debug_log(&"weapon", "[DEFLECT] Projectile parried! New speed: %.1f, New dmg: %d, Dir: %s, Pos: %s" % [speed, damage, direction, global_position])
 
 func _apply_deflected_visuals():
 	var mesh_inst: MeshInstance3D = get_node_or_null("MeshInstance3D")

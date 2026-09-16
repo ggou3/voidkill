@@ -1,3 +1,4 @@
+class_name Head
 extends Node3D
 
 const MOUSE_SENSITIVITY = 0.003

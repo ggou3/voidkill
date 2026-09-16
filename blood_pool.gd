@@ -1,3 +1,4 @@
+class_name BloodPool
 extends Area3D
 
 var _expand_tween: Tween = null

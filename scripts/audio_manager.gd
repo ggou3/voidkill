@@ -73,7 +73,7 @@ func _ready():
 	add_child(slide_player)
 	_setup_slide_stream()
 
-	print("[AudioManager] Ready! Procedural sounds generated: %d, External files: %d" % [sound_buffers.size(), external_sounds.size()])
+	GameTypes.debug_log(&"audio", "[AudioManager] Ready! Procedural sounds generated: %d, External files: %d" % [sound_buffers.size(), external_sounds.size()])
 
 func play_sound(sound_name: String):
 	# Обработка зацикленного звука скольжения
@@ -219,7 +219,7 @@ func _check_single_external_file(sound_name: String) -> bool:
 			var s = load(path)
 			if s is AudioStream:
 				external_sounds[sound_name] = s
-				print("[AudioManager] Using external audio for '%s': %s" % [sound_name, path])
+				GameTypes.debug_log(&"audio", "[AudioManager] Using external audio for '%s': %s" % [sound_name, path])
 				if sound_name == "slide" and is_instance_valid(slide_player):
 					_setup_slide_stream()
 				return true

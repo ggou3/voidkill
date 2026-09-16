@@ -520,6 +520,19 @@
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
   - Все сравнения тиров BPM в кодовой базе (`skill_manager.gd`, `weapon_manager.gd`, `player.gd`, `enemy*.gd`) переведены со строковых литералов на enum `GameTypes.BPMTier`. Преобразование в строку изолировано исключительно в точке отрисовки HUD через `GameTypes.tier_to_string()`.
 
+### Именование типов (class_name) и типизация
+- **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 16 ключевых классов сущностей:
+  - Сущности и менеджеры игрока: `Player`, `Head`, `SkillManager`, `WeaponManager`.
+  - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `ProjectileEnemy`.
+  - Враги: базовый класс `Enemy` и специализированные подтипы `EnemyFlyer`, `EnemyRanged`, `EnemyTurret`, `EnemyBomber`, `EnemyShield`, `EnemyHunter`, `EnemySwarm`, `EnemyStalker`.
+  - Autoload-синглтонам (`GameManager`, `AudioManager`, `GameTypes`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
+- **Проверки типов через `is ClassName`**: проверки объектов с однозначно известным конкретным типом переведены с утиной типизации (`has_method(...)`) на строгую проверку типа (`pool is BloodPool`, `skills is SkillManager`, `player_node is Player`, `proj is ProjectileEnemy`). Универсальная утиная типизация сохранена исключительно для полиморфных интерфейсов урона (`has_method("take_damage")`), групп и централизованных резолверов `GameTypes.resolve_damageable()` и `GameTypes.resolve_enemy()`.
+
+### Централизованное отладочное логирование (GameTypes.debug_log)
+- Все прямые вызовы `print(...)` по проекту (64 вызова) переведены на канальное логирование `GameTypes.debug_log(category: StringName, msg: String)`.
+- **Категории логирования**: `&"audio"`, `&"bpm"`, `&"enemy"`, `&"player"`, `&"weapon"`.
+- При выключенном флаге `GameTypes.DEBUG_ENABLED = false` консольный спам полностью устранён, при этом сохранена возможность точечного включения каналов отладки без модификации исходного кода. Единственный прямой вызов `print()` в проекте изолирован внутри реализации `GameTypes.debug_log()`.
+
 ### Игрок (`player.gd`, ~700 строк — структурирован по функциям, не требует рефакторинга на
 текущем этапе, но следить за ростом при добавлении новых систем)
 - View-model рук (в `head.gd`): правая рука держит активное оружие, левая — melee-анимация.

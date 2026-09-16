@@ -1,3 +1,4 @@
+class_name EnemyHunter
 extends "res://enemy.gd"
 
 ## Враг "Охотник" (Hunter Enemy).
@@ -113,7 +114,7 @@ func _physics_process(delta: float):
 		if not is_hunting:
 			is_hunting = true
 			AudioManager.play_sound("hunter_awaken")
-			print("[%s] HUNTER AWAKENED by Surging BPM (%.1f)! Relentless pursuit engaged." % [name, player_bpm])
+			GameTypes.debug_log(&"enemy", "[%s] HUNTER AWAKENED by Surging BPM (%.1f)! Relentless pursuit engaged." % [name, player_bpm])
 			
 		if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
 			if current_state == State.IDLE:
@@ -127,7 +128,7 @@ func _physics_process(delta: float):
 		if current_state == State.CHASE or is_hunting:
 			below_surging_timer += delta
 			if below_surging_timer >= deactivation_timeout:
-				print("[%s] HUNTER LOST TRACK: BPM below 140 for %.1fs. Returning to IDLE." % [name, below_surging_timer])
+				GameTypes.debug_log(&"enemy", "[%s] HUNTER LOST TRACK: BPM below 140 for %.1fs. Returning to IDLE." % [name, below_surging_timer])
 				is_hunting = false
 				below_surging_timer = 0.0
 				set_state(State.IDLE)

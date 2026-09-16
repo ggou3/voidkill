@@ -1,3 +1,4 @@
+class_name EnemySwarm
 extends "res://enemy.gd"
 
 ## Враг "Рой" (Swarm Enemy).

@@ -1,3 +1,4 @@
+class_name SkillManager
 extends Node
 
 const MAX_DASH = 3
@@ -191,7 +192,7 @@ func _update_momentum_hud(delta: float):
 func force_max_bpm():
 	bpm = MAX_BPM
 	time_since_bpm_gain = 0.0
-	print("[DEBUG] Max BPM (%.1f) forced via 'T' key! Peak delay set to 5.0s." % MAX_BPM)
+	GameTypes.debug_log(&"bpm", "[DEBUG] Max BPM (%.1f) forced via 'T' key! Peak delay set to 5.0s." % MAX_BPM)
 
 func add_bpm(amount: float):
 	if amount <= 0.0:
@@ -206,21 +207,21 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	# Бонус за разнообразие (+2 BPM), если оружие отличается от предыдущего убийства
 	if last_kill_weapon != "" and weapon_type != "" and weapon_type != last_kill_weapon:
 		bonus_bpm = 2.0
-		print("[BPM VARIETY BONUS] +2.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
+		GameTypes.debug_log(&"bpm", "[BPM VARIETY BONUS] +2.0 BPM! Killer: '%s' != previous: '%s' (Total: +%.1f BPM)" % [
 			weapon_type, last_kill_weapon, base_bpm + bonus_bpm
 		])
 		_show_combo_popup(bonus_bpm)
 	elif last_kill_weapon != "" and weapon_type == last_kill_weapon:
-		print("[BPM KILL] Same weapon '%s' (Total: +%.1f BPM, no variety bonus)" % [weapon_type, base_bpm])
+		GameTypes.debug_log(&"bpm", "[BPM KILL] Same weapon '%s' (Total: +%.1f BPM, no variety bonus)" % [weapon_type, base_bpm])
 	else:
-		print("[BPM KILL] First kill with '%s' (Total: +%.1f BPM)" % [weapon_type, base_bpm])
+		GameTypes.debug_log(&"bpm", "[BPM KILL] First kill with '%s' (Total: +%.1f BPM)" % [weapon_type, base_bpm])
 		
 	if weapon_type != "":
 		last_kill_weapon = weapon_type
 		
 	var total_bpm = (base_bpm + bonus_bpm) * combat_momentum
 	if combat_momentum > 1.0:
-		print("[COMBAT MOMENTUM] x%.2f applied: +%.1f -> +%.1f BPM" % [
+		GameTypes.debug_log(&"bpm", "[COMBAT MOMENTUM] x%.2f applied: +%.1f -> +%.1f BPM" % [
 			combat_momentum, base_bpm + bonus_bpm, total_bpm
 		])
 	add_bpm(total_bpm)
@@ -274,7 +275,7 @@ func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
 	var drop = bpm * 0.25
 	bpm = max(MIN_BPM, bpm - drop)
-	print("[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, GameTypes.tier_to_string(get_bpm_tier())])
+	GameTypes.debug_log(&"bpm", "[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, GameTypes.tier_to_string(get_bpm_tier())])
 
 func get_bpm_tier() -> GameTypes.BPMTier:
 	if bpm < 90.0:
@@ -379,7 +380,7 @@ func process_slam(_delta, vel: Vector3) -> Vector3:
 			
 			# Временное расширение луж крови (масштаб x1.4 на 4.0 секунды)
 			for pool in nearby_blood_pools:
-				if is_instance_valid(pool) and pool.has_method("expand_temporarily"):
+				if pool is BloodPool:
 					pool.expand_temporarily(1.4, 4.0)
 					
 			# Мгновенный разовый бонус +10 BPM
@@ -387,7 +388,7 @@ func process_slam(_delta, vel: Vector3) -> Vector3:
 			
 			# Визуальный эффект расширяющейся волны крови
 			_spawn_blood_slam_vfx(player.global_position, effective_aoe)
-			print("[BLOOD SLAM] Enhanced shockwave! AOE: %.1fm, +10 BPM, expanded %d blood pool(s)" % [
+			GameTypes.debug_log(&"bpm", "[BLOOD SLAM] Enhanced shockwave! AOE: %.1fm, +10 BPM, expanded %d blood pool(s)" % [
 				effective_aoe, nearby_blood_pools.size()
 			])
 		else:

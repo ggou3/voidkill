@@ -1,3 +1,4 @@
+class_name Enemy
 extends CharacterBody3D
 
 enum State {
@@ -255,7 +256,7 @@ func _physics_process(delta):
 			unreachable_timer = 0.0
 			if nav_agent:
 				nav_agent.set_velocity(Vector3.ZERO)
-			print("[%s] NavigationLink3D LANDED (floor: %s, vel.y: %.2f, timeout: %s)" % [
+			GameTypes.debug_log(&"enemy", "[%s] NavigationLink3D LANDED (floor: %s, vel.y: %.2f, timeout: %s)" % [
 				name, is_on_floor(), velocity.y, jump_timeout <= 0.0
 			])
 	else:
@@ -281,7 +282,7 @@ func set_state(new_state: State):
 	if current_state == new_state or current_state == State.DEAD:
 		return
 		
-	print("[%s] State: %s -> %s" % [name, State.keys()[current_state], State.keys()[new_state]])
+	GameTypes.debug_log(&"enemy", "[%s] State: %s -> %s" % [name, State.keys()[current_state], State.keys()[new_state]])
 	var prev_state = current_state
 	current_state = new_state
 	
@@ -359,7 +360,7 @@ func _process_chase(delta):
 	if not is_reachable:
 		unreachable_timer += delta
 		if unreachable_timer >= UNREACHABLE_TIMEOUT:
-			print("[%s] Target unreachable for %.1fs, returning to IDLE with repath cooldown" % [name, unreachable_timer])
+			GameTypes.debug_log(&"enemy", "[%s] Target unreachable for %.1fs, returning to IDLE with repath cooldown" % [name, unreachable_timer])
 			unreachable_timer = 0.0
 			repath_cooldown_timer = REPATH_COOLDOWN
 			set_state(State.IDLE)
@@ -384,7 +385,7 @@ func _process_chase(delta):
 	debug_diag_timer -= delta
 	if debug_diag_timer <= 0.0:
 		debug_diag_timer = 0.5
-		print("[%s CHASE] dist: %.2f | next_pos: %s | my_pos: %s | move_dir: %s | vel: (%.1f, %.1f) | reachable: %s | unreach_t: %.1f" % [
+		GameTypes.debug_log(&"enemy", "[%s CHASE] dist: %.2f | next_pos: %s | my_pos: %s | move_dir: %s | vel: (%.1f, %.1f) | reachable: %s | unreach_t: %.1f" % [
 			name,
 			dist_to_player,
 			next_path_pos,
@@ -641,7 +642,7 @@ func start_lunge():
 		if head_hitbox:
 			head_hitbox.position = Vector3(0.0, 0.38, 0.0)
 			
-	print("[%s] LUNGE started: Telegraph (%.2fs) towards %s" % [name, lunge_telegraph_time, lunge_dir])
+	GameTypes.debug_log(&"enemy", "[%s] LUNGE started: Telegraph (%.2fs) towards %s" % [name, lunge_telegraph_time, lunge_dir])
 
 func _process_lunge(delta: float):
 	lunge_timer -= delta
@@ -673,7 +674,7 @@ func _process_lunge(delta: float):
 			# Проверяем raycast вниз от новой (3D) конечной точки рывка (позиция + вектор × дистанция)
 			var landing_pos = global_position + lunge_dir * lunge_target_distance
 			if not _has_floor_at_destination(landing_pos):
-				print("[%s] LUNGE cancelled: Destination %s has no floor (chasm)! Resuming chase." % [name, landing_pos])
+				GameTypes.debug_log(&"enemy", "[%s] LUNGE cancelled: Destination %s has no floor (chasm)! Resuming chase." % [name, landing_pos])
 				lunge_cooldown_timer = 2.0
 				end_lunge()
 				return
@@ -704,7 +705,7 @@ func _process_lunge(delta: float):
 					head_hitbox.position = Vector3(0.0, 0.55, 0.0)
 					
 			AudioManager.play_sound("dash")
-			print("[%s] LUNGE DASH START! dir: %s, target_dist: %.2fm, speed: %.1f" % [
+			GameTypes.debug_log(&"enemy", "[%s] LUNGE DASH START! dir: %s, target_dist: %.2fm, speed: %.1f" % [
 				name, lunge_dir, lunge_target_distance, lunge_speed
 			])
 			
@@ -733,7 +734,7 @@ func _process_lunge(delta: float):
 		
 		# Завершение активного импульса рывка строго по прохождению полной дистанции или по истечению таймаута
 		if covered_dist >= lunge_target_distance or lunge_timer <= 0.0:
-			print("[%s] LUNGE DASH DISTANCE REACHED: traveled %.2fm / %.2fm (hit_player: %s, on_floor: %s). Handing over to ballistic inertia." % [
+			GameTypes.debug_log(&"enemy", "[%s] LUNGE DASH DISTANCE REACHED: traveled %.2fm / %.2fm (hit_player: %s, on_floor: %s). Handing over to ballistic inertia." % [
 				name, covered_dist, lunge_target_distance, lunge_has_hit, is_on_floor()
 			])
 			_reset_lunge_visuals()
@@ -768,7 +769,7 @@ func _process_lunge(delta: float):
 					
 		# Приземление: возврат управления NavigationAgent3D только после касания земли (или по таймауту)
 		if is_on_floor() or lunge_timer <= 0.0:
-			print("[%s] LUNGE LANDED on floor! (is_on_floor: %s, vel: (%.1f, %.1f, %.1f)). Resuming chase." % [
+			GameTypes.debug_log(&"enemy", "[%s] LUNGE LANDED on floor! (is_on_floor: %s, vel: (%.1f, %.1f, %.1f)). Resuming chase." % [
 				name, is_on_floor(), velocity.x, velocity.y, velocity.z
 			])
 			end_lunge()
@@ -780,7 +781,7 @@ func _on_lunge_hit_player(player: Node3D):
 	if player.has_method("take_damage"):
 		var attack_impulse = lunge_dir * 12.0 + Vector3.UP * 3.0
 		player.take_damage(lunge_damage, attack_impulse, global_position)
-	print("[%s] LUNGE HIT player for %d damage! (Continuing full dash)" % [name, lunge_damage])
+	GameTypes.debug_log(&"enemy", "[%s] LUNGE HIT player for %d damage! (Continuing full dash)" % [name, lunge_damage])
 	# НЕ вызываем end_lunge() — враг завершает полный рывок по инерции!
 
 func end_lunge():
@@ -852,7 +853,7 @@ func _process_fear_chain_check(delta: float):
 	if randf() <= 0.40:
 		target_player = player
 		flee_timer = randf_range(4.0, 5.0)
-		print("[%s] FEAR CHAIN: Overdrive panic triggered (BPM: %.1f)! FLEE for %.2fs" % [name, player_bpm, flee_timer])
+		GameTypes.debug_log(&"enemy", "[%s] FEAR CHAIN: Overdrive panic triggered (BPM: %.1f)! FLEE for %.2fs" % [name, player_bpm, flee_timer])
 		set_state(State.FLEE)
 
 func _process_flee(delta: float):
@@ -871,14 +872,14 @@ func _process_flee(delta: float):
 		else:
 			is_overdrive = (player_bpm >= 180.0)
 	if not is_overdrive:
-		print("[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
+		GameTypes.debug_log(&"enemy", "[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
 		_resume_from_flee()
 		return
 		
 	# Отсчет таймера паники (4-5 сек)
 	flee_timer -= delta
 	if flee_timer <= 0.0:
-		print("[%s] FLEE expired. Resuming normal behavior." % name)
+		GameTypes.debug_log(&"enemy", "[%s] FLEE expired. Resuming normal behavior." % name)
 		_resume_from_flee()
 		return
 		
@@ -1018,7 +1019,7 @@ func _start_link_jump(target_pos: Vector3):
 	if dist_h > 0.01:
 		rotation.y = atan2(-delta_h.x, -delta_h.z)
 		
-	print("[%s] NavigationLink3D JUMP -> target %s, dy=%.2f, dh=%.2f, v=(%.1f, %.1f, %.1f), t_flight=%.2fs" % [
+	GameTypes.debug_log(&"enemy", "[%s] NavigationLink3D JUMP -> target %s, dy=%.2f, dh=%.2f, v=(%.1f, %.1f, %.1f), t_flight=%.2fs" % [
 		name, target_pos, delta_y, dist_h, velocity.x, velocity.y, velocity.z, t_total
 	])
 
@@ -1101,7 +1102,7 @@ func add_needle():
 	needle_timers.append(6.0)
 	needle_count = needle_timers.size()
 	_update_needle_visuals()
-	print("[%s] Needle stuck! Total needles: %d" % [name, needle_count])
+	GameTypes.debug_log(&"enemy", "[%s] Needle stuck! Total needles: %d" % [name, needle_count])
 
 func _update_needle_visuals():
 	if current_state == State.DEAD:
@@ -1174,7 +1175,7 @@ func inflate():
 		if is_instance_valid(player):
 			start_chase(player)
 
-	print("[%s] INFLATED with blood!" % name)
+	GameTypes.debug_log(&"enemy", "[%s] INFLATED with blood!" % name)
 
 func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
 	if current_state == State.DEAD:
@@ -1206,14 +1207,14 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	AudioManager.play_sound("enemy_hit")
 	
 	if is_headshot:
-		print("[%s] HEADSHOT! Damage: %d | Remaining HP: %d" % [name, amount, max(0, health)])
+		GameTypes.debug_log(&"enemy", "[%s] HEADSHOT! Damage: %d | Remaining HP: %d" % [name, amount, max(0, health)])
 		var cur_frame = Engine.get_process_frames()
 		if cur_frame != last_headshot_bonus_frame:
 			last_headshot_bonus_frame = cur_frame
 			var player_node = get_tree().get_first_node_in_group("player")
 			if is_instance_valid(player_node) and "skills" in player_node and is_instance_valid(player_node.skills):
 				player_node.skills.add_bpm(1.5)
-				print("[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.skills.bpm)
+				GameTypes.debug_log(&"enemy", "[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.skills.bpm)
 	
 	# Задержка реакции перед контратакой после получения любого урона (telegraph window)
 	hit_reaction_timer = reaction_delay
@@ -1224,7 +1225,7 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	if is_shockwave or is_execute or is_melee or knockback_vector.length_squared() > 10.0:
 		is_jumping_link = false
 	if current_state == State.LUNGE and (is_shockwave or is_execute or is_melee or amount >= 20 or knockback_vector.length_squared() > 10.0):
-		print("[%s] Lunge interrupted by damage/melee!" % [name])
+		GameTypes.debug_log(&"enemy", "[%s] Lunge interrupted by damage/melee!" % [name])
 		end_lunge()
 	
 	# При melee-ударе активируем окно отслеживания удара об стену только для мощной ударной волны или добивания
@@ -1353,7 +1354,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 		my_mult = 0.20
 		
 	var wall_damage = int(round(base_wall_damage * my_mult))
-	print("[%s] Wall slam! Speed: %.1f, chain_depth: %d, damage: %d (base: %d)" % [
+	GameTypes.debug_log(&"enemy", "[%s] Wall slam! Speed: %.1f, chain_depth: %d, damage: %d (base: %d)" % [
 		name, impact_speed, slam_chain_depth, wall_damage, base_wall_damage
 	])
 	
@@ -1375,7 +1376,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D):
 			else:
 				next_mult = 0.20
 			var collateral_damage = int(round(base_wall_damage * next_mult))
-			print("[%s] Collateral hit %s! Depth: %d, damage: %d" % [name, target.name, next_depth, collateral_damage])
+			GameTypes.debug_log(&"enemy", "[%s] Collateral hit %s! Depth: %d, damage: %d" % [name, target.name, next_depth, collateral_damage])
 			# Импульс отброса сохраняется, урон ослаблен по цепи:
 			target.take_damage(collateral_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), false, false, true, false, next_depth)
 	
@@ -1566,7 +1567,7 @@ func _trigger_inflation_explosion(depth: int = 0):
 	var base_heal: int = 35 if was_killed_by_melee else 15
 	var heal_amount: int = max(1, int(round(float(base_heal) * mult)))
 	
-	print("[%s] DETONATION! chain_depth: %d | mult: %.2f | dmg: %d | radius: %.2fm | heal: %d%s" % [
+	GameTypes.debug_log(&"enemy", "[%s] DETONATION! chain_depth: %d | mult: %.2f | dmg: %d | radius: %.2fm | heal: %d%s" % [
 		name, depth, mult, explosion_damage, explosion_radius, heal_amount,
 		" (CHAIN LIMIT: NO FURTHER CHAIN DETONATIONS)" if depth >= 3 else ""
 	])
@@ -1610,7 +1611,7 @@ func _trigger_inflation_explosion(depth: int = 0):
 				knock_dir = Vector3.UP
 			var knock_vec = knock_dir * (14.0 * mult) + Vector3.UP * (4.5 * mult)
 			
-			print("[%s] DETONATION AOE HIT (chain %d -> %d) -> %s for %d dmg!" % [name, depth, depth + 1, enemy.name, dmg])
+			GameTypes.debug_log(&"enemy", "[%s] DETONATION AOE HIT (chain %d -> %d) -> %s for %d dmg!" % [name, depth, depth + 1, enemy.name, dmg])
 			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, depth, "injector")
 			
 	# 2. Лечение игрока, если он в радиусе взрыва
@@ -1652,7 +1653,7 @@ func _trigger_poison_contagion(depth: int = 0):
 	const CONTAGION_RADIUS: float = 2.5
 	var cloud_pos = global_position + Vector3(0, 0.8, 0)
 	
-	print("[%s] POISON CONTAGION! depth: %d, radius: %.1fm" % [name, depth, CONTAGION_RADIUS])
+	GameTypes.debug_log(&"enemy", "[%s] POISON CONTAGION! depth: %d, radius: %.1fm" % [name, depth, CONTAGION_RADIUS])
 	AudioManager.play_sound("flask_splash")
 	
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
@@ -1683,7 +1684,7 @@ func _trigger_poison_contagion(depth: int = 0):
 						
 			if enemy.has_method("apply_poison_dot"):
 				enemy.apply_poison_dot(3.0, 3, 0.5, depth + 1)
-				print("[%s] CONTAGION INFECTED %s! Stack applied at depth %d" % [name, enemy.name, depth + 1])
+				GameTypes.debug_log(&"enemy", "[%s] CONTAGION INFECTED %s! Stack applied at depth %d" % [name, enemy.name, depth + 1])
 
 func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float):
 	var mesh_inst = MeshInstance3D.new()
@@ -1745,7 +1746,7 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 			
 	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
 	
-	print("[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
+	GameTypes.debug_log(&"enemy", "[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
 		name, count, str(was_inflated), burst_radius, damage_per_needle, depth, nearby_enemies.size()
 	])
 	

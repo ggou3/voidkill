@@ -1,3 +1,4 @@
+class_name Player
 extends CharacterBody3D
 
 const WALK_SPEED = 10.0
@@ -128,7 +129,7 @@ func is_blood_active() -> bool:
 	return is_on_blood
 
 func has_infinite_ammo() -> bool:
-	return skills != null and skills.has_method("get_bpm_tier") and skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE
+	return skills is SkillManager and skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE
 
 func get_bpm_ratio() -> float:
 	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
@@ -211,7 +212,7 @@ func _input(event):
 	if event.is_action_pressed("melee") and not event.is_echo():
 		perform_melee()
 	if event.is_action_pressed("debug_max_bpm") or (event is InputEventKey and event.pressed and not event.is_echo() and (event.keycode == KEY_T or event.physical_keycode == KEY_T)):
-		if skills and skills.has_method("force_max_bpm"):
+		if skills is SkillManager:
 			skills.force_max_bpm()
 
 func _process(_delta):
@@ -467,7 +468,7 @@ func handle_jump() -> bool:
 			head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
 			time_on_ground = 0.0
 			prev_air_time = 0.0
-			if skills and skills.has_method("add_combat_momentum"):
+			if skills is SkillManager:
 				skills.add_combat_momentum(0.04)
 				
 		coyote_timer = 0.0
@@ -797,7 +798,7 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 	var final_damage = max(1, int(round(float(amount) * (1.0 - reduction))))
 	health = max(0, health - final_damage)
 	_update_health_display(true)
-	if skills and skills.has_method("drop_bpm_on_damage"):
+	if skills is SkillManager:
 		skills.drop_bpm_on_damage()
 	if head:
 		head.add_recoil(0.25, 0.0)
@@ -1005,7 +1006,7 @@ func _check_and_deflect_projectiles(from_pos: Vector3, aim_dir: Vector3, is_shoc
 				continue
 				
 		# Отражаем снаряд по вектору взгляда игрока (aim_dir)
-		if proj.has_method("deflect"):
+		if proj is ProjectileEnemy:
 			var orig_pos = proj.global_position
 			proj.deflect(aim_dir, 27.0, 24, from_pos)
 			_spawn_deflect_flash(orig_pos)
@@ -1256,7 +1257,7 @@ func perform_melee():
 			var eff_dmg: int = int(round(float(raw_eff_dmg) * final_multiplier))
 			
 			if needle_count > 0:
-				print("[%s] CONE MELEE HIT: BaseEffDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+				GameTypes.debug_log(&"player", "[%s] CONE MELEE HIT: BaseEffDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
 					e.name, raw_eff_dmg, needle_count, final_multiplier, eff_dmg
 				])
 				
@@ -1280,7 +1281,7 @@ func perform_melee():
 			if is_exec:
 				executed_any = true
 				
-		print("[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | BaseDmg: %.1f | SHOCKWAVE: true | Hits: %d" % [
+		GameTypes.debug_log(&"player", "[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | BaseDmg: %.1f | SHOCKWAVE: true | Hits: %d" % [
 			effective_speed, cur_speed, recent_peak_speed, cone_melee_speed_threshold, speed_base_dmg, hit_count
 		])
 		
@@ -1341,7 +1342,7 @@ func perform_melee():
 			var will_kill: bool = is_execute or (enemy_cur_hp <= dmg)
 			
 			if needle_count > 0:
-				print("[%s] REGULAR MELEE HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+				GameTypes.debug_log(&"player", "[%s] REGULAR MELEE HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
 					hit_collider.name, melee_damage, needle_count, final_multiplier, dmg
 				])
 			
@@ -1356,6 +1357,6 @@ func perform_melee():
 			if will_kill and skills:
 				skills.add_dash_charge()
 				
-		print("[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | SHOCKWAVE: false | Dmg: %d | Hit: %s" % [
+		GameTypes.debug_log(&"player", "[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | SHOCKWAVE: false | Dmg: %d | Hit: %s" % [
 			effective_speed, cur_speed, recent_peak_speed, cone_melee_speed_threshold, melee_damage, str(hit_anything)
 		])

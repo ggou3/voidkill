@@ -1,3 +1,4 @@
+class_name EnemyRanged
 extends "res://enemy.gd"
 
 @export var projectile_scene: PackedScene = preload("res://projectile_enemy.tscn")
@@ -174,7 +175,7 @@ func perform_attack():
 	proj.global_position = spawn_pos
 		
 	AudioManager.play_sound("flask_throw")
-	print("[%s] RANGED ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
+	GameTypes.debug_log(&"enemy", "[%s] RANGED ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
 		name, target_player.name, fly_dir, projectile_speed, attack_damage
 	])
 
@@ -223,7 +224,7 @@ func _process_fear_chain_check(delta: float):
 					if randf() <= 0.40:
 						target_player = player
 						flee_timer = randf_range(4.0, 5.0)
-						print("[%s] FEAR CHAIN: Ranged enemy panicked! FLEE for %.2fs" % [name, flee_timer])
+						GameTypes.debug_log(&"enemy", "[%s] FEAR CHAIN: Ranged enemy panicked! FLEE for %.2fs" % [name, flee_timer])
 						set_state(State.FLEE)
 						return
 	super._process_fear_chain_check(delta)

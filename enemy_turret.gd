@@ -1,3 +1,4 @@
+class_name EnemyTurret
 extends "res://enemy.gd"
 
 ## Враг "Турель" (Turret Enemy).
@@ -167,7 +168,7 @@ func _enter_lockdown():
 	if turret_light:
 		lockdown_tween.tween_property(turret_light, "light_energy", 0.1, 0.35)
 		
-	print("[%s] TURRET LOCKDOWN: Player in OVERDRIVE! Ceased fire, tucked barrel." % name)
+	GameTypes.debug_log(&"enemy", "[%s] TURRET LOCKDOWN: Player in OVERDRIVE! Ceased fire, tucked barrel." % name)
 
 func _exit_lockdown():
 	is_in_lockdown = false
@@ -186,7 +187,7 @@ func _exit_lockdown():
 		lockdown_tween.tween_property(turret_light, "light_energy", 1.2, 0.3)
 		
 	attack_timer = max(attack_timer, 0.6)
-	print("[%s] TURRET RESTORE: Player exited OVERDRIVE. Resumed targeting." % name)
+	GameTypes.debug_log(&"enemy", "[%s] TURRET RESTORE: Player exited OVERDRIVE. Resumed targeting." % name)
 
 func _process_idle(delta: float):
 	velocity = Vector3.ZERO
@@ -289,7 +290,7 @@ func perform_attack():
 		attack_flash_tween.tween_property(eyes_material, "emission", SENSOR_BASE_COLOR, 0.22)
 		
 	AudioManager.play_sound("flask_throw")
-	print("[%s] TURRET ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
+	GameTypes.debug_log(&"enemy", "[%s] TURRET ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
 		name, target_player.name, fly_dir, projectile_speed, attack_damage
 	])
 

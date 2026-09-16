@@ -1,3 +1,4 @@
+class_name BloodSplatter
 extends GPUParticles3D
 
 func _ready():

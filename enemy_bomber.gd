@@ -1,3 +1,4 @@
+class_name EnemyBomber
 extends "res://enemy.gd"
 
 ## Враг "Подрывник" (Bomber Enemy).
@@ -132,7 +133,7 @@ func _start_detonation():
 	is_detonating = true
 	detonation_timer = detonation_duration
 	tick_timer = 0.0 # Первый тик раздаётся мгновенно
-	print("[%s] BOMBER DETONATION STARTED! (Window: %.2fs)" % [name, detonation_duration])
+	GameTypes.debug_log(&"enemy", "[%s] BOMBER DETONATION STARTED! (Window: %.2fs)" % [name, detonation_duration])
 
 func die():
 	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв
@@ -148,7 +149,7 @@ func _explode():
 	current_state = State.DEAD
 	
 	var explosion_pos = global_position + Vector3(0, 0.75, 0)
-	print("[%s] BOMBER EXPLODED at %s! Radius: %.1fm, Dmg: %d" % [name, explosion_pos, explosion_radius, explosion_damage])
+	GameTypes.debug_log(&"enemy", "[%s] BOMBER EXPLODED at %s! Radius: %.1fm, Dmg: %d" % [name, explosion_pos, explosion_radius, explosion_damage])
 	
 	AudioManager.play_sound("explosion")
 	
@@ -184,7 +185,7 @@ func _explode():
 				knock_dir = Vector3.UP
 			var knock_vec = knock_dir * 18.0 + Vector3.UP * 4.5
 			player.take_damage(dmg, knock_vec, explosion_pos)
-			print("[BOMBER] Hit player for %d dmg (dist: %.2fm)" % [dmg, dist_to_player])
+			GameTypes.debug_log(&"enemy", "[BOMBER] Hit player for %d dmg (dist: %.2fm)" % [dmg, dist_to_player])
 			
 	# 2. Урон по всем остальным врагам в радиусе поражения
 	var all_enemies = get_tree().get_nodes_in_group("enemy")
@@ -204,7 +205,7 @@ func _explode():
 				knock_dir = Vector3.UP
 			var knock_vec = knock_dir * 16.0 + Vector3.UP * 4.0
 			other_enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, -1, "bomber")
-			print("[BOMBER] Hit enemy %s for %d dmg" % [other_enemy.name, dmg])
+			GameTypes.debug_log(&"enemy", "[BOMBER] Hit enemy %s for %d dmg" % [other_enemy.name, dmg])
 			
 	# Спавн лужи крови на полу
 	if blood_pool_scene and scene_root:

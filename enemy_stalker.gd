@@ -1,3 +1,4 @@
+class_name EnemyStalker
 extends "res://enemy.gd"
 
 ## Враг "Соглядатай" (Stalker Enemy).

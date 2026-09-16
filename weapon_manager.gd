@@ -1,3 +1,4 @@
+class_name WeaponManager
 extends Node
 
 var current_weapon_index = 0
@@ -101,7 +102,7 @@ var ammos = [4, 2, 6, 40]
 func _get_bpm_tier() -> GameTypes.BPMTier:
 	if not skill_manager and is_inside_tree():
 		skill_manager = get_node_or_null("../SkillManager")
-	if is_instance_valid(skill_manager) and skill_manager.has_method("get_bpm_tier"):
+	if skill_manager is SkillManager:
 		return skill_manager.get_bpm_tier()
 	return GameTypes.BPMTier.CALM
 
@@ -238,7 +239,7 @@ func _process(delta):
 	if current_weapon_index < weapons.size() and weapons[current_weapon_index].get("is_automatic", false):
 		if Input.is_action_pressed("shoot") and not is_reloading and fire_timers[current_weapon_index] <= 0:
 			var inf = false
-			if is_instance_valid(player_node) and player_node.has_method("has_infinite_ammo"):
+			if player_node is Player:
 				inf = player_node.has_infinite_ammo()
 			shoot(inf)
 
@@ -570,7 +571,7 @@ func _fire_anvil_piston():
 				var upward_impulse = 21.0
 				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
 				push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
-				print("[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, on_floor: true, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
+				GameTypes.debug_log(&"weapon", "[ANVIL PISTON] VERTICAL LAUNCH -> %s (rel_height: %.2f, on_floor: true, impulse: %.1f)" % [target.name, rel_height, upward_impulse])
 			else:
 				# Полный 3D-вектор толчка от игрока с учетом вертикального угла камеры (aim_dir.y):
 				# Если игрок целится сверху вниз, толчок направляет врага в пол для срабатывания wall_slam.
@@ -578,7 +579,7 @@ func _fire_anvil_piston():
 				var push_speed = 42.0
 				var push_dir = aim_dir.normalized()
 				push_vec = push_dir * push_speed
-				print("[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, on_floor: %s, speed: %.1f, push_vec: %s)" % [target.name, rel_height, str(target_on_floor), push_speed, push_vec])
+				GameTypes.debug_log(&"weapon", "[ANVIL PISTON] 3D DIRECTIONAL PUSH -> %s (rel_height: %.2f, on_floor: %s, speed: %.1f, push_vec: %s)" % [target.name, rel_height, str(target_on_floor), push_speed, push_vec])
 				
 			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
 			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth, "anvil")
@@ -674,7 +675,7 @@ func _fire_anvil_piston():
 				var upward_impulse = 21.0
 				var push_h = Vector3(aim_dir.x, 0, aim_dir.z).normalized() * 5.0
 				var push_vec = Vector3(push_h.x, upward_impulse, push_h.z)
-				print("[ANVIL PISTON] FLOOR SPLASH LAUNCH -> %s (h_dist: %.2f, impulse: %.1f)" % [target.name, splash_enemies[idx]["dist"], upward_impulse])
+				GameTypes.debug_log(&"weapon", "[ANVIL PISTON] FLOOR SPLASH LAUNCH -> %s (h_dist: %.2f, impulse: %.1f)" % [target.name, splash_enemies[idx]["dist"], upward_impulse])
 				
 				var hit_pos = target.global_position + Vector3(0, -0.6, 0)
 				target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth, "anvil")
@@ -689,7 +690,7 @@ func _fire_anvil_piston():
 		head.trigger_muzzle_flash(true)
 		AudioManager.play_sound("shotgun_shot")
 		spawn_piston_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, false)
-		print("[ANVIL PISTON] Air blast (no surface or enemy in range)")
+		GameTypes.debug_log(&"weapon", "[ANVIL PISTON] Air blast (no surface or enemy in range)")
 
 func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_normal: Vector3):
 	var player_node = get_parent()
@@ -755,7 +756,7 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_n
 	var start_pos = head.get_muzzle_position()
 	spawn_piston_tracer(start_pos, surface_hit_pos, true)
 	
-	print("[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | PushDir: %s | Vel: %s" % [
+	GameTypes.debug_log(&"weapon", "[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | PushDir: %s | Vel: %s" % [
 		anvil_self_launch_chain, mult, final_impulse, push_dir, player_node.velocity
 	])
 
@@ -1061,13 +1062,13 @@ func _fire_caliber_piercing_shot():
 		var final_dmg = int(round(base_dmg * total_mult))
 		
 		if is_headshot and is_airborne:
-			print("[RAIL SHOT] AIRBORNE HEADSHOT on %s! (%.1fx MULTIPLICATIVE) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+			GameTypes.debug_log(&"weapon", "[RAIL SHOT] AIRBORNE HEADSHOT on %s! (%.1fx MULTIPLICATIVE) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 		elif is_headshot:
-			print("[RAIL SHOT] HEADSHOT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+			GameTypes.debug_log(&"weapon", "[RAIL SHOT] HEADSHOT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 		elif is_airborne:
-			print("[RAIL SHOT] AIRBORNE HIT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+			GameTypes.debug_log(&"weapon", "[RAIL SHOT] AIRBORNE HIT on %s! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 		else:
-			print("[RAIL SHOT] PIERCING HIT on %s! Damage: %d | Base: %d" % [target.name, final_dmg, int(base_dmg)])
+			GameTypes.debug_log(&"weapon", "[RAIL SHOT] PIERCING HIT on %s! Damage: %d | Base: %d" % [target.name, final_dmg, int(base_dmg)])
 			
 		target.take_damage(final_dmg, knockback_vector, item["hit_pos"], false, false, false, is_headshot, -1, "caliber0")
 		
@@ -1232,7 +1233,7 @@ func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 		spawn_needle_tracer(start_pos, hit_pos)
 		
 	head.raycast.target_position = Vector3(0, 0, -100)
-	print("[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [NEEDLE_COUNT, ammos[3]])
+	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [NEEDLE_COUNT, ammos[3]])
 
 func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: bool = false):
 	var w = weapons[weapon_idx]
@@ -1319,11 +1320,11 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					
 					if is_headshot and is_airborne:
 						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE else "ADDITIVE"
-						print("[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
+						GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
-						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
+						GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 					elif weapon_idx == 1 and needle_count > 0:
-						print("[%s] SHOTGUN PELLET HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
+						GameTypes.debug_log(&"weapon", "[%s] SHOTGUN PELLET HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
 							target.name, int(base_dmg), needle_count, final_multiplier, final_dmg
 						])
 						
