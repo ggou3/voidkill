@@ -6,10 +6,25 @@ extends Node
 # Перечисление тиров BPM-системы
 enum BPMTier {
 	CALM,
-	RISING,
-	HIGH,
+	PUMPING,
+	SURGING,
 	OVERDRIVE
 }
+
+## Преобразует enum BPMTier в строковое представление
+static func tier_to_string(tier: BPMTier) -> String:
+	match tier:
+		BPMTier.CALM:
+			return "CALM"
+		BPMTier.PUMPING:
+			return "PUMPING"
+		BPMTier.SURGING:
+			return "SURGING"
+		BPMTier.OVERDRIVE:
+			return "OVERDRIVE"
+		_:
+			return "CALM"
+
 
 # Именованные битовые маски слоёв 3D-коллизий (3D Physics Layers)
 # Фактическое состояние в сценах проекта:
