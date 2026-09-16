@@ -1,0 +1,127 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://enemy_swarm.gd" id="1_swarm"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_swarm"]
+radius = 0.22
+height = 0.75
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_head"]
+radius = 0.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.22
+height = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_chitin"]
+albedo_color = Color(0.18, 0.19, 0.18, 1)
+metallic = 0.45
+roughness = 0.45
+rim_enabled = true
+rim = 0.3
+rim_tint = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
+albedo_color = Color(0.14, 0.15, 0.14, 1)
+metallic = 0.5
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
+albedo_color = Color(1, 0.85, 0.15, 1)
+emission_enabled = true
+emission = Color(1, 0.85, 0.15, 1)
+emission_energy_multiplier = 3.5
+
+[sub_resource type="BoxMesh" id="BoxMesh_carapace"]
+size = Vector3(0.32, 0.45, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_eye_dot"]
+size = Vector3(0.03, 0.03, 0.03)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 25.0
+
+[node name="EnemySwarm" type="CharacterBody3D" groups=["enemy", "enemy_swarm"]]
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("1_swarm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.175, 0)
+shape = SubResource("CapsuleShape3D_swarm")
+
+[node name="HeadHitbox" type="Area3D" parent="." groups=["enemy_head"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, -0.26)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
+shape = SubResource("SphereShape3D_head")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.15, 0.05)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_chitin")
+
+[node name="BackCarapace" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, -0.08, 0.14)
+mesh = SubResource("BoxMesh_carapace")
+surface_material_override/0 = SubResource("StandardMaterial3D_chitin")
+
+[node name="HeadMesh" type="CSGSphere3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, -0.26)
+radius = 0.18
+radial_segments = 16
+rings = 8
+material = SubResource("StandardMaterial3D_head")
+
+[node name="Eyes" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, -0.42)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeTopL" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.055, 0.045, 0.015)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeTopR" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.055, 0.045, 0.015)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeMidL" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0, 0.025)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeMidR" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.08, 0, 0.025)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeBotL" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.045, -0.045, 0.02)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="EyeBotR" type="MeshInstance3D" parent="Eyes"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.045, -0.045, 0.02)
+mesh = SubResource("BoxMesh_eye_dot")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+target_desired_distance = 1.2
+path_desired_distance = 0.6
+avoidance_enabled = false
+radius = 0.2
+neighbor_distance = 2.0
+max_neighbors = 4
+time_horizon_agents = 1.0
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("SphereShape3D_detection")
