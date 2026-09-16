@@ -48,8 +48,8 @@ emission_energy_multiplier = 2.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_3xd07"]
 shader = ExtResource("2_onrkg")
-shader_parameter/resolution = 900.0
-shader_parameter/noise_amount = 0.11
+shader_parameter/resolution = 1100.0
+shader_parameter/noise_amount = 0.075
 shader_parameter/player_speed = 0.0
 shader_parameter/speed_threshold = 14.5
 shader_parameter/max_speed_threshold = 19.5
