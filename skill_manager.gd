@@ -124,7 +124,7 @@ func _process(delta):
 		
 	# Индикация BPM в HUD
 	if bpm_label:
-		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm)), get_bpm_tier()]
+		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm)), GameTypes.tier_to_string(get_bpm_tier())]
 		
 	# Постоянная индикация Combat Momentum в HUD
 	_update_momentum_hud(delta)
@@ -274,17 +274,17 @@ func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
 	var drop = bpm * 0.25
 	bpm = max(MIN_BPM, bpm - drop)
-	print("[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, get_bpm_tier()])
+	print("[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, GameTypes.tier_to_string(get_bpm_tier())])
 
-func get_bpm_tier() -> String:
+func get_bpm_tier() -> GameTypes.BPMTier:
 	if bpm < 90.0:
-		return "CALM"
+		return GameTypes.BPMTier.CALM
 	elif bpm < 140.0:
-		return "PUMPING"
+		return GameTypes.BPMTier.PUMPING
 	elif bpm < 180.0:
-		return "SURGING"
+		return GameTypes.BPMTier.SURGING
 	else:
-		return "OVERDRIVE"
+		return GameTypes.BPMTier.OVERDRIVE
 
 # Устаревшие методы кровавого баффа (заменены BPM-системой)
 func activate_blood_buff():

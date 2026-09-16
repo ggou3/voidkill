@@ -518,6 +518,7 @@
 - **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), статические методы `resolve_damageable(collider)` и `resolve_enemy(node)` для надёжного и унифицированного разрешения узлов целей с `take_damage` и проверкой принадлежности к врагам (включая дочерние хитбоксы `HeadHitbox` и метаданные `"enemy"`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
+  - Все сравнения тиров BPM в кодовой базе (`skill_manager.gd`, `weapon_manager.gd`, `player.gd`, `enemy*.gd`) переведены со строковых литералов на enum `GameTypes.BPMTier`. Преобразование в строку изолировано исключительно в точке отрисовки HUD через `GameTypes.tier_to_string()`.
 
 ### Игрок (`player.gd`, ~700 строк — структурирован по функциям, не требует рефакторинга на
 текущем этапе, но следить за ростом при добавлении новых систем)

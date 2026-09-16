@@ -98,12 +98,12 @@ var ammos = [4, 2, 6, 40]
 @onready var hud = $"../HUD"
 @onready var skill_manager = get_node_or_null("../SkillManager")
 
-func _get_bpm_tier() -> String:
+func _get_bpm_tier() -> GameTypes.BPMTier:
 	if not skill_manager and is_inside_tree():
 		skill_manager = get_node_or_null("../SkillManager")
 	if is_instance_valid(skill_manager) and skill_manager.has_method("get_bpm_tier"):
 		return skill_manager.get_bpm_tier()
-	return "CALM"
+	return GameTypes.BPMTier.CALM
 
 var weapon_hud_container: VBoxContainer
 var weapon_ui_slots: Array = []
@@ -394,7 +394,7 @@ func alt_shoot(has_infinite_ammo: bool = false):
 		if is_reloading or fire_timers[0] > 0:
 			return
 		# Калибр-0: ПКМ пробивной рейлган-выстрел (BPM-гейт: доступен ТОЛЬКО на OVERDRIVE)
-		if _get_bpm_tier() != "OVERDRIVE":
+		if _get_bpm_tier() != GameTypes.BPMTier.OVERDRIVE:
 			AudioManager.play_sound("dry_fire")
 			return
 		if ammos[0] <= 0:
@@ -1296,7 +1296,7 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					var total_mult = 1.0
 					
 					if is_headshot and is_airborne:
-						if _get_bpm_tier() == "OVERDRIVE":
+						if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
 							total_mult = hs_mult * air_mult
 						else:
 							total_mult = 1.0 + (hs_mult - 1.0) + (air_mult - 1.0)
@@ -1318,7 +1318,7 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					var final_dmg = int(round(base_dmg * total_mult * final_multiplier))
 					
 					if is_headshot and is_airborne:
-						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == "OVERDRIVE" else "ADDITIVE"
+						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE else "ADDITIVE"
 						print("[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
 					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
 						print("[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
@@ -1342,7 +1342,7 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					
 		if w.get("has_vacuum", false):
 			spawn_bullet_tracer(start_pos, hit_pos)
-			if not is_alt_fire and _get_bpm_tier() == "OVERDRIVE":
+			if not is_alt_fire and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
 				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.5)), float(w.get("vacuum_force", 25.6)), directly_hit_target)
 		elif weapon_idx == 1:
 			spawn_shotgun_pellet_tracer(start_pos, hit_pos)

@@ -830,9 +830,15 @@ func _process_fear_chain_check(delta: float):
 		
 	# Проверяем тир OVERDRIVE игрока (BPM >= 180.0)
 	var player_bpm: float = 0.0
-	if "skills" in player and is_instance_valid(player.skills) and "bpm" in player.skills:
-		player_bpm = player.skills.bpm
-	if player_bpm < 180.0:
+	var is_overdrive: bool = false
+	if "skills" in player and is_instance_valid(player.skills):
+		if "bpm" in player.skills:
+			player_bpm = player.skills.bpm
+		if player.skills.has_method("get_bpm_tier"):
+			is_overdrive = (player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+		else:
+			is_overdrive = (player_bpm >= 180.0)
+	if not is_overdrive:
 		return
 		
 	# Проверяем нахождение в зоне видимости / детекции и прямую видимость (LOS)
@@ -856,9 +862,15 @@ func _process_flee(delta: float):
 		
 	# Прерывание FLEE при падении BPM ниже 180 (игрок вышел из OVERDRIVE)
 	var player_bpm: float = 0.0
-	if "skills" in target_player and is_instance_valid(target_player.skills) and "bpm" in target_player.skills:
-		player_bpm = target_player.skills.bpm
-	if player_bpm < 180.0:
+	var is_overdrive: bool = false
+	if "skills" in target_player and is_instance_valid(target_player.skills):
+		if "bpm" in target_player.skills:
+			player_bpm = target_player.skills.bpm
+		if target_player.skills.has_method("get_bpm_tier"):
+			is_overdrive = (target_player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+		else:
+			is_overdrive = (player_bpm >= 180.0)
+	if not is_overdrive:
 		print("[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
 		_resume_from_flee()
 		return

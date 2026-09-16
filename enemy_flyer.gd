@@ -726,10 +726,13 @@ func _process_fear_check(delta: float):
 	
 	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-		var player_bpm: float = 0.0
-		if "skills" in player and is_instance_valid(player.skills) and "bpm" in player.skills:
-			player_bpm = player.skills.bpm
-		if player_bpm >= 180.0 and global_position.distance_to(player.global_position) <= detection_range and _has_line_of_sight_to(player):
+		var is_overdrive = false
+		if "skills" in player and is_instance_valid(player.skills):
+			if player.skills.has_method("get_bpm_tier"):
+				is_overdrive = (player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+			elif "bpm" in player.skills:
+				is_overdrive = (player.skills.bpm >= 180.0)
+		if is_overdrive and global_position.distance_to(player.global_position) <= detection_range and _has_line_of_sight_to(player):
 			if randf() <= 0.40:
 				flee_timer = randf_range(3.5, 4.5)
 				_end_firing()

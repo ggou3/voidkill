@@ -128,7 +128,7 @@ func is_blood_active() -> bool:
 	return is_on_blood
 
 func has_infinite_ammo() -> bool:
-	return skills != null and skills.has_method("get_bpm_tier") and skills.get_bpm_tier() == "OVERDRIVE"
+	return skills != null and skills.has_method("get_bpm_tier") and skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE
 
 func get_bpm_ratio() -> float:
 	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
