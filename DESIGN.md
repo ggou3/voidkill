@@ -519,6 +519,8 @@
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
   - Все сравнения тиров BPM в кодовой базе (`skill_manager.gd`, `weapon_manager.gd`, `player.gd`, `enemy*.gd`) переведены со строковых литералов на enum `GameTypes.BPMTier`. Преобразование в строку изолировано исключительно в точке отрисовки HUD через `GameTypes.tier_to_string()`.
+- **TracerPool** (`res://scripts/core/tracer_pool.gd`) — циклический пул для рендеринга трейсеров выстрелов (`POOL_SIZE = 64`) и сопутствующих сфер попадания (`SPHERE_POOL_SIZE = 16`). Исключает динамические аллокации `SurfaceTool`, `ArrayMesh` и `StandardMaterial3D` во время боя. Поддерживает стили `&"bullet"`, `&"pellet"`, `&"syringe"`, `&"needle"`, `&"piston"`, `&"piston_self"`, `&"piercing"`, `&"inflate"`, `&"shrapnel"`, `&"shrapnel_blood"`. Материалы и меши предсоздаются один раз при инициализации; индивидуальное затухание каждого экземпляра реализуется через покадровый tween `transparency` на уровне `GeometryInstance3D`.
+  - ВАЖНО: скрипт НЕ должен иметь `class_name TracerPool` — конфликтует с именем автозагрузки.
 
 ### Именование типов (class_name) и типизация
 - **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 16 ключевых классов сущностей:
