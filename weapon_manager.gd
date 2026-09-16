@@ -584,7 +584,7 @@ func _fire_anvil_piston():
 			# 0 прямого урона (прямой урон снят), активирует wall_slam и collateral_slam с затуханием цепи chain_depth
 			target.take_damage(0, push_vec, hit_pos, false, false, true, false, chain_depth, "anvil")
 			
-		spawn_piston_tracer(start_pos, primary_hit_pos, false)
+		TracerPool.spawn_tracer(start_pos, primary_hit_pos, &"piston", false)
 		return
 		
 	# 2. Прямого попадания во врагов нет — проверяем попадание конуса в статичную геометрию (стена, пол, потолок)
@@ -689,7 +689,7 @@ func _fire_anvil_piston():
 		head.add_recoil(0.08, 0.25)
 		head.trigger_muzzle_flash(true)
 		AudioManager.play_sound("shotgun_shot")
-		spawn_piston_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, false)
+		TracerPool.spawn_tracer(start_pos, from_pos + aim_dir * PISTON_RANGE, &"piston", false)
 		GameTypes.debug_log(&"weapon", "[ANVIL PISTON] Air blast (no surface or enemy in range)")
 
 func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_normal: Vector3):
@@ -754,86 +754,11 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_n
 	AudioManager.play_sound("shotgun_shot")
 	
 	var start_pos = head.get_muzzle_position()
-	spawn_piston_tracer(start_pos, surface_hit_pos, true)
+	TracerPool.spawn_tracer(start_pos, surface_hit_pos, &"piston", true)
 	
 	GameTypes.debug_log(&"weapon", "[ANVIL PISTON] SELF-LAUNCH! Chain: %d | Mult: %.2f | Impulse: %.1f | PushDir: %s | Vel: %s" % [
 		anvil_self_launch_chain, mult, final_impulse, push_dir, player_node.velocity
 	])
-
-func spawn_piston_tracer(start_pos: Vector3, end_pos: Vector3, is_self_launch: bool = false):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.07 if is_self_launch else 0.055
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.65, 0.25, 0.9) if is_self_launch else Color(0.85, 0.95, 1.0, 0.9)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
-	
-	var sphere = MeshInstance3D.new()
-	var smesh = SphereMesh.new()
-	smesh.radius = 0.25
-	smesh.height = 0.5
-	sphere.mesh = smesh
-	var smat = StandardMaterial3D.new()
-	smat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	smat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	smat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	smat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	smat.albedo_color = Color(1.0, 0.75, 0.3, 0.8) if is_self_launch else Color(0.6, 0.85, 1.0, 0.75)
-	sphere.material_override = smat
-	scene_root.add_child(sphere)
-	sphere.global_position = end_pos
-	
-	var stween = create_tween().set_parallel(true)
-	var target_scale = Vector3(2.4, 2.4, 2.4) if is_self_launch else Vector3(1.6, 1.6, 1.6)
-	stween.tween_property(sphere, "scale", target_scale, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	stween.tween_property(smat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	stween.chain().tween_callback(sphere.queue_free)
 
 func _fire_injector_inflate():
 	if injector_alt_timer > 0.0:
@@ -865,61 +790,7 @@ func _fire_injector_inflate():
 			if target != null and target.has_method("inflate"):
 				target.inflate()
 				
-	spawn_inflate_tracer(start_pos, hit_pos)
-
-func spawn_inflate_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.038
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.12, 0.18, 0.95)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
+	TracerPool.spawn_tracer(start_pos, hit_pos, &"inflate")
 
 func _fire_caliber_piercing_shot():
 	ammos[0] = 0
@@ -1072,101 +943,10 @@ func _fire_caliber_piercing_shot():
 			
 		target.take_damage(final_dmg, knockback_vector, item["hit_pos"], false, false, false, is_headshot, -1, "caliber0")
 		
-	spawn_piercing_beam_tracer(start_pos, beam_end)
+	TracerPool.spawn_tracer(start_pos, beam_end, &"piercing")
 	apply_vacuum_wake(start_pos, beam_end, 2.5, 25.6, null)
 	
 	reload()
-
-func spawn_piercing_beam_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r_core = 0.065
-	st.add_vertex(start_pos - right * r_core)
-	st.add_vertex(end_pos + right * r_core)
-	st.add_vertex(end_pos - right * r_core)
-	
-	st.add_vertex(start_pos - right * r_core)
-	st.add_vertex(start_pos + right * r_core)
-	st.add_vertex(end_pos + right * r_core)
-	
-	st.add_vertex(start_pos - up * r_core)
-	st.add_vertex(end_pos + up * r_core)
-	st.add_vertex(end_pos - up * r_core)
-	
-	st.add_vertex(start_pos - up * r_core)
-	st.add_vertex(start_pos + up * r_core)
-	st.add_vertex(end_pos + up * r_core)
-	
-	var r_outer = 0.26
-	st.add_vertex(start_pos - right * r_outer)
-	st.add_vertex(end_pos + right * r_outer)
-	st.add_vertex(end_pos - right * r_outer)
-	
-	st.add_vertex(start_pos - right * r_outer)
-	st.add_vertex(start_pos + right * r_outer)
-	st.add_vertex(end_pos + right * r_outer)
-	
-	st.add_vertex(start_pos - up * r_outer)
-	st.add_vertex(end_pos + up * r_outer)
-	st.add_vertex(end_pos - up * r_outer)
-	
-	st.add_vertex(start_pos - up * r_outer)
-	st.add_vertex(start_pos + up * r_outer)
-	st.add_vertex(end_pos + up * r_outer)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.85, 0.95, 1.0, 0.95)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
-	
-	var impact_sphere = MeshInstance3D.new()
-	var smesh = SphereMesh.new()
-	smesh.radius = 0.28
-	smesh.height = 0.56
-	impact_sphere.mesh = smesh
-	var imat = StandardMaterial3D.new()
-	imat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	imat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	imat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	imat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	imat.albedo_color = Color(0.5, 0.85, 1.0, 0.9)
-	impact_sphere.material_override = imat
-	scene_root.add_child(impact_sphere)
-	impact_sphere.global_position = end_pos
-	
-	var itween = create_tween().set_parallel(true)
-	itween.tween_property(impact_sphere, "scale", Vector3(2.6, 2.6, 2.6), 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	itween.tween_property(imat, "albedo_color:a", 0.0, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	itween.chain().tween_callback(impact_sphere.queue_free)
 
 func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 	if sewing_alt_timer > 0.0:
@@ -1230,7 +1010,7 @@ func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 						
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, "sewing")
 					
-		spawn_needle_tracer(start_pos, hit_pos)
+		TracerPool.spawn_tracer(start_pos, hit_pos, &"needle")
 		
 	head.raycast.target_position = Vector3(0, 0, -100)
 	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [NEEDLE_COUNT, ammos[3]])
@@ -1342,251 +1122,15 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, weapon_key)
 					
 		if w.get("has_vacuum", false):
-			spawn_bullet_tracer(start_pos, hit_pos)
+			TracerPool.spawn_tracer(start_pos, hit_pos, &"bullet")
 			if not is_alt_fire and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
 				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.5)), float(w.get("vacuum_force", 25.6)), directly_hit_target)
 		elif weapon_idx == 1:
-			spawn_shotgun_pellet_tracer(start_pos, hit_pos)
+			TracerPool.spawn_tracer(start_pos, hit_pos, &"pellet")
 		elif weapon_idx == 2:
-			spawn_syringe_tracer(start_pos, hit_pos)
+			TracerPool.spawn_tracer(start_pos, hit_pos, &"syringe")
 		elif weapon_idx == 3:
-			spawn_needle_tracer(start_pos, hit_pos)
-
-func spawn_shotgun_pellet_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.016
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.72, 0.25, 0.85)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
-
-func spawn_syringe_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.022
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.25, 1.0, 0.4, 0.95)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
-
-func spawn_needle_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.012
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.85, 0.95, 1.0, 0.9)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.10).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
-
-func spawn_bullet_tracer(start_pos: Vector3, end_pos: Vector3):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.2:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	# 1. Тонкий яркий белый сердечник следа пули (r = 0.035)
-	var r_core = 0.035
-	st.add_vertex(start_pos - right * r_core)
-	st.add_vertex(end_pos + right * r_core)
-	st.add_vertex(end_pos - right * r_core)
-	
-	st.add_vertex(start_pos - right * r_core)
-	st.add_vertex(start_pos + right * r_core)
-	st.add_vertex(end_pos + right * r_core)
-	
-	st.add_vertex(start_pos - up * r_core)
-	st.add_vertex(end_pos + up * r_core)
-	st.add_vertex(end_pos - up * r_core)
-	
-	st.add_vertex(start_pos - up * r_core)
-	st.add_vertex(start_pos + up * r_core)
-	st.add_vertex(end_pos + up * r_core)
-	
-	# 2. Внешняя полупрозрачная оболочка вакуумного возмущения воздуха (r = 0.16)
-	var r_outer = 0.16
-	st.add_vertex(start_pos - right * r_outer)
-	st.add_vertex(end_pos + right * r_outer)
-	st.add_vertex(end_pos - right * r_outer)
-	
-	st.add_vertex(start_pos - right * r_outer)
-	st.add_vertex(start_pos + right * r_outer)
-	st.add_vertex(end_pos + right * r_outer)
-	
-	st.add_vertex(start_pos - up * r_outer)
-	st.add_vertex(end_pos + up * r_outer)
-	st.add_vertex(end_pos - up * r_outer)
-	
-	st.add_vertex(start_pos - up * r_outer)
-	st.add_vertex(start_pos + up * r_outer)
-	st.add_vertex(end_pos + up * r_outer)
-	
-	var mesh = st.commit()
-	mesh_inst.mesh = mesh
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.8, 0.92, 1.0, 0.85)
-	mesh_inst.material_override = mat
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
+			TracerPool.spawn_tracer(start_pos, hit_pos, &"needle")
 
 func apply_vacuum_wake(start_pos: Vector3, end_pos: Vector3, radius: float, force: float, excluded_target: Node = null):
 	var line_vec = end_pos - start_pos

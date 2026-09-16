@@ -1729,7 +1729,6 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 	var damage_per_needle = max(1, int(round(base_needle_dmg * mult)))
 	
 	var burst_pos = global_position + Vector3(0.0, 0.85, 0.0)
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 	var space_state = get_world_3d().direct_space_state
 	
 	var all_enemies = get_tree().get_nodes_in_group("enemy")
@@ -1818,56 +1817,5 @@ func _trigger_needle_burst(was_inflated: bool, depth: int):
 					var knock = needle_dir * 2.5 + Vector3.UP * 0.8
 					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth, "sewing")
 					
-		if scene_root:
-			_spawn_needle_shrapnel_tracer(scene_root, burst_pos, needle_end, was_inflated)
+		TracerPool.spawn_tracer(burst_pos, needle_end, &"shrapnel", was_inflated)
 
-func _spawn_needle_shrapnel_tracer(scene_root: Node, start_pos: Vector3, end_pos: Vector3, is_blood_needle: bool):
-	var dir = end_pos - start_pos
-	var dist = dir.length()
-	if dist < 0.15:
-		return
-		
-	var forward = dir / dist
-	var up = Vector3.UP
-	if abs(forward.dot(up)) > 0.92:
-		up = Vector3.RIGHT
-	var right = forward.cross(up).normalized()
-	up = right.cross(forward).normalized()
-	
-	var mesh_inst = MeshInstance3D.new()
-	var st = SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	
-	var r = 0.016 if is_blood_needle else 0.012
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(end_pos + right * r)
-	st.add_vertex(end_pos - right * r)
-	
-	st.add_vertex(start_pos - right * r)
-	st.add_vertex(start_pos + right * r)
-	st.add_vertex(end_pos + right * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(end_pos + up * r)
-	st.add_vertex(end_pos - up * r)
-	
-	st.add_vertex(start_pos - up * r)
-	st.add_vertex(start_pos + up * r)
-	st.add_vertex(end_pos + up * r)
-	
-	mesh_inst.mesh = st.commit()
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.35, 0.25, 0.95) if is_blood_needle else Color(0.85, 0.95, 1.0, 0.9)
-	mesh_inst.material_override = mat
-	
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_transform = Transform3D.IDENTITY
-	
-	var tween = create_tween()
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_callback(mesh_inst.queue_free)
