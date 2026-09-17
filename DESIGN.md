@@ -527,11 +527,22 @@
 
 ### Именование типов (class_name) и типизация
 - **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 16 ключевых классов сущностей:
-  - Сущности и менеджеры игрока: `Player`, `Head`, `SkillManager`, `WeaponManager`.
+  - Сущности, компоненты и менеджеры: `Player`, `Head`, `SkillManager`, `WeaponManager`, `HealthComponent`.
   - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `ProjectileEnemy`.
   - Враги: базовый класс `Enemy` и специализированные подтипы `EnemyFlyer`, `EnemyRanged`, `EnemyTurret`, `EnemyBomber`, `EnemyShield`, `EnemyHunter`, `EnemySwarm`, `EnemyStalker`.
   - Autoload-синглтонам (`GameManager`, `AudioManager`, `GameTypes`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
 - **Проверки типов через `is ClassName`**: проверки объектов с однозначно известным конкретным типом переведены с утиной типизации (`has_method(...)`) на строгую проверку типа (`pool is BloodPool`, `skills is SkillManager`, `player_node is Player`, `proj is ProjectileEnemy`). Универсальная утиная типизация сохранена исключительно для полиморфных интерфейсов урона (`has_method("take_damage")`), групп и централизованных резолверов `GameTypes.resolve_damageable()` и `GameTypes.resolve_enemy()`.
+
+### Компонентная архитектура (HealthComponent) — ✅ Реализован (Шаг 3.1)
+- **HealthComponent** (`res://scripts/components/health_component.gd`, `class_name HealthComponent`) — инкапсулирует расчёт и хранение здоровья, обработку урона, учёт глубин цепных реакций (`explosion_chain_depth`, `slam_chain_depth`), фиксацию флагов типа убийства (`was_killed_by_melee`, `was_killed_by_shockwave`, `last_damage_weapon`, `is_execute`).
+- **Сигналы**:
+  - `damaged(amount: int, is_crit: bool, hit_pos: Vector3)` — оповещение о нанесении урона (спавн всплывающих цифр урона и VFX брызг крови).
+  - `died(info: Dictionary)` — словарь `info` передаёт `killer_weapon`, `was_melee`, `was_shockwave`, `is_headshot`, `is_execute`, `hit_pos`, `knockback`, `source_chain_depth`, `explosion_chain_depth`, `slam_chain_depth`.
+  - `health_changed(current: int, maximum: int)` — реактивное обновление отладочного HP-бара.
+- **Интеграция с Enemy**:
+  - В `enemy.gd` метод `take_damage()` стал тонкой обёрткой: обрабатывает локальные физические реакции CharacterBody3D (отброс, сброс прыжков, прерывание выпада lunge, таймер соударения со стеной `wall_slam_timer`, агр из IDLE в CHASE) и делегирует урон в `health_component.take_damage(...)`.
+  - Поля `health` и `max_health` на `Enemy` оформлены через геттеры/сеттеры к компоненту с сохранением полной обратной совместимости для внешних систем (`player.gd`, `weapon_manager.gd`, DoT яда, урон об стены).
+  - Удалена мёртвая ветка `else` при проверке `player.skills.has_method("record_kill_bpm")` в `Enemy.die()`.
 
 ### Централизованное отладочное логирование (GameTypes.debug_log)
 - Все прямые вызовы `print(...)` по проекту (64 вызова) переведены на канальное логирование `GameTypes.debug_log(category: StringName, msg: String)`.

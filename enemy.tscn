@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://rkw44u1bvqo3"]
 
 [ext_resource type="Script" uid="uid://n81thag53g2p" path="res://enemy.gd" id="1_7k104"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
 radius = 0.36
@@ -33,6 +34,9 @@ radius = 25.0
 
 [node name="Enemy" type="CharacterBody3D" unique_id=948084825 groups=["enemy"]]
 script = ExtResource("1_7k104")
+
+[node name="HealthComponent" type="Node" parent="." unique_id=987654321]
+script = ExtResource("2_health")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=804700386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)

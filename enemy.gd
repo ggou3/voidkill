@@ -10,7 +10,12 @@ enum State {
 	DEAD
 }
 
-@export var max_health: int = 100
+@export var max_health: int = 100:
+	set(value):
+		max_health = value
+		if is_instance_valid(health_component):
+			health_component.max_health = value
+
 @export var move_speed: float = 11.5
 @export var acceleration: float = 6.2
 @export var attack_damage: int = 15
@@ -33,7 +38,16 @@ enum State {
 @export var lunge_cooldown: float = 4.5
 
 var current_state: State = State.IDLE
-var health: int = 100
+var health: int:
+	get:
+		if is_instance_valid(health_component):
+			return health_component.health
+		return _health
+	set(value):
+		_health = value
+		if is_instance_valid(health_component):
+			health_component.health = value
+var _health: int = 100
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var knockback_velocity: Vector3 = Vector3.ZERO
 var target_player: Node3D = null
@@ -84,6 +98,22 @@ var inflation_pulse_tween: Tween = null
 var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
+@onready var health_component: HealthComponent = _get_or_create_health_component()
+var last_hit_knockback: Vector3 = Vector3.ZERO
+
+func _ensure_health_component() -> HealthComponent:
+	if not is_instance_valid(health_component):
+		health_component = _get_or_create_health_component()
+	return health_component
+
+func _get_or_create_health_component() -> HealthComponent:
+	var comp = get_node_or_null("HealthComponent") as HealthComponent
+	if not comp:
+		comp = HealthComponent.new()
+		comp.name = "HealthComponent"
+		add_child(comp)
+	return comp
+
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
 @onready var eyes: MeshInstance3D = get_node_or_null("Eyes")
@@ -101,7 +131,16 @@ var hp_sprite: Sprite3D
 var hp_label: Label3D
 
 func _ready():
-	health = max_health
+	_ensure_health_component()
+	health_component.max_health = max_health
+	health_component.health = max_health
+	if not health_component.damaged.is_connected(_on_health_damaged):
+		health_component.damaged.connect(_on_health_damaged)
+	if not health_component.health_changed.is_connected(_on_health_changed):
+		health_component.health_changed.connect(_on_health_changed)
+	if not health_component.died.is_connected(_on_health_died):
+		health_component.died.connect(_on_health_died)
+	
 	floor_snap_length = 0.4
 	floor_max_angle = deg_to_rad(60.0)
 	floor_constant_speed = true
@@ -1177,36 +1216,11 @@ func inflate():
 
 	GameTypes.debug_log(&"enemy", "[%s] INFLATED with blood!" % name)
 
-func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
-	if current_state == State.DEAD:
-		return
-		
-	if source_chain_depth >= 0:
-		explosion_chain_depth = source_chain_depth + 1
-		# Жёсткий предел: если смертельный урон получен от взрыва с глубиной >= 3 — цепная детонация блокируется
-		if source_chain_depth >= 3 and (health - amount <= 0):
-			is_inflated = false
-	else:
-		explosion_chain_depth = 0
-		
-	if is_shockwave:
-		slam_chain_depth = max(0, source_chain_depth)
-		was_killed_by_shockwave = true
-	elif amount > 0:
-		was_killed_by_shockwave = false
-		
-	was_killed_by_melee = is_melee or is_shockwave or is_execute
-	if is_melee or is_shockwave or is_execute:
-		last_damage_weapon = "melee"
-	elif weapon_source != "":
-		last_damage_weapon = weapon_source
-		
-	health -= amount
-	_update_health_bar()
-	_spawn_damage_number(amount, hit_pos, is_headshot)
+func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:
+	_spawn_damage_number(amount, hit_pos, is_crit)
 	AudioManager.play_sound("enemy_hit")
 	
-	if is_headshot:
+	if is_crit:
 		GameTypes.debug_log(&"enemy", "[%s] HEADSHOT! Damage: %d | Remaining HP: %d" % [name, amount, max(0, health)])
 		var cur_frame = Engine.get_process_frames()
 		if cur_frame != last_headshot_bonus_frame:
@@ -1215,7 +1229,21 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 			if is_instance_valid(player_node) and "skills" in player_node and is_instance_valid(player_node.skills):
 				player_node.skills.add_bpm(1.5)
 				GameTypes.debug_log(&"enemy", "[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.skills.bpm)
-	
+				
+	_spawn_hit_blood_splatter(amount, hit_pos, is_crit, last_hit_knockback)
+
+func _on_health_changed(_current_hp: int, _max_hp: int) -> void:
+	_update_health_bar()
+
+func _on_health_died(death_info: Dictionary) -> void:
+	die(death_info)
+
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
+	if current_state == State.DEAD:
+		return
+
+	last_hit_knockback = knockback_vector
+
 	# Задержка реакции перед контратакой после получения любого урона (telegraph window)
 	hit_reaction_timer = reaction_delay
 	attack_timer = max(attack_timer, reaction_delay)
@@ -1248,76 +1276,77 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player):
 			start_chase(player)
+
+	# Делегирование в HealthComponent (расчёт урона, множители, chain depth, флаги и сигналы)
+	_ensure_health_component().take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
+
+func _spawn_hit_blood_splatter(amount: int, hit_pos: Vector3, is_crit: bool, knock_vec: Vector3) -> void:
+	if not blood_splatter_scene:
+		return
+	var splatter = blood_splatter_scene.instantiate()
+	var pmat = splatter.process_material.duplicate()
 	
-	if blood_splatter_scene:
-		var splatter = blood_splatter_scene.instantiate()
-		var pmat = splatter.process_material.duplicate()
-		
-		if is_execute:
-			# Максимальный gore-эффект при добивании (execute)
-			splatter.amount = 160
-			splatter.scale = Vector3(2.4, 2.4, 2.4)
-			pmat.spread = 180.0
-			pmat.initial_velocity_min = 8.0
-			pmat.initial_velocity_max = 20.0
-			pmat.scale_min = 0.35
-			pmat.scale_max = 0.65
-		elif is_headshot:
-			# Сочный, мощный разрыв головы при хедшоте (высокая скорость разлёта во все стороны)
-			splatter.amount = 145
-			splatter.scale = Vector3(2.2, 2.2, 2.2)
-			pmat.spread = 160.0
-			pmat.initial_velocity_min = 7.5
-			pmat.initial_velocity_max = 18.0
-			pmat.scale_min = 0.26
-			pmat.scale_max = 0.55
-		elif is_shockwave or amount >= 80 or knockback_vector.length() >= 25.0:
-			# Массивный, сочный разлёт крови от конусной ударной волны / высокой скорости / мощного удара
-			splatter.amount = 110
-			splatter.scale = Vector3(1.9, 1.9, 1.9)
-			pmat.spread = 100.0
-			pmat.initial_velocity_min = 6.0
-			pmat.initial_velocity_max = 16.0
-			pmat.scale_min = 0.22
-			pmat.scale_max = 0.50
-		elif is_melee:
-			# Скромный, компактный всплеск крови при обычном слабом тычке стоя на месте (~35 урона)
-			splatter.amount = 20
-			splatter.scale = Vector3(0.8, 0.8, 0.8)
-			pmat.spread = 35.0
-			pmat.initial_velocity_min = 3.0
-			pmat.initial_velocity_max = 6.0
-			pmat.scale_min = 0.08
-			pmat.scale_max = 0.18
-		else:
-			# Стандартные попадания из огнестрельного оружия
-			splatter.amount = 28
-			splatter.scale = Vector3(1.0, 1.0, 1.0)
-			pmat.spread = 40.0
-			pmat.initial_velocity_min = 4.0
-			pmat.initial_velocity_max = 8.0
-			pmat.scale_min = 0.10
-			pmat.scale_max = 0.25
-			
-		splatter.process_material = pmat
-		
-		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-		if scene_root:
-			scene_root.add_child(splatter)
-			splatter.global_position = hit_pos
-			
-			# Чтобы кровь не выдавала ошибку при выстреле ровно сверху вниз
-			var flat_knockback = Vector3(knockback_vector.x, 0, knockback_vector.z)
-			if flat_knockback != Vector3.ZERO and hit_pos != hit_pos + flat_knockback:
-				splatter.look_at(hit_pos + flat_knockback, Vector3.UP)
+	var is_exec = health_component.last_is_execute if is_instance_valid(health_component) else false
+	var is_shock = health_component.was_killed_by_shockwave if is_instance_valid(health_component) else false
+	var is_mel = health_component.was_killed_by_melee if is_instance_valid(health_component) else false
 	
-	if health <= 0:
-		if is_headshot:
-			if eyes:
-				eyes.visible = false
-			if head_mesh:
-				head_mesh.visible = false
-		set_state(State.DEAD)
+	if is_exec:
+		# Максимальный gore-эффект при добивании (execute)
+		splatter.amount = 160
+		splatter.scale = Vector3(2.4, 2.4, 2.4)
+		pmat.spread = 180.0
+		pmat.initial_velocity_min = 8.0
+		pmat.initial_velocity_max = 20.0
+		pmat.scale_min = 0.35
+		pmat.scale_max = 0.65
+	elif is_crit:
+		# Сочный, мощный разрыв головы при хедшоте (высокая скорость разлёта во все стороны)
+		splatter.amount = 145
+		splatter.scale = Vector3(2.2, 2.2, 2.2)
+		pmat.spread = 160.0
+		pmat.initial_velocity_min = 7.5
+		pmat.initial_velocity_max = 18.0
+		pmat.scale_min = 0.26
+		pmat.scale_max = 0.55
+	elif is_shock or amount >= 80 or knock_vec.length() >= 25.0:
+		# Массивный, сочный разлёт крови от конусной ударной волны / высокой скорости / мощного удара
+		splatter.amount = 110
+		splatter.scale = Vector3(1.9, 1.9, 1.9)
+		pmat.spread = 100.0
+		pmat.initial_velocity_min = 6.0
+		pmat.initial_velocity_max = 16.0
+		pmat.scale_min = 0.22
+		pmat.scale_max = 0.50
+	elif is_mel:
+		# Скромный, компактный всплеск крови при обычном слабом тычке стоя на месте (~35 урона)
+		splatter.amount = 20
+		splatter.scale = Vector3(0.8, 0.8, 0.8)
+		pmat.spread = 35.0
+		pmat.initial_velocity_min = 3.0
+		pmat.initial_velocity_max = 6.0
+		pmat.scale_min = 0.08
+		pmat.scale_max = 0.18
+	else:
+		# Стандартные попадания из огнестрельного оружия
+		splatter.amount = 28
+		splatter.scale = Vector3(1.0, 1.0, 1.0)
+		pmat.spread = 40.0
+		pmat.initial_velocity_min = 4.0
+		pmat.initial_velocity_max = 8.0
+		pmat.scale_min = 0.10
+		pmat.scale_max = 0.25
+		
+	splatter.process_material = pmat
+	
+	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+	if scene_root:
+		scene_root.add_child(splatter)
+		splatter.global_position = hit_pos
+		
+		# Чтобы кровь не выдавала ошибку при выстреле ровно сверху вниз
+		var flat_knockback = Vector3(knock_vec.x, 0, knock_vec.z)
+		if flat_knockback != Vector3.ZERO and hit_pos != hit_pos + flat_knockback:
+			splatter.look_at(hit_pos + flat_knockback, Vector3.UP)
 
 func _check_wall_slam(delta: float):
 	if wall_slam_timer <= 0.0 or current_state == State.DEAD:
@@ -1455,11 +1484,33 @@ func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = f
 	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
-func die():
+func die(death_info: Dictionary = {}):
+	if current_state == State.DEAD and not is_physics_processing():
+		return
 	current_state = State.DEAD
 	attack_timer = 999999.0
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
+	
+	if not death_info.is_empty():
+		was_killed_by_melee = death_info.get("was_melee", was_killed_by_melee)
+		was_killed_by_shockwave = death_info.get("was_shockwave", was_killed_by_shockwave)
+		last_damage_weapon = death_info.get("killer_weapon", last_damage_weapon)
+		explosion_chain_depth = death_info.get("explosion_chain_depth", explosion_chain_depth)
+		slam_chain_depth = death_info.get("slam_chain_depth", slam_chain_depth)
+		if death_info.get("source_chain_depth", -1) >= 3:
+			is_inflated = false
+		if death_info.get("is_headshot", false):
+			if eyes:
+				eyes.visible = false
+			if head_mesh:
+				head_mesh.visible = false
+	elif is_instance_valid(health_component):
+		was_killed_by_melee = health_component.was_killed_by_melee
+		was_killed_by_shockwave = health_component.was_killed_by_shockwave
+		last_damage_weapon = health_component.last_damage_weapon
+		explosion_chain_depth = health_component.explosion_chain_depth
+		slam_chain_depth = health_component.slam_chain_depth
 	
 	# Начисление BPM игроку (+8.0 за убийство ударной волной, +5.5 за обычное убийство, +2.0 за смену оружия)
 	var player = get_tree().get_first_node_in_group("player")
@@ -1482,9 +1533,6 @@ func die():
 				
 		if player.skills.has_method("record_kill_bpm"):
 			player.skills.record_kill_bpm(weapon_used, was_killed_by_shockwave)
-		else:
-			var mult: float = player.skills.combat_momentum if "combat_momentum" in player.skills else 1.0
-			player.skills.add_bpm((8.0 if was_killed_by_shockwave else 5.5) * mult)
 	
 	if hp_sprite:
 		hp_sprite.visible = false
