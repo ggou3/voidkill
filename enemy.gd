@@ -79,26 +79,18 @@ var lunge_target_distance: float = 5.5
 var fear_check_timer: float = 0.0
 var flee_timer: float = 0.0
 
-var is_inflated: bool = false
 var was_killed_by_melee: bool = false
 var was_killed_by_shockwave: bool = false
 var last_damage_weapon: String = ""
 var last_headshot_bonus_frame: int = -1
 var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
-var slow_factor: float = 1.0
-var slow_sources: int = 0
-const MAX_POISON_STACKS: int = 5
-var poison_stacks: Array[Dictionary] = []
-var needle_count: int = 0
-var needle_timers: Array[float] = []
-var inflation_tween: Tween = null
-var inflation_pulse_tween: Tween = null
 
 var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 @onready var health_component: HealthComponent = _get_or_create_health_component()
+@onready var status_effect_component: StatusEffectComponent = _get_or_create_status_effect_component()
 var last_hit_knockback: Vector3 = Vector3.ZERO
 
 func _ensure_health_component() -> HealthComponent:
@@ -113,6 +105,69 @@ func _get_or_create_health_component() -> HealthComponent:
 		comp.name = "HealthComponent"
 		add_child(comp)
 	return comp
+
+func _ensure_status_effect_component() -> StatusEffectComponent:
+	if not is_instance_valid(status_effect_component):
+		status_effect_component = _get_or_create_status_effect_component()
+	return status_effect_component
+
+func _get_or_create_status_effect_component() -> StatusEffectComponent:
+	var comp = get_node_or_null("StatusEffectComponent") as StatusEffectComponent
+	if not comp:
+		comp = StatusEffectComponent.new()
+		comp.name = "StatusEffectComponent"
+		add_child(comp)
+	return comp
+
+var slow_factor: float:
+	get:
+		return _ensure_status_effect_component().slow_factor
+	set(val):
+		_ensure_status_effect_component().slow_factor = val
+
+var slow_sources: int:
+	get:
+		return _ensure_status_effect_component().slow_sources
+	set(val):
+		_ensure_status_effect_component().slow_sources = val
+
+const MAX_POISON_STACKS: int = StatusEffectComponent.MAX_POISON_STACKS
+
+var poison_stacks: Array[Dictionary]:
+	get:
+		return _ensure_status_effect_component().poison_stacks
+	set(val):
+		_ensure_status_effect_component().poison_stacks = val
+
+var needle_count: int:
+	get:
+		return _ensure_status_effect_component().needle_count
+	set(val):
+		_ensure_status_effect_component().needle_count = val
+
+var needle_timers: Array[float]:
+	get:
+		return _ensure_status_effect_component().needle_timers
+	set(val):
+		_ensure_status_effect_component().needle_timers = val
+
+var is_inflated: bool:
+	get:
+		return _ensure_status_effect_component().is_inflated
+	set(val):
+		_ensure_status_effect_component().is_inflated = val
+
+var inflation_tween: Tween:
+	get:
+		return _ensure_status_effect_component().inflation_tween
+	set(val):
+		_ensure_status_effect_component().inflation_tween = val
+
+var inflation_pulse_tween: Tween:
+	get:
+		return _ensure_status_effect_component().inflation_pulse_tween
+	set(val):
+		_ensure_status_effect_component().inflation_pulse_tween = val
 
 @onready var nav_agent: NavigationAgent3D = $NavigationAgent3D
 @onready var collision_shape: CollisionShape3D = $CollisionShape3D
@@ -140,6 +195,18 @@ func _ready():
 		health_component.health_changed.connect(_on_health_changed)
 	if not health_component.died.is_connected(_on_health_died):
 		health_component.died.connect(_on_health_died)
+	
+	_ensure_status_effect_component()
+	status_effect_component.actor = self
+	status_effect_component.health_component = health_component
+	if not status_effect_component.effect_applied.is_connected(_on_status_effect_applied):
+		status_effect_component.effect_applied.connect(_on_status_effect_applied)
+	if not status_effect_component.effect_expired.is_connected(_on_status_effect_expired):
+		status_effect_component.effect_expired.connect(_on_status_effect_expired)
+	if not status_effect_component.visuals_need_update.is_connected(_on_status_visuals_need_update):
+		status_effect_component.visuals_need_update.connect(_on_status_visuals_need_update)
+	if not status_effect_component.requests_damage.is_connected(_on_status_requests_damage):
+		status_effect_component.requests_damage.connect(_on_status_requests_damage)
 	
 	floor_snap_length = 0.4
 	floor_max_angle = deg_to_rad(60.0)
@@ -248,40 +315,6 @@ func _physics_process(delta):
 		hit_reaction_timer -= delta
 	if lunge_cooldown_timer > 0.0:
 		lunge_cooldown_timer -= delta
-		
-	# Обработка стаков яда (Poison DoT)
-	if not poison_stacks.is_empty():
-		var write_idx = 0
-		for i in range(poison_stacks.size()):
-			var stack = poison_stacks[i]
-			stack["duration"] -= delta
-			stack["tick_timer"] -= delta
-			if stack["tick_timer"] <= 0.0:
-				stack["tick_timer"] = float(stack["interval"])
-				_apply_poison_tick(int(stack["damage"]))
-				if current_state == State.DEAD:
-					break
-			if stack["duration"] > 0.0 and current_state != State.DEAD:
-				poison_stacks[write_idx] = stack
-				write_idx += 1
-		if current_state != State.DEAD:
-			poison_stacks.resize(write_idx)
-			
-	# Обработка застрявших игл: независимый таймер 6.0с на каждую иглу
-	if not needle_timers.is_empty():
-		var write_idx = 0
-		var changed = false
-		for i in range(needle_timers.size()):
-			var t = needle_timers[i] - delta
-			if t > 0.0:
-				needle_timers[write_idx] = t
-				write_idx += 1
-			else:
-				changed = true
-		if changed:
-			needle_timers.resize(write_idx)
-			needle_count = write_idx
-			_update_needle_visuals()
 		
 	if is_jumping_link:
 		jump_grace_timer -= delta
@@ -1087,61 +1120,22 @@ func apply_vacuum_pull(pull_impulse: Vector3):
 	hit_reaction_timer = max(hit_reaction_timer, 0.2)
 
 func add_slow(factor: float = 0.5):
-	slow_sources += 1
-	slow_factor = factor
+	_ensure_status_effect_component().add_slow(factor)
 
 func remove_slow():
-	slow_sources = max(0, slow_sources - 1)
-	if slow_sources == 0:
-		slow_factor = 1.0
+	_ensure_status_effect_component().remove_slow()
 
 func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5, chain_depth: int = 0):
-	if current_state == State.DEAD:
-		return
-	last_damage_weapon = "injector"
-	if poison_stacks.size() < MAX_POISON_STACKS:
-		poison_stacks.append({
-			"duration": duration,
-			"tick_timer": interval,
-			"damage": damage_per_tick,
-			"interval": interval,
-			"chain_depth": chain_depth
-		})
-	else:
-		# При максимуме 5 стаков обновляем стак с наименьшим оставшимся временем
-		var min_idx = 0
-		var min_dur = float(poison_stacks[0]["duration"])
-		for i in range(1, poison_stacks.size()):
-			if float(poison_stacks[i]["duration"]) < min_dur:
-				min_dur = float(poison_stacks[i]["duration"])
-				min_idx = i
-		poison_stacks[min_idx]["duration"] = max(float(poison_stacks[min_idx]["duration"]), duration)
-		poison_stacks[min_idx]["chain_depth"] = min(int(poison_stacks[min_idx]["chain_depth"]), chain_depth)
+	_ensure_status_effect_component().apply_poison_dot(duration, damage_per_tick, interval, chain_depth)
 
 func _apply_poison_tick(damage: int):
-	if current_state == State.DEAD:
-		return
-	last_damage_weapon = "injector"
-	health -= damage
-	_update_health_bar()
-	var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
-	_spawn_damage_number(damage, hit_pos, false, true)
-	if current_state == State.IDLE:
-		var player = get_tree().get_first_node_in_group("player")
-		if is_instance_valid(player):
-			start_chase(player)
-	if health <= 0:
-		explosion_chain_depth = 0
-		set_state(State.DEAD)
+	if is_instance_valid(status_effect_component):
+		status_effect_component._apply_poison_tick(damage)
+	else:
+		_on_status_requests_damage(damage, &"poison")
 
 func add_needle():
-	if current_state == State.DEAD:
-		return
-	last_damage_weapon = "sewing"
-	needle_timers.append(6.0)
-	needle_count = needle_timers.size()
-	_update_needle_visuals()
-	GameTypes.debug_log(&"enemy", "[%s] Needle stuck! Total needles: %d" % [name, needle_count])
+	_ensure_status_effect_component().add_needle()
 
 func _update_needle_visuals():
 	if current_state == State.DEAD:
@@ -1175,9 +1169,15 @@ func _update_needle_visuals():
 func inflate():
 	if is_inflated or current_state == State.DEAD:
 		return
-	last_damage_weapon = "injector"
-	is_inflated = true
-	
+	_ensure_status_effect_component().inflate()
+	if current_state == State.IDLE:
+		var player = get_tree().get_first_node_in_group("player")
+		if is_instance_valid(player):
+			start_chase(player)
+
+func _update_inflation_visuals():
+	if current_state == State.DEAD:
+		return
 	if inflation_tween:
 		inflation_tween.kill()
 	inflation_tween = create_tween().set_parallel(true)
@@ -1208,13 +1208,39 @@ func inflate():
 	if body_override_mat:
 		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 3.2, 0.45).set_trans(Tween.TRANS_SINE)
 		inflation_pulse_tween.tween_property(body_override_mat, "emission_energy_multiplier", 1.2, 0.45).set_trans(Tween.TRANS_SINE)
-		
-	if current_state == State.IDLE:
-		var player = get_tree().get_first_node_in_group("player")
-		if is_instance_valid(player):
-			start_chase(player)
 
-	GameTypes.debug_log(&"enemy", "[%s] INFLATED with blood!" % name)
+func _on_status_effect_applied(kind: StringName, stacks: int) -> void:
+	pass
+
+func _on_status_effect_expired(kind: StringName) -> void:
+	pass
+
+func _on_status_visuals_need_update(kind: StringName) -> void:
+	if kind == &"needle":
+		_update_needle_visuals()
+	elif kind == &"inflation":
+		_update_inflation_visuals()
+
+func _on_status_requests_damage(amount: int, kind: StringName) -> void:
+	if current_state == State.DEAD:
+		return
+	if kind == &"poison":
+		last_damage_weapon = "injector"
+		if is_instance_valid(health_component):
+			health_component.last_damage_weapon = "injector"
+		health -= amount
+		_update_health_bar()
+		var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
+		_spawn_damage_number(amount, hit_pos, false, true)
+		if current_state == State.IDLE:
+			var player = get_tree().get_first_node_in_group("player")
+			if is_instance_valid(player):
+				start_chase(player)
+		if health <= 0:
+			explosion_chain_depth = 0
+			if is_instance_valid(health_component):
+				health_component.explosion_chain_depth = 0
+			set_state(State.DEAD)
 
 func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:
 	_spawn_damage_number(amount, hit_pos, is_crit)
@@ -1554,7 +1580,7 @@ func die(death_info: Dictionary = {}):
 			
 	# Разлёт застрявших игл при смерти (Швейная машина)
 	var was_inflated = is_inflated
-	var chain_depth = explosion_chain_depth
+	var chain_depth = health_component.explosion_chain_depth if is_instance_valid(health_component) else explosion_chain_depth
 	if needle_count > 0:
 		_trigger_needle_burst(was_inflated, chain_depth)
 
@@ -1570,10 +1596,12 @@ func die(death_info: Dictionary = {}):
 
 	# Если враг был раздут шприцем — инициируем кровавую детонацию с учётом глубины цепи
 	if is_inflated:
-		if explosion_chain_depth > 3:
+		if chain_depth > 3:
 			is_inflated = false
+			if inflation_pulse_tween:
+				inflation_pulse_tween.kill()
 		else:
-			_trigger_inflation_explosion(explosion_chain_depth)
+			_trigger_inflation_explosion(chain_depth)
 		
 	if blood_pool_scene:
 		var space_state = get_world_3d().direct_space_state
@@ -1592,278 +1620,16 @@ func die(death_info: Dictionary = {}):
 			
 	queue_free()
 
-func _trigger_inflation_explosion(depth: int = 0):
-	is_inflated = false
-	if inflation_pulse_tween:
-		inflation_pulse_tween.kill()
-		
-	var explosion_pos = global_position + Vector3(0, 0.9, 0)
-	
-	# Расчёт затухания силы взрыва в зависимости от глубины цепи (chain_depth)
-	# глубина 0 = 100%, глубина 1 = 70%, глубина 2 = 49%, глубина 3+ = 20%
-	var mult: float = 1.0
-	if depth >= 3:
-		mult = 0.20
-	else:
-		mult = pow(0.7, depth)
-		
-	var base_radius: float = 5.2
-	var base_damage: int = 85
-	var explosion_radius: float = base_radius * mult
-	var explosion_damage: int = max(1, int(round(float(base_damage) * mult)))
-	
-	var base_heal: int = 35 if was_killed_by_melee else 15
-	var heal_amount: int = max(1, int(round(float(base_heal) * mult)))
-	
-	GameTypes.debug_log(&"enemy", "[%s] DETONATION! chain_depth: %d | mult: %.2f | dmg: %d | radius: %.2fm | heal: %d%s" % [
-		name, depth, mult, explosion_damage, explosion_radius, heal_amount,
-		" (CHAIN LIMIT: NO FURTHER CHAIN DETONATIONS)" if depth >= 3 else ""
-	])
-	
-	AudioManager.play_sound("explosion")
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if scene_root:
-		# Сочный разлёт крови во все стороны (360 градусов), масштабируемый от силы взрыва
-		if blood_splatter_scene:
-			var splatter = blood_splatter_scene.instantiate()
-			splatter.amount = max(20, int(round(135.0 * mult)))
-			splatter.scale = Vector3(2.4, 2.4, 2.4) * max(0.5, mult)
-			var pmat = splatter.process_material.duplicate()
-			pmat.spread = 180.0
-			pmat.initial_velocity_min = 7.0 * max(0.5, mult)
-			pmat.initial_velocity_max = 20.0 * max(0.5, mult)
-			pmat.scale_min = 0.28 * max(0.6, mult)
-			pmat.scale_max = 0.65 * max(0.6, mult)
-			splatter.process_material = pmat
-			scene_root.add_child(splatter)
-			splatter.global_position = explosion_pos
-			
-		_spawn_explosion_shockwave(scene_root, explosion_pos, explosion_radius)
-		
-	# 1. АОЕ урон по соседним врагам (запускает цепную реакцию для других раздутых врагов)
-	var all_enemies = get_tree().get_nodes_in_group("enemy")
-	for enemy in all_enemies:
-		if not is_instance_valid(enemy) or enemy == self:
-			continue
-		if ("current_state" in enemy and enemy.current_state == enemy.State.DEAD) or ("health" in enemy and enemy.health <= 0):
-			continue
-			
-		var enemy_center = enemy.global_position + Vector3(0, 0.9, 0)
-		var dist = explosion_pos.distance_to(enemy_center)
-		if dist <= explosion_radius:
-			var falloff = 1.0 - (dist / explosion_radius) * 0.35
-			var dmg = max(1, int(round(float(explosion_damage) * falloff)))
-			var knock_dir = (enemy_center - explosion_pos).normalized()
-			if knock_dir.length_squared() < 0.01:
-				knock_dir = Vector3.UP
-			var knock_vec = knock_dir * (14.0 * mult) + Vector3.UP * (4.5 * mult)
-			
-			GameTypes.debug_log(&"enemy", "[%s] DETONATION AOE HIT (chain %d -> %d) -> %s for %d dmg!" % [name, depth, depth + 1, enemy.name, dmg])
-			enemy.take_damage(dmg, knock_vec, enemy_center, false, false, false, false, depth, "injector")
-			
-	# 2. Лечение игрока, если он в радиусе взрыва
-	var player = get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-		var player_center = player.global_position + Vector3(0, 0.9, 0)
-		var dist_to_player = explosion_pos.distance_to(player_center)
-		var heal_radius = (5.2 + 1.8) * mult
-		if dist_to_player <= heal_radius:
-			if player.has_method("heal"):
-				player.heal(heal_amount, was_killed_by_melee)
+func _trigger_inflation_explosion(depth: int = 0) -> void:
+	if is_instance_valid(status_effect_component):
+		status_effect_component.trigger_inflation_explosion(depth)
 
-func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float):
-	var sphere = MeshInstance3D.new()
-	var smesh = SphereMesh.new()
-	smesh.radius = 0.4
-	smesh.height = 0.8
-	smesh.radial_segments = 16
-	smesh.rings = 8
-	sphere.mesh = smesh
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(1.0, 0.15, 0.1, 0.8)
-	sphere.material_override = mat
-	
-	scene_root.add_child(sphere)
-	sphere.global_position = pos
-	
-	var tween = create_tween().set_parallel(true)
-	tween.tween_property(sphere, "scale", Vector3(radius * 1.6, radius * 1.6, radius * 1.6), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(sphere.queue_free)
+func _trigger_poison_contagion(depth: int = 0) -> void:
+	if is_instance_valid(status_effect_component):
+		status_effect_component.trigger_poison_contagion(depth)
 
-func _trigger_poison_contagion(depth: int = 0):
-	const CONTAGION_RADIUS: float = 2.5
-	var cloud_pos = global_position + Vector3(0, 0.8, 0)
-	
-	GameTypes.debug_log(&"enemy", "[%s] POISON CONTAGION! depth: %d, radius: %.1fm" % [name, depth, CONTAGION_RADIUS])
-	AudioManager.play_sound("flask_splash")
-	
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if scene_root:
-		_spawn_poison_cloud_visual(scene_root, cloud_pos, CONTAGION_RADIUS)
-		
-	var space_state = get_world_3d().direct_space_state
-	var all_enemies = get_tree().get_nodes_in_group("enemy")
-	for enemy in all_enemies:
-		if not is_instance_valid(enemy) or enemy == self:
-			continue
-		if ("current_state" in enemy and enemy.current_state == enemy.State.DEAD) or ("health" in enemy and enemy.health <= 0):
-			continue
-			
-		var enemy_center = enemy.global_position + Vector3(0, 0.8, 0)
-		var dist = cloud_pos.distance_to(enemy_center)
-		if dist <= CONTAGION_RADIUS:
-			if space_state:
-				var ray_query = PhysicsRayQueryParameters3D.create(cloud_pos, enemy_center)
-				ray_query.exclude = [self, enemy]
-				ray_query.collide_with_areas = false
-				ray_query.collide_with_bodies = true
-				var hit_res = space_state.intersect_ray(ray_query)
-				if not hit_res.is_empty():
-					var col = hit_res.collider
-					if col and not (col.is_in_group("enemy") or col.is_in_group("enemy_head")):
-						continue
-						
-			if enemy.has_method("apply_poison_dot"):
-				enemy.apply_poison_dot(3.0, 3, 0.5, depth + 1)
-				GameTypes.debug_log(&"enemy", "[%s] CONTAGION INFECTED %s! Stack applied at depth %d" % [name, enemy.name, depth + 1])
+func _trigger_needle_burst(was_inflated: bool, depth: int) -> void:
+	if is_instance_valid(status_effect_component):
+		status_effect_component.trigger_needle_burst(was_inflated, depth)
 
-func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float):
-	var mesh_inst = MeshInstance3D.new()
-	var smesh = SphereMesh.new()
-	smesh.radius = 0.4
-	smesh.height = 0.8
-	smesh.radial_segments = 16
-	smesh.rings = 8
-	mesh_inst.mesh = smesh
-	
-	var mat = StandardMaterial3D.new()
-	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
-	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.25, 0.95, 0.35, 0.6) # Токсично-зеленый цвет яда
-	mesh_inst.material_override = mat
-	
-	scene_root.add_child(mesh_inst)
-	mesh_inst.global_position = cloud_pos
-	
-	var target_scale = Vector3.ONE * (cloud_radius / 0.4)
-	var tween = mesh_inst.create_tween().set_parallel(true)
-	tween.tween_property(mesh_inst, "scale", target_scale, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(mat, "albedo_color:a", 0.0, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(mesh_inst.queue_free)
-
-func _trigger_needle_burst(was_inflated: bool, depth: int):
-	var burst_radius: float = 6.0 if was_inflated else 4.0
-	var count = needle_count
-	needle_count = 0
-	needle_timers.clear()
-	
-	# Расчет урона за иглу с учетом раздутия и цепного затухания Инъектора
-	var base_needle_dmg = 8.0 if was_inflated else 3.0
-	var mult: float = 1.0
-	if was_inflated:
-		if depth >= 3:
-			mult = 0.20
-		else:
-			mult = pow(0.7, depth)
-	var damage_per_needle = max(1, int(round(base_needle_dmg * mult)))
-	
-	var burst_pos = global_position + Vector3(0.0, 0.85, 0.0)
-	var space_state = get_world_3d().direct_space_state
-	
-	var all_enemies = get_tree().get_nodes_in_group("enemy")
-	var nearby_enemies: Array = []
-	for e in all_enemies:
-		if not is_instance_valid(e) or e == self:
-			continue
-		if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
-			continue
-		var e_pos = e.global_position + Vector3(0.0, 0.85, 0.0)
-		var dist = burst_pos.distance_to(e_pos)
-		if dist <= burst_radius:
-			nearby_enemies.append({"enemy": e, "pos": e_pos, "dist": dist})
-			
-	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
-	
-	GameTypes.debug_log(&"enemy", "[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
-		name, count, str(was_inflated), burst_radius, damage_per_needle, depth, nearby_enemies.size()
-	])
-	
-	AudioManager.play_sound("needle_shot")
-	
-	const NEEDLE_TOLERANCE: float = 0.40
-	
-	for i in range(count):
-		var needle_dir: Vector3 = Vector3.FORWARD
-		if nearby_enemies.size() > 0:
-			var target_entry = nearby_enemies[i % nearby_enemies.size()]
-			var to_target = target_entry["pos"] - burst_pos
-			var base_dir = to_target.normalized() if to_target.length_squared() > 0.01 else Vector3.FORWARD
-			var jitter = Vector3(randf_range(-0.12, 0.12), randf_range(-0.12, 0.12), randf_range(-0.12, 0.12))
-			needle_dir = (base_dir + jitter).normalized()
-		else:
-			var angle = (float(i) / float(count)) * TAU + randf_range(-0.1, 0.1)
-			needle_dir = Vector3(cos(angle), randf_range(-0.2, 0.3), sin(angle)).normalized()
-			
-		var max_dist = burst_radius
-		var wall_query = PhysicsRayQueryParameters3D.create(burst_pos, burst_pos + needle_dir * max_dist)
-		wall_query.exclude = [self]
-		wall_query.collide_with_areas = false
-		wall_query.collide_with_bodies = true
-		var wall_res = space_state.intersect_ray(wall_query)
-		var needle_end = burst_pos + needle_dir * max_dist
-		if not wall_res.is_empty():
-			var col = wall_res.collider
-			if col and not (col.is_in_group("enemy") or col.is_in_group("enemy_head")):
-				needle_end = wall_res.position
-				max_dist = burst_pos.distance_to(needle_end)
-				
-		var line_vec = needle_end - burst_pos
-		var line_len = line_vec.length()
-		if line_len < 0.05:
-			continue
-		var line_dir = line_vec / line_len
-		
-		var hit_on_path: Array = []
-		for cand in nearby_enemies:
-			var e = cand["enemy"]
-			if not is_instance_valid(e):
-				continue
-			var e_pos = cand["pos"]
-			var t = clamp((e_pos - burst_pos).dot(line_dir), 0.0, line_len)
-			if t < 0.05:
-				continue
-			var pt = burst_pos + line_dir * t
-			var d = pt.distance_to(e_pos)
-			if d <= (0.36 + NEEDLE_TOLERANCE):
-				hit_on_path.append({"enemy": e, "hit_pos": pt, "dist": t})
-				
-		hit_on_path.sort_custom(func(a, b): return a["dist"] < b["dist"])
-		
-		if not was_inflated:
-			# Обычный разлёт: игла поражает только ближайшего врага на траектории (не пробивает)
-			if not hit_on_path.is_empty():
-				var first_hit = hit_on_path[0]
-				var target = first_hit["enemy"]
-				if is_instance_valid(target) and ("health" in target and target.health > 0):
-					var knock = needle_dir * 1.5 + Vector3.UP * 0.5
-					target.take_damage(damage_per_needle, knock, first_hit["hit_pos"], false, false, false, false, -1, "sewing")
-				needle_end = first_hit["hit_pos"]
-		else:
-			# Раздутый враг: иглы пробивают навылет всех врагов на своей траектории с наследованием chain_depth
-			for hit_info in hit_on_path:
-				var target = hit_info["enemy"]
-				if is_instance_valid(target) and ("health" in target and target.health > 0):
-					var knock = needle_dir * 2.5 + Vector3.UP * 0.8
-					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth, "sewing")
-					
-		TracerPool.spawn_tracer(burst_pos, needle_end, &"shrapnel", was_inflated)
 

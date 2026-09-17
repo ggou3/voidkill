@@ -526,8 +526,8 @@
   - Физическая механика `apply_vacuum_wake()` сохранена независимой в `weapon_manager.gd`.
 
 ### Именование типов (class_name) и типизация
-- **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 16 ключевых классов сущностей:
-  - Сущности, компоненты и менеджеры: `Player`, `Head`, `SkillManager`, `WeaponManager`, `HealthComponent`.
+- **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 17 ключевых классов сущностей:
+  - Сущности, компоненты и менеджеры: `Player`, `Head`, `SkillManager`, `WeaponManager`, `HealthComponent`, `StatusEffectComponent`.
   - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `ProjectileEnemy`.
   - Враги: базовый класс `Enemy` и специализированные подтипы `EnemyFlyer`, `EnemyRanged`, `EnemyTurret`, `EnemyBomber`, `EnemyShield`, `EnemyHunter`, `EnemySwarm`, `EnemyStalker`.
   - Autoload-синглтонам (`GameManager`, `AudioManager`, `GameTypes`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
@@ -543,6 +543,24 @@
   - В `enemy.gd` метод `take_damage()` стал тонкой обёрткой: обрабатывает локальные физические реакции CharacterBody3D (отброс, сброс прыжков, прерывание выпада lunge, таймер соударения со стеной `wall_slam_timer`, агр из IDLE в CHASE) и делегирует урон в `health_component.take_damage(...)`.
   - Поля `health` и `max_health` на `Enemy` оформлены через геттеры/сеттеры к компоненту с сохранением полной обратной совместимости для внешних систем (`player.gd`, `weapon_manager.gd`, DoT яда, урон об стены).
   - Удалена мёртвая ветка `else` при проверке `player.skills.has_method("record_kill_bpm")` в `Enemy.die()`.
+
+### Компонентная архитектура (StatusEffectComponent) — ✅ Реализован (Шаг 3.2)
+- **StatusEffectComponent** (`res://scripts/components/status_effect_component.gd`, `class_name StatusEffectComponent`) — инкапсулирует логику статус-эффектов врага:
+  - **Яд (Poison DoT)**: `apply_poison_dot()`, `_process_poison()`, `_apply_poison_tick()`, `poison_stacks`, `MAX_POISON_STACKS = 5`, чумное облако заражения при смерти `trigger_poison_contagion()` (радиус 2.5м, лимит цепи 3 поколения) с визуальным эффектом сферы `_spawn_poison_cloud_visual()`.
+  - **Иглы (Needles)**: `add_needle()`, `_process_needles()`, `needle_count`, `needle_timers`, разлёт застрявших игл при смерти `trigger_needle_burst()` (радиус 4.0м / 6.0м при раздутии, урон 3 HP / 8 HP с затуханием 0.7^depth, сквозное пробивание при раздутии, трассировка `TracerPool.spawn_tracer(..., &"shrapnel")`).
+  - **Раздутие (Inflation)**: `inflate()`, `is_inflated`, таймеры анимаций `inflation_tween` / `inflation_pulse_tween`, кровавая детонация раздутого врага при смерти `trigger_inflation_explosion()` (радиус 5.2м * mult, урон 85 HP * mult, исцеление игрока 35/15 HP * mult, потолок цепи на глубине 3) с ударной волной `_spawn_explosion_shockwave()` и разлётом крови `blood_splatter`.
+  - **Замедление (Slow)**: `add_slow()`, `remove_slow()`, `slow_factor`, `slow_sources`.
+- **Сигналы**:
+  - `effect_applied(kind: StringName, stacks: int)`
+  - `effect_expired(kind: StringName)`
+  - `visuals_need_update(kind: StringName)`
+  - `requests_damage(amount: int, kind: StringName)`
+- **Интеграция с Enemy и наследниками**:
+  - В `enemy.gd` свойства `needle_count`, `needle_timers`, `is_inflated`, `slow_factor`, `slow_sources`, `poison_stacks`, `inflation_tween`, `inflation_pulse_tween` оформлены через делегирующие геттеры/сеттеры с сохранением полной обратной совместимости с `player.gd`, `weapon_manager.gd`, `enemy_ranged.gd` и `enemy_stalker.gd`.
+  - Носитель (`enemy.gd`) подписывается на сигналы компонента: `requests_damage` наносит урон через `HealthComponent` со спавном зелёных цифр урона и агром из `IDLE`; `visuals_need_update` вызывает обновление мешей и материалов (`_update_needle_visuals`, `_update_inflation_visuals`); замедление напрямую учитывается при расчёте целевой скорости (`move_speed * slow_factor`).
+  - Удалены дублирующие циклы обработки таймеров яда и игл из `_physics_process` в `enemy.gd` и `enemy_stalker.gd`, устранён риск двойного покадрового тика эффектов.
+  - В `enemy.tscn` добавлен узел `StatusEffectComponent` (дополнительно подстрахован автосозданием в `_get_or_create_status_effect_component()`).
+
 
 ### Централизованное отладочное логирование (GameTypes.debug_log)
 - Все прямые вызовы `print(...)` по проекту (64 вызова) переведены на канальное логирование `GameTypes.debug_log(category: StringName, msg: String)`.
@@ -637,6 +655,7 @@
 - **Спавн снарядов и `global_position` до `add_child()`**: в Godot 4 вызов `node.global_position = pos` на только что инстанциированном `Node3D` до вызова `scene_root.add_child(node)` приводит к ошибке движка `Condition "!is_inside_tree()" is true`, так как глобальная трансформация рассчитывается от родителя в дереве сцены. Снаряд необходимо сначала добавлять в сцену через `add_child(proj)`, и только затем устанавливать `proj.global_position = spawn_pos`. При этом методы атаки (`perform_attack`) должны иметь защиту `if not is_inside_tree() or current_state == State.DEAD: return`, а при переходе в `State.DEAD` активные таймеры атак должны сбрасываться (`attack_timer = 999999.0`).
 - **Стационарные враги (Турель) и отключение навигации**: для абсолютно неподвижных огневых точек, унаследованных от `enemy.gd`, недостаточно только выставить `move_speed = 0.0`. Необходимо переопределить `_apply_movement` с принудительным `velocity = Vector3.ZERO`, отключить avoidance нав-агента, перехватывать `take_damage` для обнуления knockback-вектора, а в `_physics_process` фиксировать `global_position = spawn_position` и сохранять ориентацию постамента (`base_mount.global_transform.basis = base_fixed_basis`), пока верхняя часть и коллизии разворачиваются к цели через `rotation.y`.
 - **Сигнатуры переопределяемых методов (GDScript override) и проверка проекта**: в GDScript при переопределении метода в наследнике (`func die(...)`) сигнатура обязана строго совпадать с базовым классом по числу параметров (даже при наличии значений по умолчанию). Команда `godot --check-only` анализирует файлы изолированно и пропускает межклассовые несовпадения сигнатур; для гарантированного выявления подобных ошибок следует запускать проект целиком через `godot.windows.opt.tools.64.exe --headless --quit --path "E:\Project\voidkill"`.
+- **Вынос компонентной логики с таймерами и наследники (`_physics_process`)**: при переносе систем таймеров (DoT яда, время жизни игл) в дочерние `Node`-компоненты со своим `_physics_process(delta)` необходимо удалять локальные циклы тиков не только из базового класса, но и из специализированных наследников (как `enemy_stalker.gd`, не вызывавших `super._physics_process`), иначе таймеры будут уменьшаться с удвоенной скоростью. Наследники должны получать уведомления через сигналы `visuals_need_update`/`requests_damage` и делегирующие свойства базового класса.
 
 ---
 

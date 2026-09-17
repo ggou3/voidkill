@@ -120,40 +120,6 @@ func _physics_process(delta: float):
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
 		
-	# Обработка стаков яда Инъектора
-	if not poison_stacks.is_empty():
-		var write_idx = 0
-		for i in range(poison_stacks.size()):
-			var stack = poison_stacks[i]
-			stack["duration"] -= delta
-			stack["tick_timer"] -= delta
-			if stack["tick_timer"] <= 0.0:
-				stack["tick_timer"] = float(stack["interval"])
-				_apply_poison_tick(int(stack["damage"]))
-				if current_state == State.DEAD:
-					break
-			if stack["duration"] > 0.0 and current_state != State.DEAD:
-				poison_stacks[write_idx] = stack
-				write_idx += 1
-		if current_state != State.DEAD:
-			poison_stacks.resize(write_idx)
-			
-	# Обработка таймеров игл Швейной машины
-	if not needle_timers.is_empty():
-		var write_idx = 0
-		var changed = false
-		for i in range(needle_timers.size()):
-			var t = needle_timers[i] - delta
-			if t > 0.0:
-				needle_timers[write_idx] = t
-				write_idx += 1
-			else:
-				changed = true
-		if changed:
-			needle_timers.resize(write_idx)
-			needle_count = write_idx
-			_update_needle_visuals()
-			
 	# Проверка Fear Chain на тире OVERDRIVE игрока
 	_process_fear_chain_check(delta)
 	if current_state == State.FLEE:
