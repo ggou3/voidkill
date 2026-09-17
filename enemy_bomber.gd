@@ -135,12 +135,12 @@ func _start_detonation():
 	tick_timer = 0.0 # Первый тик раздаётся мгновенно
 	GameTypes.debug_log(&"enemy", "[%s] BOMBER DETONATION STARTED! (Window: %.2fs)" % [name, detonation_duration])
 
-func die():
+func die(death_info: Dictionary = {}):
 	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв
 	if not has_exploded:
 		_explode()
 	else:
-		super.die()
+		super.die(death_info)
 
 func _explode():
 	if has_exploded:

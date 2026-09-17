@@ -221,11 +221,11 @@ func _spawn_spark_vfx(hit_pos: Vector3):
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(spark.queue_free)
 
-func die():
+func die(death_info: Dictionary = {}):
 	if barrier_tween and barrier_tween.is_valid():
 		barrier_tween.kill()
 	if indicator_tween and indicator_tween.is_valid():
 		indicator_tween.kill()
 	if shield_barrier:
 		shield_barrier.visible = false
-	super.die()
+	super.die(death_info)

@@ -57,14 +57,14 @@ func set_state(new_state: State):
 		_reset_ranged_telegraph()
 	super.set_state(new_state)
 
-func die():
+func die(death_info: Dictionary = {}):
 	_reset_ranged_telegraph()
 	if attack_flash_tween_eyes and attack_flash_tween_eyes.is_valid():
 		attack_flash_tween_eyes.kill()
 	if attack_flash_tween_antenna and attack_flash_tween_antenna.is_valid():
 		attack_flash_tween_antenna.kill()
 	attack_timer = 999999.0
-	super.die()
+	super.die(death_info)
 
 func _process_chase(delta: float):
 	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):

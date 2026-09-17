@@ -892,7 +892,7 @@ func apply_vacuum_pull(pull_impulse: Vector3):
 	if current_state == State.TELEGRAPH or current_state == State.FIRING:
 		_end_firing()
 
-func die():
+func die(death_info: Dictionary = {}):
 	current_state = State.DEAD
 	set_physics_process(false)
 	_end_firing()

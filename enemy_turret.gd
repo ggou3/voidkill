@@ -117,7 +117,7 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	# Тяжёлая стационарная огневая точка защищена от физического отбрасывания
 	super.take_damage(amount, Vector3.ZERO, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
-func die():
+func die(death_info: Dictionary = {}):
 	_reset_telegraph()
 	if lockdown_tween and lockdown_tween.is_valid():
 		lockdown_tween.kill()
@@ -126,7 +126,7 @@ func die():
 	if attack_flash_tween and attack_flash_tween.is_valid():
 		attack_flash_tween.kill()
 	attack_timer = 999999.0
-	super.die()
+	super.die(death_info)
 
 func _process_fear_chain_check(_delta: float):
 	if current_state == State.DEAD:
