@@ -136,7 +136,7 @@ func _physics_process(delta: float) -> void:
 			StalkerState.STEALTH_STALK:
 				_process_stealth_stalk(player, delta)
 			StalkerState.TELEGRAPH:
-				_process_telegraph(player, delta)
+				_process_telegraph(delta)
 			StalkerState.VULNERABLE:
 				_process_vulnerable(player, delta)
 			StalkerState.DISSOLVING:
@@ -204,7 +204,7 @@ func _start_telegraph() -> void:
 	if eyes:
 		eyes.visible = true
 
-func _process_telegraph(player: Node3D, delta: float) -> void:
+func _process_telegraph(delta: float) -> void:
 	telegraph_timer -= delta
 	var progress = clampf(1.0 - (telegraph_timer / telegraph_duration), 0.0, 1.0)
 	set_visibility(progress)
@@ -213,23 +213,26 @@ func _process_telegraph(player: Node3D, delta: float) -> void:
 	velocity.x = lerp(velocity.x, knockback_velocity.x, 10.0 * delta)
 	velocity.z = lerp(velocity.z, knockback_velocity.z, 10.0 * delta)
 	
-	var to_player = player.global_position - global_position
-	to_player.y = 0.0
-	if to_player.length_squared() > 0.05:
-		var target_angle = atan2(-to_player.x, -to_player.z)
-		rotation.y = lerp_angle(rotation.y, target_angle, 14.0 * delta)
+	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
+	if is_instance_valid(player):
+		var to_player = player.global_position - global_position
+		to_player.y = 0.0
+		if to_player.length_squared() > 0.05:
+			var target_angle = atan2(-to_player.x, -to_player.z)
+			rotation.y = lerp_angle(rotation.y, target_angle, 14.0 * delta)
 		
 	if telegraph_timer <= 0.0:
 		_execute_ambush_attack(player)
 
-func _execute_ambush_attack(player: Node3D) -> void:
+func _execute_ambush_attack(player: Node3D = null) -> void:
+	var target = player if is_instance_valid(player) else (target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player"))
 	# Удар из засады (25 HP урона)
-	if player.has_method("take_damage"):
-		var to_player = (player.global_position - global_position)
+	if is_instance_valid(target) and target.has_method("take_damage"):
+		var to_player = (target.global_position - global_position)
 		to_player.y = 0.0
 		var attack_dir = to_player.normalized() if to_player.length_squared() > 0.01 else -transform.basis.z.normalized()
 		var attack_impulse = attack_dir * 12.0 + Vector3.UP * 2.5
-		player.take_damage(stalker_attack_damage, attack_impulse, player.global_position)
+		target.take_damage(stalker_attack_damage, attack_impulse, target.global_position)
 		
 	# Переход в окно уязвимости (2.0 секунды полной видимости)
 	stalker_state = StalkerState.VULNERABLE
