@@ -6,6 +6,8 @@ enum State {
 	CHASE,
 	ATTACK,
 	LUNGE,
+	TELEGRAPH,
+	FIRING,
 	FLEE,
 	DEAD
 }
@@ -239,6 +241,10 @@ func _physics_process(delta: float) -> void:
 			_process_attack(delta)
 		State.LUNGE:
 			_process_lunge(delta)
+		State.TELEGRAPH:
+			_process_telegraph(delta)
+		State.FIRING:
+			_process_firing(delta)
 		State.FLEE:
 			_process_flee(delta)
 
@@ -274,6 +280,12 @@ func _process_attack(_delta: float) -> void:
 	pass
 
 func _process_lunge(_delta: float) -> void:
+	pass
+
+func _process_telegraph(_delta: float) -> void:
+	pass
+
+func _process_firing(_delta: float) -> void:
 	pass
 
 func _process_flee(delta: float) -> void:

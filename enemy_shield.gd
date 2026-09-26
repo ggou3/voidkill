@@ -1,5 +1,5 @@
 class_name EnemyShield
-extends "res://enemy.gd"
+extends EnemyGround
 
 ## Враг "Щитоносец" (Shield Enemy).
 ## Оснащён массивной фронтальной бронеплитой (1.2м × 1.8м).
@@ -9,6 +9,11 @@ extends "res://enemy.gd"
 @export var block_reduction: float = 0.85 # 85% снижения урона при фронтальном блоке
 @export var block_state_duration: float = 1.5 # Длительность визуального состояния блока
 
+@export var attack_damage: int = 15
+@export var attack_range: float = 2.0
+@export var attack_cooldown: float = 1.0
+
+var attack_timer: float = 0.0
 var block_state_timer: float = 0.0
 
 var barrier_material: StandardMaterial3D = null
@@ -26,7 +31,7 @@ var indicator_tween: Tween = null
 const INDICATOR_IDLE_COLOR = Color(0.3, 0.05, 0.05)
 const INDICATOR_FLASH_COLOR = Color(1.0, 0.1, 0.1)
 
-func _ready():
+func _ready() -> void:
 	super._ready()
 	# Щитоносец использует стандартную ближнюю атаку, но НЕ использует LUNGE-выпад
 	lunge_cooldown_timer = 999999.0
@@ -57,11 +62,13 @@ func _can_lunge_to_player() -> bool:
 	# Щитоносец не совершает прыжков-выпадов LUNGE
 	return false
 
-func start_lunge():
+func start_lunge() -> void:
 	# Блокировка LUNGE
 	pass
 
-func _physics_process(delta: float):
+func _physics_process(delta: float) -> void:
+	if attack_timer > 0.0:
+		attack_timer -= delta
 	super._physics_process(delta)
 	if current_state == State.DEAD:
 		return
@@ -70,6 +77,73 @@ func _physics_process(delta: float):
 		block_state_timer -= delta
 		if block_state_timer <= 0.0:
 			_hide_barrier()
+
+func set_state(new_state: State) -> void:
+	if current_state == new_state or current_state == State.DEAD:
+		return
+	super.set_state(new_state)
+	match current_state:
+		State.ATTACK:
+			attack_timer = max(attack_timer, reaction_delay)
+			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
+		State.FLEE:
+			attack_timer = 1.0
+		State.DEAD:
+			attack_timer = 999999.0
+
+func _process_chase(delta: float) -> void:
+	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
+		set_state(State.IDLE)
+		return
+		
+	var dist_to_player = global_position.distance_to(target_player.global_position)
+	if dist_to_player <= attack_range:
+		set_state(State.ATTACK)
+		return
+		
+	super._process_chase(delta)
+
+func _process_attack(delta: float) -> void:
+	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
+		set_state(State.IDLE)
+		return
+		
+	var dist_to_player = global_position.distance_to(target_player.global_position)
+	if dist_to_player > attack_range * 1.3:
+		set_state(State.CHASE)
+		return
+		
+	velocity.x = lerp(velocity.x, knockback_velocity.x, 10.0 * delta)
+	velocity.z = lerp(velocity.z, knockback_velocity.z, 10.0 * delta)
+
+	var to_player = target_player.global_position - global_position
+	to_player.y = 0.0
+	if to_player.length_squared() > 0.01:
+		var target_angle = atan2(-to_player.x, -to_player.z)
+		var angle_diff = abs(wrapf(target_angle - rotation.y, -PI, PI))
+		if angle_diff > 0.08:
+			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, rotation_speed * delta))
+	
+	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
+		if is_inside_tree() and current_state == State.ATTACK:
+			perform_attack()
+		attack_timer = attack_cooldown
+
+func perform_attack() -> void:
+	if not is_inside_tree() or current_state == State.DEAD:
+		return
+	if not is_instance_valid(target_player):
+		return
+		
+	if eyes_material:
+		eyes_material.emission = Color(1.0, 0.1, 0.1)
+		var tween = create_tween()
+		tween.tween_property(eyes_material, "emission", Color(1.0, 1.0, 1.0), 0.25)
+		
+	if target_player.has_method("take_damage"):
+		var attack_dir = (target_player.global_position - global_position).normalized()
+		var attack_impulse = attack_dir * 8.0 + Vector3.UP * 2.0
+		target_player.take_damage(attack_damage, attack_impulse, target_player.global_position)
 
 func is_damage_blocked(hit_pos: Vector3, knockback_vector: Vector3) -> bool:
 	var forward_dir = -global_transform.basis.z
@@ -113,10 +187,11 @@ func is_damage_blocked(hit_pos: Vector3, knockback_vector: Vector3) -> bool:
 	var dot = forward_dir.dot(attack_incoming_dir)
 	return dot >= 0.7071
 
-func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	if current_state == State.DEAD:
 		return
 		
+	attack_timer = max(attack_timer, reaction_delay)
 	var blocked = is_damage_blocked(hit_pos, knockback_vector)
 	var final_amount = amount
 	var final_knockback = knockback_vector
@@ -134,13 +209,13 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		
 	super.take_damage(final_amount, final_knockback, hit_pos, is_melee, is_execute, is_shockwave, final_headshot, source_chain_depth, weapon_source)
 
-func _trigger_block_reaction(hit_pos: Vector3):
+func _trigger_block_reaction(hit_pos: Vector3) -> void:
 	AudioManager.play_sound("shield_block")
 	block_state_timer = block_state_duration
 	_show_barrier()
 	_spawn_spark_vfx(hit_pos)
 
-func _show_barrier():
+func _show_barrier() -> void:
 	if not shield_barrier:
 		return
 	shield_barrier.visible = true
@@ -158,7 +233,7 @@ func _show_barrier():
 		barrier_tween.tween_property(barrier_material, "emission_energy_multiplier", 3.2, 0.1)
 		barrier_tween.chain().tween_property(barrier_material, "emission_energy_multiplier", 2.0, 0.3)
 
-func _hide_barrier():
+func _hide_barrier() -> void:
 	if not shield_barrier:
 		return
 		
@@ -175,7 +250,7 @@ func _hide_barrier():
 			shield_barrier.visible = false
 	)
 
-func _trigger_flank_damage_reaction():
+func _trigger_flank_damage_reaction() -> void:
 	if indicator_tween and indicator_tween.is_valid():
 		indicator_tween.kill()
 		
@@ -192,7 +267,7 @@ func _trigger_flank_damage_reaction():
 		indicator_tween.tween_property(indicator_mat_right, "emission", INDICATOR_IDLE_COLOR, 0.45)
 		indicator_tween.tween_property(indicator_mat_right, "emission_energy_multiplier", 0.4, 0.45)
 
-func _spawn_spark_vfx(hit_pos: Vector3):
+func _spawn_spark_vfx(hit_pos: Vector3) -> void:
 	var scene_root = get_tree().current_scene if (get_tree() and get_tree().current_scene) else get_parent()
 	if not scene_root:
 		return
@@ -221,7 +296,8 @@ func _spawn_spark_vfx(hit_pos: Vector3):
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.chain().tween_callback(spark.queue_free)
 
-func die(death_info: Dictionary = {}):
+func die(death_info: Dictionary = {}) -> void:
+	attack_timer = 999999.0
 	if barrier_tween and barrier_tween.is_valid():
 		barrier_tween.kill()
 	if indicator_tween and indicator_tween.is_valid():

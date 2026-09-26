@@ -594,9 +594,33 @@
   - Система атаки-выпада (Lunge Attack): расчёт 3D-вектора наведения с вертикальным лимитом 38° `_calculate_lunge_vector_and_distance()`, проверка пола в точке приземления `_has_floor_at_destination()`, фаза 1 (телеграф 0.38с со сжатием модели и янтарными глазами), фаза 2 (рывок 25 м/с на 6.5–7.5м с дэш-звуком и нанесением 20 HP урона), фаза 3 (баллистическое падение по инерции до касания пола).
   - Система соударения со стенами (Wall Slam): отслеживание удара `-pre_move_velocity.dot(n) >= 16.0` в окне `wall_slam_timer`, асимптотический урон с насыщением `wall_slam_max_damage = 55 HP`, цепной сплэш по другим врагам `collateral_slam` с затуханием (60% -> 35% -> 20%), разлёт крови и восполнение дэша игроку при фатальном ударе.
   - Гравитация `velocity.y -= gravity * 2.0 * delta`, инерционное затухание отброса `knockback_velocity` и вызов `move_and_slide()`.
-- **Enemy** (`res://enemy.gd`, `class_name Enemy extends EnemyGround`, 109 строк — сокращение на 93% с 1643 до 109 строк):
+- **Enemy** (`res://enemy.gd`, `class_name Enemy extends EnemyGround`, 98 строк — сокращение на 94% с 1643 до 98 строк):
   - Специализация базового ближнего врага: атака в упор `perform_attack()` (15 урона, кулдаун 1.0с, радиус 2.0м, алая вспышка глаз `eyes_material`), логика состояний `_process_attack(delta)` и `_process_chase(delta)` с проверкой кулдауна выпада Lunge.
-  - Все существующие специализированные наследники (`enemy_bomber.gd`, `enemy_hunter.gd`, `enemy_ranged.gd`, `enemy_shield.gd`, `enemy_stalker.gd`, `enemy_swarm.gd`, `enemy_turret.gd`), наследующие `res://enemy.gd`, продолжают функционировать без изменений, получая доступ ко всей цепочке `Enemy` -> `EnemyGround` -> `EnemyBase`.
+  - Наследников у класса больше нет: используется исключительно базовым ближним врагом (`enemy.tscn`).
+
+### Рефакторинг специализированных врагов, летуна и турели — ✅ Реализован (Шаг 3.5)
+- **Перевод наземных врагов на EnemyGround**:
+  - `enemy_ranged.gd`, `enemy_bomber.gd`, `enemy_shield.gd`, `enemy_hunter.gd`, `enemy_swarm.gd`, `enemy_stalker.gd` переведены с наследования `res://enemy.gd` на прямое наследование `extends EnemyGround`.
+  - Устранена паразитная зависимость специализированных архетипов от параметров и методов ближней атаки базового моба `Enemy`: параметры атаки и методы `perform_attack` / `_process_attack` / `_process_chase` явно и изолированно определены в тех архетипах, где они требуются (`EnemyShield`, `EnemyHunter`, `EnemySwarm`).
+  - Все сигнатуры виртуальных переопределений приведены к строгому соответствию базовым классам с явной статической типизацией параметров (`amount: int`, `knockback_vector: Vector3`, `hit_pos: Vector3`, и т.д.).
+- **Рефакторинг и дедупликация летуна (`EnemyFlyer`, `enemy_flyer.gd`)**:
+  - Переведён с обособленного `CharacterBody3D` на наследование `extends EnemyBase`.
+  - Полностью удалены сотни строк дублированного бойлерплейта: урон и отброс (`take_damage`), смерть (`die`), все статус-эффекты (`apply_poison_dot`, `_apply_poison_tick`, `inflate`, `add_slow`, `remove_slow`, `add_needle`), гравипул (`apply_vacuum_pull`), спавн цифр урона (`_spawn_damage_number`), проверка прямой видимости (`_has_line_of_sight_to`) и процедурное создание полоски HP в SubViewport.
+  - Подключен к `HealthComponent`, `StatusEffectComponent` и `EnemyHealthBar`.
+  - Восстановлены все механики статус-эффектов:
+    - **Иглы (Needles)**: накопление стаков игл Швейной машины, масштабирование модели от количества игл, шрапнельный разлёт игл при смерти (`trigger_needle_burst`).
+    - **Яд (Poison DoT)**: тики урона от Инъектора с зелёными цифрами урона, чумное облако заражения при гибели (`trigger_poison_contagion`).
+    - **Раздутие (Inflation)**: анимация раздутия с пульсацией глаз, разрушительная кровавая детонация при гибели (`trigger_inflation_explosion`).
+    - **Замедление (Slow)**: множитель `slow_factor` с динамическим снижением скорости полёта при попадании колбы замедления.
+  - Дедуплицированы процедуры построения геометрии лазера и секторов прицеливания (`_orient_cylinder_between`, `_cast_boundary_line`).
+  - Задействованы виртуальные диспетчеры базового класса `_process_telegraph(delta)`, `_process_firing(delta)`, `_apply_flee_movement(delta)`.
+  - Размер файла сокращён с 875 до 447 строк (сокращение на 49%, строго в пределах нормы <= 500 строк).
+- **Рефакторинг турели (`EnemyTurret`, `enemy_turret.gd`)**:
+  - Переведена с `res://enemy.gd` на наследование `extends EnemyRanged`.
+  - Из `EnemyRanged` выделены виртуальные методы `_get_projectile_spawn_position()` и `_play_attack_flash()`, благодаря чему в `EnemyTurret` полностью удалены дублированный спавн снарядов, расчёт траекторий и звуки выстрела: турель переопределяет точки ствола и вызывает `super.perform_attack()`.
+  - Сохранена полная стационарность (`_apply_movement` с `velocity = Vector3.ZERO`), фиксация базы (`base_mount.global_transform.basis = base_fixed_basis`), и механика захвата в прицел (lockdown) с кулдауном.
+- **Интеграция лазерной атаки в EnemyBase**:
+  - В `EnemyBase.State` добавлены общие состояния `TELEGRAPH` и `FIRING` вместе с виртуальными методами `_process_telegraph(_delta)` и `_process_firing(_delta)`, что исключило конфликт затенения enum `State` в GDScript и стандартизировало обработку подготовки/стрельбы в общем цикле `_physics_process`.
 
 ### Централизованное отладочное логирование (GameTypes.debug_log)
 - Все прямые вызовы `print(...)` по проекту (64 вызова) переведены на канальное логирование `GameTypes.debug_log(category: StringName, msg: String)`.
@@ -698,6 +722,8 @@
   1. Функции в автозагрузках (`GameTypes`) не должны объявляться со `static`, если вызываются через глобальный синглтон-экземпляр (`GameTypes.func()`), иначе движок выдаёт предупреждение `is a static function but was called from an instance`.
   2. В тернарных операторах (`a if cond else b`) обе ветви обязаны возвращать строго совместимый тип; свойство `Node.name` имеет тип `StringName`, и в паре со строковым литералом `String` (`"Enemy"`) вызывает `Values of the ternary operator are not mutually compatible` — необходимо приводить к единому типу (`String(node.name)`).
   3. Неиспользуемые в теле метода параметры обязательных сигнатур переопределения должны иметь префикс подчёркивания (`_death_info`, `_knockback_vector`, `_delta`).
+- **Переопределение `enum` в наследниках GDScript**: в GDScript наследник не может повторно объявлять enum с тем же именем (`enum State`), если он объявлен в базовом классе (ошибка `Name 'State' is already defined in base class`). Для расширения состояний стейт-машины специализированных врагов (например, `TELEGRAPH`, `FIRING` у летуна) общие состояния должны объявляться в базовом enum `EnemyBase.State` с виртуальными диспетчерами `_process_telegraph` и `_process_firing`.
+- **Вынесение хуков спавна снарядов для переиспользования (`_get_projectile_spawn_position`, `_play_attack_flash`)**: при наследовании дальнобойных врагов (Турель от Стрелка) дедупликация логики атаки (`perform_attack`) достигается вынесением точек спавна снаряда и визуальных эффектов выстрела в виртуальные методы, что позволяет наследникам настраивать конкретные сопла/башни без дублирования инстанцирования снаряда, расчёта коллизий и звуков.
 
 ---
 

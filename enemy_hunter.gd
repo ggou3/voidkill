@@ -1,5 +1,5 @@
 class_name EnemyHunter
-extends "res://enemy.gd"
+extends EnemyGround
 
 ## Враг "Охотник" (Hunter Enemy).
 ## Элитный преследователь (1.15x масштаб), реагирующий на пульс (BPM) игрока.
@@ -17,6 +17,11 @@ extends "res://enemy.gd"
 @export var surging_threshold: float = 140.0
 @export var deactivation_timeout: float = 5.0
 
+@export var attack_damage: int = 20
+@export var attack_range: float = 2.2
+@export var attack_cooldown: float = 1.0
+
+var attack_timer: float = 0.0
 var below_surging_timer: float = 0.0
 var pulse_time: float = 0.0
 var is_hunting: bool = false
@@ -29,7 +34,7 @@ var hunter_eyes_material: StandardMaterial3D = null
 
 const SILVER_WHITE_COLOR = Color(0.88, 0.95, 1.0)
 
-func _ready():
+func _ready() -> void:
 	super._ready()
 	max_health = hunter_max_health
 	health = hunter_max_health
@@ -66,20 +71,28 @@ func _ready():
 func _can_lunge_to_player() -> bool:
 	return false
 
-func start_lunge():
+func start_lunge() -> void:
 	pass
 
-func _process_fear_chain_check(_delta: float):
+func _process_fear_chain_check(_delta: float) -> void:
 	# Охотник бесстрашен и игнорирует панику Overdrive / Fear Chain
 	pass
 
-func set_state(new_state: State):
+func set_state(new_state: State) -> void:
 	# Охотник никогда не спасается бегством
 	if new_state == State.FLEE:
 		return
+	if current_state == new_state or current_state == State.DEAD:
+		return
 	super.set_state(new_state)
+	match current_state:
+		State.ATTACK:
+			attack_timer = max(attack_timer, reaction_delay)
+			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
+		State.DEAD:
+			attack_timer = 999999.0
 
-func _on_detection_area_body_entered(body: Node3D):
+func _on_detection_area_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player"):
 		var bpm = _get_player_bpm()
 		# Входит в погоню от DetectionArea только если BPM уже разогнан до SURGING+ или если уже охотится
@@ -93,7 +106,10 @@ func _get_player_bpm() -> float:
 		return player.skills.bpm
 	return 50.0
 
-func _physics_process(delta: float):
+func _physics_process(delta: float) -> void:
+	if attack_timer > 0.0:
+		attack_timer -= delta
+		
 	if current_state == State.DEAD:
 		super._physics_process(delta)
 		return
@@ -139,7 +155,71 @@ func _physics_process(delta: float):
 	_update_pulse_visuals(player_bpm, bpm_factor)
 	super._physics_process(delta)
 
-func _update_pulse_visuals(player_bpm: float, bpm_factor: float):
+func _process_chase(delta: float) -> void:
+	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
+		set_state(State.IDLE)
+		return
+		
+	var dist_to_player = global_position.distance_to(target_player.global_position)
+	if dist_to_player <= attack_range:
+		set_state(State.ATTACK)
+		return
+		
+	super._process_chase(delta)
+
+func _process_attack(delta: float) -> void:
+	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
+		set_state(State.IDLE)
+		return
+		
+	var dist_to_player = global_position.distance_to(target_player.global_position)
+	if dist_to_player > attack_range * 1.3:
+		set_state(State.CHASE)
+		return
+		
+	velocity.x = lerp(velocity.x, knockback_velocity.x, 10.0 * delta)
+	velocity.z = lerp(velocity.z, knockback_velocity.z, 10.0 * delta)
+
+	var to_player = target_player.global_position - global_position
+	to_player.y = 0.0
+	if to_player.length_squared() > 0.01:
+		var target_angle = atan2(-to_player.x, -to_player.z)
+		var angle_diff = abs(wrapf(target_angle - rotation.y, -PI, PI))
+		if angle_diff > 0.08:
+			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, rotation_speed * delta))
+	
+	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
+		if is_inside_tree() and current_state == State.ATTACK:
+			perform_attack()
+		attack_timer = attack_cooldown
+
+func perform_attack() -> void:
+	if not is_inside_tree() or current_state == State.DEAD:
+		return
+	if not is_instance_valid(target_player):
+		return
+		
+	if hunter_eyes_material:
+		hunter_eyes_material.emission = Color(1.0, 0.2, 0.2)
+		var tween = create_tween()
+		tween.tween_property(hunter_eyes_material, "emission", SILVER_WHITE_COLOR, 0.25)
+		
+	if target_player.has_method("take_damage"):
+		var attack_dir = (target_player.global_position - global_position).normalized()
+		var attack_impulse = attack_dir * 10.0 + Vector3.UP * 2.5
+		target_player.take_damage(attack_damage, attack_impulse, target_player.global_position)
+
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
+	if current_state == State.DEAD:
+		return
+	attack_timer = max(attack_timer, reaction_delay)
+	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
+
+func die(death_info: Dictionary = {}) -> void:
+	attack_timer = 999999.0
+	super.die(death_info)
+
+func _update_pulse_visuals(player_bpm: float, bpm_factor: float) -> void:
 	# Синхронизация пульсации прожилок точно в такт сердцебиению игрока
 	var heartbeat_rad_sec = (max(50.0, player_bpm) / 60.0) * TAU
 	var pulse = 0.5 + 0.5 * sin(pulse_time * heartbeat_rad_sec)

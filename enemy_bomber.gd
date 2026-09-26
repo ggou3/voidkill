@@ -1,5 +1,5 @@
 class_name EnemyBomber
-extends "res://enemy.gd"
+extends EnemyGround
 
 ## Враг "Подрывник" (Bomber Enemy).
 ## Быстрый камикадзе (+40% к скорости обычного врага).
@@ -32,14 +32,12 @@ const CORE_IDLE_COLOR = Color(1.0, 0.15, 0.05)
 const BODY_IDLE_COLOR = Color(0.09, 0.04, 0.04)
 const OVERHEAT_COLOR = Color(1.0, 0.35, 0.1)
 
-func _ready():
+func _ready() -> void:
 	super._ready()
 	max_health = bomber_health
 	health = bomber_health
 	move_speed = bomber_speed
 	acceleration = 8.5
-	attack_range = 0.0
-	attack_damage = 0
 	lunge_cooldown_timer = 999999.0
 	
 	if core_mesh:
@@ -61,10 +59,10 @@ func _ready():
 func _can_lunge_to_player() -> bool:
 	return false
 
-func start_lunge():
+func start_lunge() -> void:
 	pass
 
-func _physics_process(delta: float):
+func _physics_process(delta: float) -> void:
 	super._physics_process(delta)
 	if has_exploded or current_state == State.DEAD:
 		return
@@ -127,7 +125,7 @@ func _physics_process(delta: float):
 			if detonation_timer <= 0.0:
 				_explode()
 
-func _start_detonation():
+func _start_detonation() -> void:
 	if is_detonating or has_exploded:
 		return
 	is_detonating = true
@@ -135,14 +133,14 @@ func _start_detonation():
 	tick_timer = 0.0 # Первый тик раздаётся мгновенно
 	GameTypes.debug_log(&"enemy", "[%s] BOMBER DETONATION STARTED! (Window: %.2fs)" % [name, detonation_duration])
 
-func die(death_info: Dictionary = {}):
+func die(death_info: Dictionary = {}) -> void:
 	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв
 	if not has_exploded:
 		_explode()
 	else:
 		super.die(death_info)
 
-func _explode():
+func _explode() -> void:
 	if has_exploded:
 		return
 	has_exploded = true

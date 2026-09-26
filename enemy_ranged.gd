@@ -1,5 +1,5 @@
 class_name EnemyRanged
-extends "res://enemy.gd"
+extends EnemyGround
 
 @export var projectile_scene: PackedScene = preload("res://projectile_enemy.tscn")
 @export var preferred_distance_min: float = 10.0
@@ -7,6 +7,12 @@ extends "res://enemy.gd"
 @export var projectile_speed: float = 18.0
 @export var ranged_damage: int = 12
 @export var ranged_attack_cooldown: float = 2.8
+
+@export var attack_damage: int = 12
+@export var attack_range: float = 0.0
+@export var attack_cooldown: float = 2.8
+
+var attack_timer: float = 0.0
 
 const EYES_BASE_COLOR = Color(0.85, 0.2, 1.0)
 const EYES_TELEGRAPH_COLOR = Color(1.0, 0.85, 0.2)
@@ -20,14 +26,12 @@ var telegraph_tween_antenna: Tween = null
 var attack_flash_tween_eyes: Tween = null
 var attack_flash_tween_antenna: Tween = null
 
-func _ready():
+func _ready() -> void:
 	super._ready()
 	attack_damage = ranged_damage
 	attack_cooldown = ranged_attack_cooldown
-	# Обнуляем базовый attack_range, чтобы базовый enemy.gd не переходил в State.ATTACK на 2.0м сам
 	attack_range = 0.0
 	lunge_cooldown_timer = 999999.0
-	# Случайная задержка первого выстрела при спавне (0.6 - 1.8с)
 	attack_timer = randf_range(0.6, 1.8)
 	
 	if antenna_tip:
@@ -42,14 +46,17 @@ func _ready():
 		antenna_material.emission = EYES_BASE_COLOR
 
 func _can_lunge_to_player() -> bool:
-	# Дальник не использует атаку-выпад LUNGE ближнего боя
 	return false
 
-func start_lunge():
-	# Блокировка выпада LUNGE
+func start_lunge() -> void:
 	pass
 
-func set_state(new_state: State):
+func _physics_process(delta: float) -> void:
+	if attack_timer > 0.0:
+		attack_timer -= delta
+	super._physics_process(delta)
+
+func set_state(new_state: State) -> void:
 	if new_state == State.DEAD:
 		_reset_ranged_telegraph()
 		attack_timer = 999999.0
@@ -57,7 +64,13 @@ func set_state(new_state: State):
 		_reset_ranged_telegraph()
 	super.set_state(new_state)
 
-func die(death_info: Dictionary = {}):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
+	if current_state == State.DEAD:
+		return
+	attack_timer = max(attack_timer, reaction_delay)
+	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
+
+func die(death_info: Dictionary = {}) -> void:
 	_reset_ranged_telegraph()
 	if attack_flash_tween_eyes and attack_flash_tween_eyes.is_valid():
 		attack_flash_tween_eyes.kill()
@@ -66,7 +79,7 @@ func die(death_info: Dictionary = {}):
 	attack_timer = 999999.0
 	super.die(death_info)
 
-func _process_chase(delta: float):
+func _process_chase(delta: float) -> void:
 	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
 		set_state(State.IDLE)
 		return
@@ -81,7 +94,7 @@ func _process_chase(delta: float):
 	# Иначе продолжаем обычное сближение и навигацию по NavMesh
 	super._process_chase(delta)
 
-func _process_attack(delta: float):
+func _process_attack(delta: float) -> void:
 	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
@@ -131,14 +144,10 @@ func _process_attack(delta: float):
 			perform_attack()
 		attack_timer = attack_cooldown
 
-func perform_attack():
-	if not is_inside_tree() or current_state == State.DEAD:
-		return
-	_reset_ranged_telegraph()
-	if not is_instance_valid(target_player):
-		return
-		
-	# Вспышка глаз и маячка антенны при выстреле
+func _get_projectile_spawn_position() -> Vector3:
+	return global_position + Vector3(0.0, 0.55, 0.0) - transform.basis.z * 0.4
+
+func _play_attack_flash() -> void:
 	if eyes_material:
 		if attack_flash_tween_eyes and attack_flash_tween_eyes.is_valid():
 			attack_flash_tween_eyes.kill()
@@ -151,6 +160,15 @@ func perform_attack():
 		antenna_material.emission = Color(1.0, 0.4, 0.1)
 		attack_flash_tween_antenna = create_tween()
 		attack_flash_tween_antenna.tween_property(antenna_material, "emission", EYES_BASE_COLOR, 0.3)
+
+func perform_attack() -> void:
+	if not is_inside_tree() or current_state == State.DEAD:
+		return
+	_reset_ranged_telegraph()
+	if not is_instance_valid(target_player):
+		return
+		
+	_play_attack_flash()
 		
 	if not projectile_scene:
 		return
@@ -159,7 +177,7 @@ func perform_attack():
 	if not scene_root:
 		return
 		
-	var spawn_pos = global_position + Vector3(0.0, 0.55, 0.0) - transform.basis.z * 0.4
+	var spawn_pos = _get_projectile_spawn_position()
 	
 	# Точка прицеливания: корпус игрока на момент выстрела (прямая траектория, без самонаведения)
 	var target_pos = target_player.global_position + Vector3(0.0, 0.2, 0.0)
@@ -179,7 +197,7 @@ func perform_attack():
 		name, target_player.name, fly_dir, projectile_speed, attack_damage
 	])
 
-func _start_ranged_telegraph():
+func _start_ranged_telegraph() -> void:
 	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	is_telegraphing_shot = true
@@ -194,7 +212,7 @@ func _start_ranged_telegraph():
 		telegraph_tween_antenna = create_tween()
 		telegraph_tween_antenna.tween_property(antenna_material, "emission", EYES_TELEGRAPH_COLOR, 0.18)
 
-func _reset_ranged_telegraph():
+func _reset_ranged_telegraph() -> void:
 	if telegraph_tween_eyes and telegraph_tween_eyes.is_valid():
 		telegraph_tween_eyes.kill()
 	if telegraph_tween_antenna and telegraph_tween_antenna.is_valid():
@@ -207,7 +225,7 @@ func _reset_ranged_telegraph():
 	if antenna_material:
 		antenna_material.emission = EYES_BASE_COLOR
 
-func _process_fear_chain_check(delta: float):
+func _process_fear_chain_check(delta: float) -> void:
 	if current_state == State.ATTACK:
 		fear_check_timer -= delta
 		if fear_check_timer <= 0.0:

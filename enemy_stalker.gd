@@ -1,5 +1,5 @@
 class_name EnemyStalker
-extends "res://enemy.gd"
+extends EnemyGround
 
 ## Враг "Соглядатай" (Stalker Enemy).
 ## Скрытный преследователь с оптическим искажением пространства (heat haze) вместо полной невидимости.
@@ -43,15 +43,13 @@ var hit_flash_tween: Tween = null
 const STALKER_EYES_COLOR = Color(0.85, 0.25, 1.0)
 const STALKER_BODY_COLOR = Color(0.12, 0.05, 0.18)
 
-func _ready():
+func _ready() -> void:
 	super._ready()
 	max_health = stalker_health
 	health = stalker_health
-	attack_damage = stalker_attack_damage
 	detection_range = stalker_detect_range
 	move_speed = stalk_speed
 	acceleration = 7.5
-	attack_range = 2.2
 	lunge_cooldown_timer = 999999.0
 	
 	# Случайный выбор стороны первичного фланкирования
@@ -82,10 +80,10 @@ func _ready():
 func _can_lunge_to_player() -> bool:
 	return false
 
-func start_lunge():
+func start_lunge() -> void:
 	pass
 
-func set_visibility(val: float):
+func set_visibility(val: float) -> void:
 	current_visibility = clampf(val, 0.0, 1.0)
 	if stalker_shader_mat:
 		stalker_shader_mat.set_shader_parameter("visibility", current_visibility)
@@ -97,7 +95,7 @@ func set_visibility(val: float):
 		hp_sprite.visible = show_bars
 		hp_label.visible = show_bars
 
-func _physics_process(delta: float):
+func _physics_process(delta: float) -> void:
 	if current_state == State.DEAD:
 		return
 		
@@ -148,14 +146,14 @@ func _physics_process(delta: float):
 	move_and_slide()
 	_check_wall_slam(delta)
 
-func _process_no_player(delta: float):
+func _process_no_player(delta: float) -> void:
 	velocity.x = lerp(velocity.x, knockback_velocity.x, 8.0 * delta)
 	velocity.z = lerp(velocity.z, knockback_velocity.z, 8.0 * delta)
 	if stalker_state != StalkerState.STEALTH_IDLE:
 		stalker_state = StalkerState.STEALTH_IDLE
 		set_visibility(0.0)
 
-func _process_stealth_idle(player: Node3D, delta: float):
+func _process_stealth_idle(player: Node3D, delta: float) -> void:
 	set_visibility(0.0)
 	velocity.x = lerp(velocity.x, knockback_velocity.x, 6.0 * delta)
 	velocity.z = lerp(velocity.z, knockback_velocity.z, 6.0 * delta)
@@ -165,7 +163,7 @@ func _process_stealth_idle(player: Node3D, delta: float):
 		stalker_state = StalkerState.STEALTH_STALK
 		stalk_update_timer = 0.0
 
-func _process_stealth_stalk(player: Node3D, delta: float):
+func _process_stealth_stalk(player: Node3D, delta: float) -> void:
 	set_visibility(0.0)
 	var dist = global_position.distance_to(player.global_position)
 	
@@ -197,7 +195,7 @@ func _process_stealth_stalk(player: Node3D, delta: float):
 			
 	_follow_nav_path(stalk_speed, delta)
 
-func _start_telegraph():
+func _start_telegraph() -> void:
 	stalker_state = StalkerState.TELEGRAPH
 	telegraph_timer = telegraph_duration
 	velocity.x = 0.0
@@ -206,7 +204,7 @@ func _start_telegraph():
 	if eyes:
 		eyes.visible = true
 
-func _process_telegraph(player: Node3D, delta: float):
+func _process_telegraph(player: Node3D, delta: float) -> void:
 	telegraph_timer -= delta
 	var progress = clampf(1.0 - (telegraph_timer / telegraph_duration), 0.0, 1.0)
 	set_visibility(progress)
@@ -224,7 +222,7 @@ func _process_telegraph(player: Node3D, delta: float):
 	if telegraph_timer <= 0.0:
 		_execute_ambush_attack(player)
 
-func _execute_ambush_attack(player: Node3D):
+func _execute_ambush_attack(player: Node3D) -> void:
 	# Удар из засады (25 HP урона)
 	if player.has_method("take_damage"):
 		var to_player = (player.global_position - global_position)
@@ -241,7 +239,7 @@ func _execute_ambush_attack(player: Node3D):
 	# Меняем сторону фланкирования для следующей атаки
 	stalk_flank_sign = -stalk_flank_sign
 
-func _process_vulnerable(player: Node3D, delta: float):
+func _process_vulnerable(player: Node3D, delta: float) -> void:
 	vulnerability_timer -= delta
 	set_visibility(1.0)
 	
@@ -262,7 +260,7 @@ func _process_vulnerable(player: Node3D, delta: float):
 		stalker_state = StalkerState.DISSOLVING
 		dissolve_timer = dissolve_duration
 
-func _process_dissolving(player: Node3D, delta: float):
+func _process_dissolving(player: Node3D, delta: float) -> void:
 	dissolve_timer -= delta
 	var progress = clampf(dissolve_timer / dissolve_duration, 0.0, 1.0)
 	set_visibility(progress)
@@ -282,7 +280,7 @@ func _process_dissolving(player: Node3D, delta: float):
 		set_visibility(0.0)
 		stalker_state = StalkerState.STEALTH_STALK
 
-func _follow_nav_path(speed: float, delta: float):
+func _follow_nav_path(speed: float, delta: float) -> void:
 	var next_pos = nav_agent.get_next_path_position()
 	var move_dir = next_pos - global_position
 	move_dir.y = 0.0
@@ -298,7 +296,7 @@ func _follow_nav_path(speed: float, delta: float):
 		velocity.x = lerp(velocity.x, knockback_velocity.x, 8.0 * delta)
 		velocity.z = lerp(velocity.z, knockback_velocity.z, 8.0 * delta)
 
-func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
+func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 	if current_state == State.DEAD:
 		return
@@ -316,7 +314,7 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		hit_flash_tween = create_tween()
 		hit_flash_tween.tween_method(func(v): stalker_shader_mat.set_shader_parameter("hit_flash", v), 1.0, 0.0, 0.18)
 
-func _update_needle_visuals():
+func _update_needle_visuals() -> void:
 	if current_state == State.DEAD:
 		return
 	if is_inflated:
@@ -341,7 +339,7 @@ func _update_needle_visuals():
 		if head_mesh:
 			head_mesh.scale = Vector3.ONE
 
-func inflate():
+func inflate() -> void:
 	if is_inflated or current_state == State.DEAD:
 		return
 	super.inflate()

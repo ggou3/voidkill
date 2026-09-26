@@ -1,21 +1,19 @@
 class_name EnemyTurret
-extends "res://enemy.gd"
+extends EnemyRanged
 
 ## Враг "Турель" (Turret Enemy).
 ## Статичная огневая точка на промышленном постаменте.
 ## Не перемещается (NavigationAgent3D отключён, позиция зафиксирована).
 ## При обнаружении игрока в LOS разворачивается лицом к цели (поворот вокруг вертикальной оси Y).
 ## При потере LOS удерживает прицел на последней известной позиции 2.0 секунды, после чего возвращается в IDLE.
-## Атака: projectile_enemy.tscn (скорость 18.0 м/с, урон 12 HP, кулдаун 2.0с).
+## Атака: projectile_enemy.tscn (унаследовано от EnemyRanged).
 ## Fear Chain: не может убегать (State.FLEE заблокирован).
 ## При OVERDRIVE игрока (BPM >= 180.0) переходит в защитный локдаун: прекращает огонь,
 ## сворачивается / опускает ствол вниз, снижая угрозу.
 ## Здоровье: 90 HP.
 
-@export var projectile_scene: PackedScene = preload("res://projectile_enemy.tscn")
 @export var turret_health: int = 90
 @export var turret_damage: int = 12
-@export var projectile_speed: float = 18.0
 @export var turret_attack_cooldown: float = 2.0
 @export var turret_rotation_speed: float = 4.5
 @export var los_memory_duration: float = 2.0
@@ -42,17 +40,15 @@ var attack_flash_tween: Tween = null
 @onready var muzzle_point: Marker3D = get_node_or_null("BarrelPivot/MuzzlePoint")
 @onready var turret_light: OmniLight3D = get_node_or_null("Eyes/TurretLight")
 
-func _ready():
-	max_health = turret_health
-	health = turret_health
+func _ready() -> void:
+	ranged_damage = turret_damage
+	ranged_attack_cooldown = turret_attack_cooldown
 	super._ready()
 	
-	attack_damage = turret_damage
-	attack_cooldown = turret_attack_cooldown
-	attack_range = 0.0
+	max_health = turret_health
+	health = turret_health
 	move_speed = 0.0
 	acceleration = 0.0
-	lunge_cooldown_timer = 999999.0
 	detection_range = turret_detection_range
 	spawn_position = global_position
 	
@@ -71,13 +67,7 @@ func _ready():
 		
 	_update_health_bar()
 
-func _can_lunge_to_player() -> bool:
-	return false
-
-func start_lunge():
-	pass
-
-func set_state(new_state: State):
+func set_state(new_state: State) -> void:
 	if new_state == State.FLEE:
 		return # Fear Chain бегство заблокировано для стационарной турели
 	if new_state == State.CHASE:
@@ -92,32 +82,31 @@ func set_state(new_state: State):
 			lockdown_tween.kill()
 		if telegraph_tween and telegraph_tween.is_valid():
 			telegraph_tween.kill()
-		attack_timer = 999999.0
 	elif current_state == State.ATTACK and new_state != State.ATTACK:
 		_reset_telegraph()
 	super.set_state(new_state)
 
-func start_chase(player: Node3D):
+func start_chase(player: Node3D) -> void:
 	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
 		target_player = player
 		last_known_player_pos = player.global_position
 		lost_los_timer = los_memory_duration
 		set_state(State.ATTACK)
 
-func _on_detection_area_body_entered(body: Node3D):
+func _on_detection_area_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player") and current_state == State.IDLE:
 		if _has_line_of_sight_to(body):
 			start_chase(body)
 
-func _apply_movement(_target_vel: Vector3, _delta: float):
+func _apply_movement(_target_vel: Vector3, _delta: float) -> void:
 	# Статичная турель никогда не перемещается
 	velocity = Vector3.ZERO
 
-func take_damage(amount: int, _knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = ""):
+func take_damage(amount: int, _knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	# Тяжёлая стационарная огневая точка защищена от физического отбрасывания
 	super.take_damage(amount, Vector3.ZERO, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
-func die(death_info: Dictionary = {}):
+func die(death_info: Dictionary = {}) -> void:
 	_reset_telegraph()
 	if lockdown_tween and lockdown_tween.is_valid():
 		lockdown_tween.kill()
@@ -125,10 +114,9 @@ func die(death_info: Dictionary = {}):
 		telegraph_tween.kill()
 	if attack_flash_tween and attack_flash_tween.is_valid():
 		attack_flash_tween.kill()
-	attack_timer = 999999.0
 	super.die(death_info)
 
-func _process_fear_chain_check(_delta: float):
+func _process_fear_chain_check(_delta: float) -> void:
 	if current_state == State.DEAD:
 		return
 		
@@ -151,7 +139,7 @@ func _process_fear_chain_check(_delta: float):
 		if is_in_lockdown:
 			_exit_lockdown()
 
-func _enter_lockdown():
+func _enter_lockdown() -> void:
 	is_in_lockdown = true
 	_reset_telegraph()
 	
@@ -170,7 +158,7 @@ func _enter_lockdown():
 		
 	GameTypes.debug_log(&"enemy", "[%s] TURRET LOCKDOWN: Player in OVERDRIVE! Ceased fire, tucked barrel." % name)
 
-func _exit_lockdown():
+func _exit_lockdown() -> void:
 	is_in_lockdown = false
 	
 	if lockdown_tween and lockdown_tween.is_valid():
@@ -189,7 +177,7 @@ func _exit_lockdown():
 	attack_timer = max(attack_timer, 0.6)
 	GameTypes.debug_log(&"enemy", "[%s] TURRET RESTORE: Player exited OVERDRIVE. Resumed targeting." % name)
 
-func _process_idle(_delta: float):
+func _process_idle(_delta: float) -> void:
 	velocity = Vector3.ZERO
 	knockback_velocity = Vector3.ZERO
 	
@@ -199,14 +187,14 @@ func _process_idle(_delta: float):
 		if dist <= detection_range and _has_line_of_sight_to(player):
 			start_chase(player)
 
-func _process_chase(_delta: float):
+func _process_chase(_delta: float) -> void:
 	# Турель никогда не выполняет физическое преследование
 	if is_instance_valid(target_player) and not ("is_dead" in target_player and target_player.is_dead):
 		set_state(State.ATTACK)
 	else:
 		set_state(State.IDLE)
 
-func _process_attack(delta: float):
+func _process_attack(delta: float) -> void:
 	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
@@ -257,44 +245,26 @@ func _process_attack(delta: float):
 	else:
 		_reset_telegraph()
 
-func perform_attack():
-	if not is_inside_tree() or current_state == State.DEAD or is_in_lockdown:
-		return
-	_reset_telegraph()
-	if not is_instance_valid(target_player):
-		return
-		
-	var scene_root = get_tree().current_scene if (get_tree() and get_tree().current_scene) else get_parent()
-	if not scene_root or not projectile_scene:
-		return
-		
-	var spawn_pos = muzzle_point.global_position if muzzle_point else (global_position + Vector3(0.0, 0.45, 0.0) - transform.basis.z * 0.72)
-	var target_pos = target_player.global_position + Vector3(0.0, 0.25, 0.0)
-	var fly_dir = (target_pos - spawn_pos).normalized()
-	
-	var proj = projectile_scene.instantiate()
-	proj.direction = fly_dir
-	proj.speed = projectile_speed
-	proj.damage = attack_damage
-	proj.shooter = self
-	
-	scene_root.add_child(proj)
-	proj.global_position = spawn_pos
-	
-	# Вспышка сенсора и ствола при выстреле
+func _get_projectile_spawn_position() -> Vector3:
+	if muzzle_point:
+		return muzzle_point.global_position
+	return global_position + Vector3(0.0, 0.45, 0.0) - transform.basis.z * 0.72
+
+func _play_attack_flash() -> void:
 	if eyes_material:
 		if attack_flash_tween and attack_flash_tween.is_valid():
 			attack_flash_tween.kill()
 		eyes_material.emission = Color(1.0, 0.95, 0.7)
 		attack_flash_tween = create_tween()
 		attack_flash_tween.tween_property(eyes_material, "emission", SENSOR_BASE_COLOR, 0.22)
-		
-	AudioManager.play_sound("flask_throw")
-	GameTypes.debug_log(&"enemy", "[%s] TURRET ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
-		name, target_player.name, fly_dir, projectile_speed, attack_damage
-	])
 
-func _start_telegraph():
+func perform_attack() -> void:
+	if not is_inside_tree() or current_state == State.DEAD or is_in_lockdown:
+		return
+	_reset_telegraph()
+	super.perform_attack()
+
+func _start_telegraph() -> void:
 	if not is_inside_tree() or current_state == State.DEAD or is_in_lockdown:
 		return
 	is_telegraphing = true
@@ -308,7 +278,7 @@ func _start_telegraph():
 		telegraph_tween.tween_property(turret_light, "light_energy", 2.2, 0.18)
 		telegraph_tween.tween_property(turret_light, "light_color", SENSOR_TELEGRAPH_COLOR, 0.18)
 
-func _reset_telegraph():
+func _reset_telegraph() -> void:
 	if telegraph_tween and telegraph_tween.is_valid():
 		telegraph_tween.kill()
 	if not is_telegraphing:
@@ -321,7 +291,7 @@ func _reset_telegraph():
 		turret_light.light_energy = 1.2
 		turret_light.light_color = SENSOR_BASE_COLOR
 
-func _physics_process(delta: float):
+func _physics_process(delta: float) -> void:
 	if current_state == State.DEAD:
 		super._physics_process(delta)
 		return

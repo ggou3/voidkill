@@ -109,6 +109,10 @@ func _physics_process(delta: float) -> void:
 				_process_attack(delta)
 			State.LUNGE:
 				_process_lunge(delta)
+			State.TELEGRAPH:
+				_process_telegraph(delta)
+			State.FIRING:
+				_process_firing(delta)
 			State.FLEE:
 				_process_flee(delta)
 			
