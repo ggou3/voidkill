@@ -35,11 +35,7 @@ func _ready() -> void:
 func is_dead() -> bool:
 	return health <= 0
 
-func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3,
-                 is_melee: bool = false, is_execute: bool = false,
-                 is_shockwave: bool = false, is_headshot: bool = false,
-                 source_chain_depth: int = -1,
-                 weapon_source: String = "") -> void:
+func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	if is_dead():
 		return
 		

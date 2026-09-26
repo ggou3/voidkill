@@ -274,6 +274,7 @@ func _start_telegraph() -> void:
 		telegraph_tween = create_tween().set_parallel(true)
 		telegraph_tween.tween_property(eyes_material, "emission", SENSOR_TELEGRAPH_COLOR, 0.18)
 		telegraph_tween.tween_property(eyes_material, "emission_energy_multiplier", 5.0, 0.18)
+	# Визуальный телеграф прожектора турели
 	if turret_light:
 		telegraph_tween.tween_property(turret_light, "light_energy", 2.2, 0.18)
 		telegraph_tween.tween_property(turret_light, "light_color", SENSOR_TELEGRAPH_COLOR, 0.18)
