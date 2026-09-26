@@ -18,81 +18,14 @@ var injector_alt_timer: float = 0.0
 var sewing_alt_cooldown: float = 1.5
 var sewing_alt_timer: float = 0.0
 
-var weapons = [
-	{
-		"name": "КАЛИБР-0",
-		"max_ammo": 4,
-		"damage": 70,
-		"pellets": 1,
-		"spread": 0.0,
-		"fire_rate": 1.0, # Ровно 1.0 секунда между выстрелами
-		"reload_time": 1.1,
-		"cam_shake": 0.09,
-		"weapon_kick": 0.35,
-		"knockback": 4.5,   # Толчок от пули крупного калибра
-		"upward_kick": 0.0, # Не подбрасывает вверх
-		"headshot_multiplier": 2.2, # Хедшот: 70 * 2.2 = 154 урона (ваншот)
-		"air_multiplier": 2.0,      # Бонус x2 по воздушным целям (стакается с хедшотом)
-		"has_vacuum": true,
-		"vacuum_radius": 2.5,
-		"vacuum_force": 25.6
-	},
-	{
-		"name": "КРОВАВАЯ НАКОВАЛЬНЯ",
-		"max_ammo": 2,
-		"damage": 12,
-		"pellets": 8,
-		"spread": 0.085, # Конус разброса ~8-10 градусов
-		"fire_rate": 0.5,
-		"reload_time": 1.5,
-		"cam_shake": 0.12,
-		"weapon_kick": 0.4,
-		"knockback": 6.0,   # Сильный толчок назад
-		"upward_kick": 7.0, # Подбрасывает в воздух
-		"headshot_multiplier": 1.5,
-		"air_multiplier": 1.0,
-		"has_vacuum": false,
-		"vacuum_radius": 0.0,
-		"vacuum_force": 0.0
-	},
-	{
-		"name": "ИНЪЕКТОР",
-		"max_ammo": 6,
-		"damage": 10, # Прямой урон одного дротика 10 HP (очередь из 3 дротиков = 30 HP суммарно)
-		"pellets": 1,
-		"spread": 0.045, # Конусный разброс ~4-5 градусов
-		"fire_rate": 0.28, # Кулдаун между очередями
-		"reload_time": 1.4,
-		"cam_shake": 0.025,
-		"weapon_kick": 0.08,
-		"knockback": 1.5,
-		"upward_kick": 0.0,
-		"headshot_multiplier": 1.5,
-		"air_multiplier": 1.0,
-		"has_vacuum": false,
-		"is_injector": true
-	},
-	{
-		"name": "ШВЕЙНАЯ МАШИНА",
-		"max_ammo": 40,
-		"damage": 6,
-		"pellets": 1,
-		"spread": 0.02,
-		"fire_rate": 0.1, # 10 выстрелов/сек (0.1с интервал)
-		"reload_time": 2.0,
-		"cam_shake": 0.025,
-		"weapon_kick": 0.08,
-		"knockback": 1.0,
-		"upward_kick": 0.0,
-		"headshot_multiplier": 1.5,
-		"air_multiplier": 1.0,
-		"has_vacuum": false,
-		"is_automatic": true,
-		"is_sewing_machine": true
-	}
+@export var weapons: Array[WeaponData] = [
+	preload("res://scripts/weapons/data/caliber_0.tres"),
+	preload("res://scripts/weapons/data/anvil.tres"),
+	preload("res://scripts/weapons/data/injector.tres"),
+	preload("res://scripts/weapons/data/sewing_machine.tres")
 ]
 
-var ammos = [4, 2, 6, 40]
+var ammos: Array[int] = []
 
 @onready var head = $"../Head"
 @onready var ammo_label = $"../HUD/AmmoLabel"
@@ -110,7 +43,13 @@ var weapon_hud_container: VBoxContainer
 var weapon_ui_slots: Array = []
 
 func _ready():
+	_init_ammos()
 	_setup_weapon_hud()
+
+func _init_ammos() -> void:
+	ammos.clear()
+	for w in weapons:
+		ammos.append(w.max_ammo if w else 0)
 
 func _setup_weapon_hud():
 	if not hud:
@@ -169,13 +108,13 @@ func _rebuild_weapon_slots():
 		vbox.add_child(hbox)
 		
 		var name_label = Label.new()
-		name_label.text = "[%d] %s" % [i + 1, w["name"]]
+		name_label.text = "[%d] %s" % [i + 1, w.name]
 		name_label.add_theme_font_size_override("font_size", 15)
 		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		hbox.add_child(name_label)
 		
 		var ammo_text = Label.new()
-		ammo_text.text = "%d / %d" % [ammos[i], w["max_ammo"]]
+		ammo_text.text = "%d / %d" % [ammos[i], w.max_ammo]
 		ammo_text.add_theme_font_size_override("font_size", 16)
 		ammo_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		hbox.add_child(ammo_text)
@@ -231,12 +170,12 @@ func _process(delta):
 	if is_reloading:
 		active_reload_timer -= delta
 		if active_reload_timer <= 0.0:
-			ammos[current_weapon_index] = weapons[current_weapon_index]["max_ammo"]
+			ammos[current_weapon_index] = weapons[current_weapon_index].max_ammo
 			is_reloading = false
 			active_reload_timer = 0.0
 
 	# Автоматическая стрельба при удержании ЛКМ
-	if current_weapon_index < weapons.size() and weapons[current_weapon_index].get("is_automatic", false):
+	if current_weapon_index < weapons.size() and weapons[current_weapon_index].is_automatic:
 		if Input.is_action_pressed("shoot") and not is_reloading and fire_timers[current_weapon_index] <= 0:
 			var inf = false
 			if player_node is Player:
@@ -246,10 +185,10 @@ func _process(delta):
 	# Пассивная перезарядка неактивного оружия в фоне
 	for i in range(weapons.size()):
 		if i != current_weapon_index:
-			if ammos[i] < weapons[i]["max_ammo"]:
+			if ammos[i] < weapons[i].max_ammo:
 				passive_reload_timers[i] += delta
-				if passive_reload_timers[i] >= weapons[i]["reload_time"]:
-					ammos[i] = weapons[i]["max_ammo"]
+				if passive_reload_timers[i] >= weapons[i].reload_time:
+					ammos[i] = weapons[i].max_ammo
 					passive_reload_timers[i] = 0.0
 			else:
 				passive_reload_timers[i] = 0.0
@@ -287,11 +226,11 @@ func update_hud(has_infinite_ammo: bool):
 			sb.set_corner_radius_all(3)
 			slot["panel"].add_theme_stylebox_override("panel", sb)
 			
-			slot["name_label"].text = "[%d] %s" % [i + 1, w["name"]]
+			slot["name_label"].text = "[%d] %s" % [i + 1, w.name]
 			slot["name_label"].add_theme_color_override("font_color", Color(1.0, 0.88, 0.35, 1.0))
 			
 			if is_reloading:
-				var progress = clamp((float(w["reload_time"]) - active_reload_timer) / float(w["reload_time"]), 0.0, 1.0)
+				var progress = clamp((w.reload_time - active_reload_timer) / w.reload_time, 0.0, 1.0)
 				var alt_suffix = ""
 				if i == 1 and anvil_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % anvil_alt_timer
@@ -305,7 +244,7 @@ func update_hud(has_infinite_ammo: bool):
 				slot["pbar"].value = progress * 100.0
 				slot["pbar_fg"].bg_color = Color(0.95, 0.65, 0.15, 1.0) # Amber
 			elif is_bursting:
-				slot["ammo_text"].text = "%d / %d (BURST)" % [ammos[i], w["max_ammo"]]
+				slot["ammo_text"].text = "%d / %d (BURST)" % [ammos[i], w.max_ammo]
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.3, 0.3, 1.0))
 				slot["pbar"].visible = false
 			elif has_infinite_ammo:
@@ -329,7 +268,7 @@ func update_hud(has_infinite_ammo: bool):
 					alt_suffix = " (RMB %.1fs)" % injector_alt_timer
 				elif i == 3 and sewing_alt_timer > 0.0:
 					alt_suffix = " (RMB %.1fs)" % sewing_alt_timer
-				slot["ammo_text"].text = ("%d / %d" % [ammos[i], w["max_ammo"]]) + alt_suffix
+				slot["ammo_text"].text = ("%d / %d" % [ammos[i], w.max_ammo]) + alt_suffix
 				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
 				slot["pbar"].visible = false
 		else:
@@ -341,19 +280,19 @@ func update_hud(has_infinite_ammo: bool):
 			sb.set_corner_radius_all(3)
 			slot["panel"].add_theme_stylebox_override("panel", sb)
 			
-			slot["name_label"].text = "[%d] %s" % [i + 1, w["name"]]
+			slot["name_label"].text = "[%d] %s" % [i + 1, w.name]
 			slot["name_label"].add_theme_color_override("font_color", Color(0.65, 0.68, 0.72, 0.8))
 			
 			# Индикатор прогресса пассивной перезарядки спрятанного оружия
-			if ammos[i] < w["max_ammo"]:
-				var p_progress = clamp(passive_reload_timers[i] / float(w["reload_time"]), 0.0, 1.0)
-				slot["ammo_text"].text = "%d / %d (%d%%)" % [ammos[i], w["max_ammo"], int(p_progress * 100.0)]
+			if ammos[i] < w.max_ammo:
+				var p_progress = clamp(passive_reload_timers[i] / w.reload_time, 0.0, 1.0)
+				slot["ammo_text"].text = "%d / %d (%d%%)" % [ammos[i], w.max_ammo, int(p_progress * 100.0)]
 				slot["ammo_text"].add_theme_color_override("font_color", Color(0.3, 0.8, 1.0, 0.9)) # Cyan
 				slot["pbar"].visible = true
 				slot["pbar"].value = p_progress * 100.0
 				slot["pbar_fg"].bg_color = Color(0.2, 0.75, 1.0, 0.9)
 			else:
-				slot["ammo_text"].text = "%d / %d" % [ammos[i], w["max_ammo"]]
+				slot["ammo_text"].text = "%d / %d" % [ammos[i], w.max_ammo]
 				slot["ammo_text"].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 0.7))
 				slot["pbar"].visible = false
 
@@ -369,7 +308,7 @@ func shoot(has_infinite_ammo: bool):
 	if not has_infinite_ammo:
 		ammos[current_weapon_index] -= 1
 		
-	fire_timers[current_weapon_index] = w["fire_rate"]
+	fire_timers[current_weapon_index] = w.fire_rate
 	if current_weapon_index == 2:
 		_fire_injector_burst()
 	else:
@@ -794,7 +733,7 @@ func _fire_injector_inflate():
 
 func _fire_caliber_piercing_shot():
 	ammos[0] = 0
-	fire_timers[0] = weapons[0]["fire_rate"]
+	fire_timers[0] = weapons[0].fire_rate
 	
 	head.add_recoil(0.20, 0.60)
 	head.trigger_muzzle_flash(true)
@@ -906,12 +845,12 @@ func _fire_caliber_piercing_shot():
 	hit_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
 	
 	var w = weapons[0]
-	var base_dmg = float(w.get("damage", 70))
-	var hs_mult = float(w.get("headshot_multiplier", 2.2))
-	var air_mult = float(w.get("air_multiplier", 2.0))
+	var base_dmg = float(w.damage)
+	var hs_mult = w.headshot_multiplier
+	var air_mult = w.air_multiplier
 	var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
-	var knockback_vector = flat_dir * float(w.get("knockback", 4.5))
-	knockback_vector.y = float(w.get("upward_kick", 0.0))
+	var knockback_vector = flat_dir * w.knockback
+	knockback_vector.y = w.upward_kick
 	
 	for item in hit_enemies:
 		var target = item["enemy"]
@@ -1017,10 +956,10 @@ func _fire_sewing_barrage(has_infinite_ammo: bool = false):
 
 func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: bool = false):
 	var w = weapons[weapon_idx]
-	var spread = spread_override if spread_override >= 0.0 else float(w.get("spread", 0.0))
+	var spread = spread_override if spread_override >= 0.0 else w.spread
 	
-	var cam_shake = float(w.get("cam_shake", 0.09))
-	var weapon_kick = float(w.get("weapon_kick", 0.35))
+	var cam_shake = w.cam_shake
+	var weapon_kick = w.weapon_kick
 	if is_alt_fire:
 		cam_shake *= 0.75
 		weapon_kick *= 0.75
@@ -1039,7 +978,7 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 		
 	var aim_dir = head.get_aim_direction()
 	var start_pos = head.get_muzzle_position()
-	var pellets_count = 1 if is_alt_fire else int(w.get("pellets", 1))
+	var pellets_count = 1 if is_alt_fire else w.pellets
 	
 	for i in range(pellets_count):
 		var ray = head.get_aim_raycast(spread)
@@ -1065,15 +1004,15 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 				if target != null and target.has_method("take_damage"):
 					directly_hit_target = target
 					var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
-					var knockback_vector = flat_dir * float(w.get("knockback", 4.5))
-					knockback_vector.y = float(w.get("upward_kick", 0.0))
+					var knockback_vector = flat_dir * w.knockback
+					knockback_vector.y = w.upward_kick
 					
 					var target_body = GameTypes.resolve_damageable(target)
 					var is_airborne: bool = not target_body.is_on_floor() if (target_body and target_body.has_method("is_on_floor")) else false
 						
-					var base_dmg = float(w.get("damage", 70))
-					var hs_mult = float(w.get("headshot_multiplier", 1.0)) if is_headshot else 1.0
-					var air_mult = float(w.get("air_multiplier", 1.0)) if is_airborne else 1.0
+					var base_dmg = float(w.damage)
+					var hs_mult = w.headshot_multiplier if is_headshot else 1.0
+					var air_mult = w.air_multiplier if is_airborne else 1.0
 					var total_mult = 1.0
 					
 					if is_headshot and is_airborne:
@@ -1101,7 +1040,7 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 					if is_headshot and is_airborne:
 						var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE else "ADDITIVE"
 						GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
-					elif is_airborne and float(w.get("air_multiplier", 1.0)) > 1.0:
+					elif is_airborne and w.air_multiplier > 1.0:
 						GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
 					elif weapon_idx == 1 and needle_count > 0:
 						GameTypes.debug_log(&"weapon", "[%s] SHOTGUN PELLET HIT: BaseDmg: %d | Needles: %d | Mult: %.2f | FinalDmg: %d" % [
@@ -1121,10 +1060,10 @@ func _fire_pellets(weapon_idx: int, spread_override: float = -1.0, is_alt_fire: 
 						3: weapon_key = "sewing"
 					target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, weapon_key)
 					
-		if w.get("has_vacuum", false):
+		if w.has_vacuum:
 			TracerPool.spawn_tracer(start_pos, hit_pos, &"bullet")
 			if not is_alt_fire and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
-				apply_vacuum_wake(start_pos, hit_pos, float(w.get("vacuum_radius", 2.5)), float(w.get("vacuum_force", 25.6)), directly_hit_target)
+				apply_vacuum_wake(start_pos, hit_pos, w.vacuum_radius, w.vacuum_force, directly_hit_target)
 		elif weapon_idx == 1:
 			TracerPool.spawn_tracer(start_pos, hit_pos, &"pellet")
 		elif weapon_idx == 2:
@@ -1167,8 +1106,8 @@ func apply_vacuum_wake(start_pos: Vector3, end_pos: Vector3, radius: float, forc
 
 func reload():
 	var w = weapons[current_weapon_index]
-	if ammos[current_weapon_index] == w["max_ammo"] or is_reloading or is_bursting:
+	if ammos[current_weapon_index] == w.max_ammo or is_reloading or is_bursting:
 		return
 	is_reloading = true
-	active_reload_timer = float(w["reload_time"])
+	active_reload_timer = w.reload_time
 	AudioManager.play_sound("reload")
