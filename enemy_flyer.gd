@@ -90,10 +90,44 @@ var laser_outer_mat: StandardMaterial3D = null
 var laser_core_mat: StandardMaterial3D = null
 
 # HP Bar
-var hp_viewport: SubViewport
-var hp_bar: ProgressBar
-var hp_sprite: Sprite3D
-var hp_label: Label3D
+@onready var health_bar: EnemyHealthBar = _get_or_create_health_bar()
+
+func _ensure_health_bar() -> EnemyHealthBar:
+	if not is_instance_valid(health_bar):
+		health_bar = _get_or_create_health_bar()
+	return health_bar
+
+func _get_or_create_health_bar() -> EnemyHealthBar:
+	var bar = get_node_or_null("EnemyHealthBar") as EnemyHealthBar
+	if not bar:
+		bar = EnemyHealthBar.new()
+		bar.name = "EnemyHealthBar"
+		add_child(bar)
+	return bar
+
+var hp_viewport: SubViewport:
+	get:
+		return _ensure_health_bar().hp_viewport
+	set(val):
+		_ensure_health_bar().hp_viewport = val
+
+var hp_bar: ProgressBar:
+	get:
+		return _ensure_health_bar().hp_bar
+	set(val):
+		_ensure_health_bar().hp_bar = val
+
+var hp_sprite: Sprite3D:
+	get:
+		return _ensure_health_bar().hp_sprite
+	set(val):
+		_ensure_health_bar().hp_sprite = val
+
+var hp_label: Label3D:
+	get:
+		return _ensure_health_bar().hp_label
+	set(val):
+		_ensure_health_bar().hp_label = val
 
 const EYE_COLOR_IDLE = Color(0.15, 0.9, 1.0)
 const EYE_COLOR_TELEGRAPH = Color(1.0, 0.85, 0.2)
@@ -189,57 +223,18 @@ func _setup_boundary_visuals():
 	add_child(boundary_right_marker)
 
 func _setup_health_bar():
-	hp_viewport = SubViewport.new()
-	hp_viewport.size = Vector2i(130, 20)
-	hp_viewport.transparent_bg = true
-	hp_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-
-	hp_bar = ProgressBar.new()
-	hp_bar.size = Vector2(130, 20)
-	hp_bar.max_value = max_health
-	hp_bar.value = health
-	hp_bar.show_percentage = false
-
-	var bg_box = StyleBoxFlat.new()
-	bg_box.bg_color = Color(0.08, 0.08, 0.08, 0.85)
-	bg_box.border_color = Color(0.35, 0.35, 0.35, 0.9)
-	bg_box.set_border_width_all(2)
-	bg_box.set_corner_radius_all(3)
-
-	var fg_box = StyleBoxFlat.new()
-	fg_box.bg_color = Color(0.15, 0.8, 0.95, 1.0) # Циановый цвет полоски для летающего врага
-	fg_box.set_corner_radius_all(2)
-
-	hp_bar.add_theme_stylebox_override("background", bg_box)
-	hp_bar.add_theme_stylebox_override("fill", fg_box)
-
-	hp_viewport.add_child(hp_bar)
-	add_child(hp_viewport)
-
-	hp_sprite = Sprite3D.new()
-	hp_sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	hp_sprite.no_depth_test = true
-	hp_sprite.position = Vector3(0, 0.95, 0)
-	hp_sprite.texture = hp_viewport.get_texture()
-	hp_sprite.pixel_size = 0.007
-	add_child(hp_sprite)
-
-	hp_label = Label3D.new()
-	hp_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	hp_label.no_depth_test = true
-	hp_label.position = Vector3(0, 1.12, 0)
-	hp_label.font_size = 18
-	hp_label.outline_size = 4
-	hp_label.outline_modulate = Color.BLACK
-	hp_label.modulate = Color(0.9, 0.98, 1.0)
-	hp_label.text = "%d / %d" % [health, max_health]
-	add_child(hp_label)
+	_ensure_health_bar().setup(
+		health,
+		max_health,
+		0.95,
+		Color(0.15, 0.8, 0.95, 1.0),
+		Color(0.9, 0.98, 1.0),
+		null
+	)
 
 func _update_health_bar():
-	if hp_bar:
-		hp_bar.value = max(0, health)
-	if hp_label:
-		hp_label.text = "%d / %d" % [max(0, health), max_health]
+	if is_instance_valid(health_bar):
+		health_bar.update_health(health, max_health)
 
 func _physics_process(delta: float):
 	if current_state == State.DEAD:

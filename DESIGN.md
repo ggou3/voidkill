@@ -527,7 +527,7 @@
 
 ### Именование типов (class_name) и типизация
 - **Глобальные имена классов (`class_name`)**: объявлены в PascalCase для всех 17 ключевых классов сущностей:
-  - Сущности, компоненты и менеджеры: `Player`, `Head`, `SkillManager`, `WeaponManager`, `HealthComponent`, `StatusEffectComponent`.
+  - Сущности, компоненты и менеджеры: `Player`, `Head`, `SkillManager`, `WeaponManager`, `HealthComponent`, `StatusEffectComponent`, `EnemyHealthBar`.
   - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `ProjectileEnemy`.
   - Враги: базовый класс `Enemy` и специализированные подтипы `EnemyFlyer`, `EnemyRanged`, `EnemyTurret`, `EnemyBomber`, `EnemyShield`, `EnemyHunter`, `EnemySwarm`, `EnemyStalker`.
   - Autoload-синглтонам (`GameManager`, `AudioManager`, `GameTypes`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
@@ -562,7 +562,23 @@
   - В `enemy.tscn` добавлен узел `StatusEffectComponent` (дополнительно подстрахован автосозданием в `_get_or_create_status_effect_component()`).
   - В `enemy.gd` реализованы фасадные методы-делегаты и публичные алиасы для эффектов и их визуалов: `_spawn_explosion_shockwave()`, `spawn_explosion_shockwave()`, `_spawn_poison_cloud_visual()`, `spawn_poison_cloud_visual()`, `_trigger_inflation_explosion()`, `trigger_inflation_explosion()`, `_trigger_poison_contagion()`, `trigger_poison_contagion()`, `_trigger_needle_burst()`, `trigger_needle_burst()`, `add_needle(_is_blood_needle: bool = false)`. Благодаря этому специализированные наследники (`enemy_bomber.gd`, `enemy_stalker.gd`) не требуют переписывания и не зависят от деталей реализации компонентов.
   - В `StatusEffectComponent._spawn_explosion_shockwave()` анимация затухания ударной волны переведена на `sphere.create_tween()`, гарантируя корректное завершение эффекта и удаление сферы даже при мгновенном вызове `queue_free()` на враге-носителе (например, при взрыве Подрывника).
-
+ 
++### Компонентная архитектура (EnemyHealthBar) — ✅ Реализован (Шаг 3.3)
++- **EnemyHealthBar** (`res://scripts/components/enemy_health_bar.gd`, `class_name EnemyHealthBar`, наследует `Node3D`) — унифицированный компонент рендеринга 3D-полоски здоровья над головой врагов.
++- **Содержимое и визуал**:
++  - `SubViewport` (размер 130×20, `transparent_bg = true`, `UPDATE_ALWAYS`) + `ProgressBar` со скруглёнными углами (`StyleBoxFlat`).
++  - `Sprite3D` билборд (`BILLBOARD_ENABLED`, `no_depth_test = true`, `pixel_size = 0.007`) с текстурой вьюпорта.
++  - `Label3D` числовое значение здоровья (`BILLBOARD_ENABLED`, `no_depth_test = true`, `font_size = 18`, `outline_size = 4`, цвет контура чёрный).
++- **Параметризация**:
++  - Обычные враги (`Enemy`): вертикальный оффсет 1.15м (текст 1.32м), алый цвет полоски `Color(0.95, 0.15, 0.15)`.
++  - Летающий враг (`EnemyFlyer`): вертикальный оффсет 0.95м (текст 1.12м), циановый цвет полоски `Color(0.15, 0.8, 0.95)`, оттенок текста `Color(0.9, 0.98, 1.0)`.
++  - Рой (`EnemySwarm`): кастомный оффсет 0.65м (текст 0.80м), уменьшенный шрифт `font_size = 14`.
++- **Реактивность и совместимость**:
++  - Автоматически подписывается на сигнал `health_component.health_changed(current, max)` там, где компонент есть (`Enemy`).
++  - Предоставляет публичный метод `update_health(current_hp, max_hp)` для ручного вызова летающим врагом (`EnemyFlyer`), у которого `HealthComponent` появится на шаге 3.5.
++  - Поля `hp_viewport`, `hp_bar`, `hp_sprite`, `hp_label` на `Enemy` и `EnemyFlyer` оформлены через делегирующие геттеры/сеттеры, благодаря чему логика сокрытия в стелсе (`enemy_stalker.gd`), корректировка масштаба роя (`enemy_swarm.gd`) и обновление турели (`enemy_turret.gd`) продолжают работать без единого изменения в коде наследников.
++  - Полностью удалены 47 строк дублированного процедурного создания UI из `enemy_flyer.gd`.
++
 
 ### Централизованное отладочное логирование (GameTypes.debug_log)
 - Все прямые вызовы `print(...)` по проекту (64 вызова) переведены на канальное логирование `GameTypes.debug_log(category: StringName, msg: String)`.
