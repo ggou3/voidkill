@@ -7,17 +7,33 @@ extends Node
 
 @export var data: WeaponData
 
+var weapon_manager: WeaponManager = null
+var slot_index: int = 0
+var fire_timer: float = 0.0
+var alt_timer: float = 0.0
+var is_bursting: bool = false
+
+func _process(delta: float) -> void:
+	if fire_timer > 0.0:
+		fire_timer -= delta
+	if alt_timer > 0.0:
+		alt_timer -= delta
+
 ## Основной огонь (ЛКМ)
 func fire() -> void:
 	pass
 
 ## Альтернативный огонь (ПКМ)
-func alt_fire() -> void:
+func alt_fire(_has_infinite_ammo: bool = false) -> void:
 	pass
 
 ## Проверка готовности оружия к выстрелу
 func can_fire() -> bool:
-	return false
+	return fire_timer <= 0.0 and not is_bursting
+
+## Текстовый суффикс кулдауна/статуса для HUD слота оружия
+func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
+	return ""
 
 ## Централизованная общая логика обработки попадания hitscan-выстрела.
 ## Выполняет детекцию хедшота, проверку нахождения цели в воздухе,
@@ -28,21 +44,23 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	var tracer_style = _get_tracer_style(is_alt)
 	TracerPool.spawn_tracer(start_pos, hit_pos, tracer_style)
 	
-	if not is_instance_valid(collider):
-		return
-		
 	var target: Node = null
 	var is_headshot: bool = false
 	
-	# Детекция хедшота и разрешения целевого узла
-	if collider.is_in_group("enemy_head") or collider.name == "HeadHitbox":
-		is_headshot = true
-		if collider.has_meta("enemy"):
-			target = collider.get_meta("enemy")
-		elif collider.get_parent():
-			target = collider.get_parent()
-	else:
-		target = GameTypes.resolve_damageable(collider)
+	if is_instance_valid(collider):
+		# Детекция хедшота и разрешения целевого узла
+		if collider.is_in_group("enemy_head") or collider.name == "HeadHitbox":
+			is_headshot = true
+			if collider.has_meta("enemy"):
+				target = collider.get_meta("enemy")
+			elif collider.get_parent():
+				target = collider.get_parent()
+		else:
+			target = GameTypes.resolve_damageable(collider)
+			
+	# Вакуумный след для оружия с поддержкой гравипула (Калибр-0 в OVERDRIVE)
+	if data and data.has_vacuum and not is_alt and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
+		_apply_vacuum_wake(start_pos, hit_pos, data.vacuum_radius, data.vacuum_force, target)
 		
 	if not is_instance_valid(target) or not target.has_method("take_damage"):
 		return
@@ -80,7 +98,8 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	elif is_airborne:
 		total_mult = air_mult
 		
-	var final_dmg = int(round(base_dmg * total_mult))
+	var synergy_mult = _get_damage_multiplier(target, is_headshot, is_airborne, is_alt)
+	var final_dmg = int(round(base_dmg * total_mult * synergy_mult))
 	
 	# Логирование критических попаданий
 	if is_headshot and is_airborne:
@@ -93,23 +112,40 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	var weapon_key = _get_weapon_key()
 	target.take_damage(final_dmg, knockback_vector, hit_pos, false, false, false, is_headshot, -1, weapon_key)
 	
-	# Вакуумный след для оружия с поддержкой гравипула (Калибр-0 в OVERDRIVE)
-	if data and data.has_vacuum and not is_alt and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
-		_apply_vacuum_wake(start_pos, hit_pos, data.vacuum_radius, data.vacuum_force, target)
-		
 	# Хук для специализированных эффектов наследников
 	_on_hit_target(target, hit_pos, is_headshot, is_alt)
 
+## Виртуальный метод для расчёта дополнительного множителя урона (синергии)
+func _get_damage_multiplier(_target: Node, _is_headshot: bool, _is_airborne: bool, _is_alt: bool) -> float:
+	return 1.0
+
 ## Виртуальный метод для переопределения в специализированных классах оружия
-## (например, наложение яда Инъектором, добавление иглы Швейной машиной, бонус урона от игл у Наковальни)
+## (например, наложение яда Инъектором, добавление иглы Швейной машиной, синергии Наковальни)
 func _on_hit_target(_target: Node, _hit_pos: Vector3, _is_headshot: bool, _is_alt: bool) -> void:
 	pass
+
+## Получение ссылки на узел игрока
+func _get_player() -> Player:
+	if weapon_manager and is_instance_valid(weapon_manager.get_parent()):
+		return weapon_manager.get_parent() as Player
+	if is_inside_tree():
+		return get_tree().get_first_node_in_group("player") as Player
+	return null
+
+## Получение ссылки на узел Head
+func _get_head() -> Head:
+	var player = _get_player()
+	if is_instance_valid(player) and "head" in player and is_instance_valid(player.head):
+		return player.head as Head
+	if weapon_manager and is_instance_valid(weapon_manager.head):
+		return weapon_manager.head as Head
+	return null
 
 ## Определение текущего BPM-тира игрока
 func _get_bpm_tier() -> GameTypes.BPMTier:
 	var skill_mgr = get_node_or_null("../SkillManager")
 	if not skill_mgr:
-		var player = get_tree().get_first_node_in_group("player") if is_inside_tree() else null
+		var player = _get_player()
 		if is_instance_valid(player) and "skills" in player:
 			skill_mgr = player.skills
 	if skill_mgr is SkillManager:
@@ -118,11 +154,7 @@ func _get_bpm_tier() -> GameTypes.BPMTier:
 
 ## Получение стартовой точки вылета снаряда / трейсера (дуло оружия)
 func _get_muzzle_position() -> Vector3:
-	var head = get_node_or_null("../Head")
-	if not head:
-		var player = get_tree().get_first_node_in_group("player") if is_inside_tree() else null
-		if is_instance_valid(player) and "head" in player:
-			head = player.head
+	var head = _get_head()
 	if is_instance_valid(head) and head.has_method("get_muzzle_position"):
 		return head.get_muzzle_position()
 	return Vector3.ZERO
