@@ -34,18 +34,16 @@ var last_kill_weapon: String = ""
 
 var combat_momentum: float = 1.0
 var time_since_momentum_gain: float = 0.0
-var momentum_idle_timer: float = 0.0
-var momentum_display_alpha: float = 1.0
-var momentum_font_size: int = 28
+
+signal bpm_changed(value: float)
+signal tier_changed(tier: GameTypes.BPMTier)
+signal momentum_changed(value: float)
+signal dash_charges_changed(count: int)
+signal hud_popup_requested(text: String)
 
 @onready var player = $".."
 @onready var head = $"../Head"
 @onready var slam_ray = $"../SlamRay"
-@onready var dash_label = $"../HUD/DashLabel"
-@onready var bpm_label = get_node_or_null("../HUD/BPMLabel")
-@onready var momentum_label: Label = get_node_or_null("../HUD/MomentumLabel")
-@onready var combo_label: Label = get_node_or_null("../HUD/ComboLabel")
-var combo_tween: Tween = null
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 func _ready():
@@ -53,30 +51,6 @@ func _ready():
 	dash_timer_cd = 0.0
 	dash_interval_timer = 0.0
 	dash_current_speed = dash_target_speed
-	
-	if not bpm_label:
-		var hud = get_node_or_null("../HUD")
-		if hud:
-			bpm_label = Label.new()
-			bpm_label.name = "BPMLabel"
-			bpm_label.offset_left = 34.0
-			bpm_label.offset_top = 484.0
-			bpm_label.offset_right = 350.0
-			bpm_label.offset_bottom = 529.0
-			bpm_label.add_theme_font_size_override("font_size", 28)
-			hud.add_child(bpm_label)
-
-	if not momentum_label:
-		var hud = get_node_or_null("../HUD")
-		if hud:
-			momentum_label = Label.new()
-			momentum_label.name = "MomentumLabel"
-			momentum_label.offset_left = 350.0
-			momentum_label.offset_top = 484.0
-			momentum_label.offset_right = 660.0
-			momentum_label.offset_bottom = 529.0
-			momentum_label.add_theme_font_size_override("font_size", 28)
-			hud.add_child(momentum_label)
 
 func _process(delta):
 	# Восстановление зарядов дэша
@@ -85,6 +59,7 @@ func _process(delta):
 		if dash_timer_cd <= 0.0:
 			dashes += 1
 			dash_timer_cd = dash_cd if dashes < MAX_DASH else 0.0
+			dash_charges_changed.emit(dashes)
 
 	# Таймер минимального интервала между дэшами
 	if dash_interval_timer > 0.0:
@@ -99,7 +74,12 @@ func _process(delta):
 	if time_since_bpm_gain >= decay_delay and bpm > MIN_BPM:
 		var bpm_ratio: float = clampf((bpm - MIN_BPM) / (MAX_BPM - MIN_BPM), 0.0, 1.0)
 		var decay_rate: float = lerp(1.5, 7.0, bpm_ratio)
+		var old_tier = get_bpm_tier()
 		bpm = max(MIN_BPM, bpm - decay_rate * delta)
+		bpm_changed.emit(bpm)
+		var new_tier = get_bpm_tier()
+		if new_tier != old_tier:
+			tier_changed.emit(new_tier)
 		
 	# Combat Momentum: источники роста в реальном времени
 	var gained_momentum_continuous: bool = false
@@ -122,25 +102,7 @@ func _process(delta):
 	# Combat Momentum: пассивный спад при отсутствии приращений за последние 1.5 секунды: -0.1/сек (не ниже 1.0)
 	if time_since_momentum_gain >= 1.5 and combat_momentum > 1.0:
 		combat_momentum = max(1.0, combat_momentum - 0.1 * delta)
-		
-	# Индикация BPM в HUD
-	if bpm_label:
-		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm)), GameTypes.tier_to_string(get_bpm_tier())]
-		
-	# Постоянная индикация Combat Momentum в HUD
-	_update_momentum_hud(delta)
-	
-	# Индикация состояния зарядов и остывания
-	if dash_label:
-		if dashes == 0:
-			dash_label.text = "DASH: 0 (+" + str(snapped(dash_timer_cd, 0.1)) + "s)"
-		elif dash_interval_timer > 0.0 or is_dashing:
-			var int_sec = max(0.1, snapped(dash_interval_timer, 0.1))
-			dash_label.text = "DASH: " + str(dashes) + " (COOLDOWN " + str(int_sec) + "s)"
-		elif dashes < MAX_DASH:
-			dash_label.text = "DASH: " + str(dashes) + " (READY, +" + str(snapped(dash_timer_cd, 0.1)) + "s)"
-		else:
-			dash_label.text = "DASH: " + str(MAX_DASH) + " (READY)"
+		momentum_changed.emit(combat_momentum)
 
 # --- BPM API ---
 
@@ -149,56 +111,28 @@ func add_combat_momentum(amount: float):
 		return
 	combat_momentum = clampf(combat_momentum + amount, 1.0, 2.0)
 	time_since_momentum_gain = 0.0
-	momentum_idle_timer = 0.0
-
-func _update_momentum_hud(delta: float):
-	if not is_instance_valid(momentum_label):
-		return
-		
-	# Отслеживание времени простоя на базовом значении 1.0
-	if combat_momentum <= 1.001:
-		momentum_idle_timer += delta
-	else:
-		momentum_idle_timer = 0.0
-		
-	# 1. Формат отображения: "MOMENTUM: ×1.45"
-	momentum_label.text = "MOMENTUM: ×%.2f" % combat_momentum
-	
-	# 2. Линейная интерполяция цвета: от нейтрального белого (1.0) к яркому жёлтому/золотому (2.0)
-	var t: float = clampf(combat_momentum - 1.0, 0.0, 1.0)
-	var neutral_color: Color = Color(1.0, 1.0, 1.0, 1.0)
-	var gold_color: Color = Color(1.0, 0.82, 0.2, 1.0)
-	var active_color: Color = neutral_color.lerp(gold_color, t)
-	
-	# 3. Состояние покоя (2+ секунды без изменений на базовом значении 1.0)
-	var is_dimmed: bool = (combat_momentum <= 1.001 and momentum_idle_timer >= 2.0)
-	
-	if is_dimmed:
-		# Плавное затемнение/приглушение до 45% яркости и уменьшенный размер шрифта (24)
-		momentum_display_alpha = move_toward(momentum_display_alpha, 0.45, 2.0 * delta)
-		if momentum_font_size != 24:
-			momentum_font_size = 24
-			momentum_label.add_theme_font_size_override("font_size", 24)
-	else:
-		# Мгновенный возврат к полной яркости и полноразмерному шрифту (28) при любом росте
-		momentum_display_alpha = 1.0
-		if momentum_font_size != 28:
-			momentum_font_size = 28
-			momentum_label.add_theme_font_size_override("font_size", 28)
-			
-	momentum_label.add_theme_color_override("font_color", active_color)
-	momentum_label.modulate.a = momentum_display_alpha
+	momentum_changed.emit(combat_momentum)
 
 func force_max_bpm():
+	var old_tier = get_bpm_tier()
 	bpm = MAX_BPM
 	time_since_bpm_gain = 0.0
+	bpm_changed.emit(bpm)
+	var new_tier = get_bpm_tier()
+	if new_tier != old_tier:
+		tier_changed.emit(new_tier)
 	GameTypes.debug_log(&"bpm", "[DEBUG] Max BPM (%.1f) forced via 'T' key! Peak delay set to 5.0s." % MAX_BPM)
 
 func add_bpm(amount: float):
 	if amount <= 0.0:
 		return
+	var old_tier = get_bpm_tier()
 	bpm = clamp(bpm + amount, MIN_BPM, MAX_BPM)
 	time_since_bpm_gain = 0.0
+	bpm_changed.emit(bpm)
+	var new_tier = get_bpm_tier()
+	if new_tier != old_tier:
+		tier_changed.emit(new_tier)
 
 func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	var base_bpm: float = 8.0 if is_shockwave else 5.5
@@ -228,53 +162,20 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 	return total_bpm
 
 func show_hud_popup(text: String):
-	if not combo_label:
-		var hud = get_node_or_null("../HUD")
-		if hud:
-			combo_label = hud.get_node_or_null("ComboLabel")
-			if not combo_label:
-				combo_label = Label.new()
-				combo_label.name = "ComboLabel"
-				combo_label.offset_left = 34.0
-				combo_label.offset_top = 452.0
-				combo_label.offset_right = 350.0
-				combo_label.offset_bottom = 484.0
-				combo_label.add_theme_font_size_override("font_size", 22)
-				combo_label.add_theme_color_override("font_color", Color(1.0, 0.82, 0.2, 1.0))
-				combo_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1.0))
-				combo_label.add_theme_constant_override("outline_size", 6)
-				combo_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
-				combo_label.add_theme_constant_override("shadow_offset_x", 2)
-				combo_label.add_theme_constant_override("shadow_offset_y", 2)
-				hud.add_child(combo_label)
-
-	if not combo_label:
-		return
-		
-	# Если предыдущая плашка ещё на экране, отменяем её tween и обновляем таймер/текст
-	if combo_tween and combo_tween.is_valid():
-		combo_tween.kill()
-		
-	combo_label.text = text
-	combo_label.visible = true
-	combo_label.modulate.a = 1.0
-	combo_label.position.y = 452.0
-	
-	combo_tween = create_tween()
-	# Плавное всплытие вверх на 10px за 1.2 секунды
-	combo_tween.tween_property(combo_label, "position:y", 442.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	# Держится на экране 0.7с, затем плавное исчезновение (fade out) 0.5с
-	combo_tween.parallel().tween_property(combo_label, "modulate:a", 1.0, 0.7)
-	combo_tween.chain().tween_property(combo_label, "modulate:a", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	combo_tween.chain().tween_callback(func(): if is_instance_valid(combo_label): combo_label.visible = false)
+	hud_popup_requested.emit(text)
 
 func _show_combo_popup(bonus_amount: float):
 	show_hud_popup("★ VARIETY +%d ★" % int(round(bonus_amount)))
 
 func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
+	var old_tier = get_bpm_tier()
 	var drop = bpm * 0.25
 	bpm = max(MIN_BPM, bpm - drop)
+	bpm_changed.emit(bpm)
+	var new_tier = get_bpm_tier()
+	if new_tier != old_tier:
+		tier_changed.emit(new_tier)
 	GameTypes.debug_log(&"bpm", "[BPM] Damage penalty: -%.1f -> %.1f (%s)" % [drop, bpm, GameTypes.tier_to_string(get_bpm_tier())])
 
 func get_bpm_tier() -> GameTypes.BPMTier:
@@ -299,6 +200,7 @@ func add_dash_charge():
 		dashes += 1
 		if dashes == MAX_DASH:
 			dash_timer_cd = 0.0
+		dash_charges_changed.emit(dashes)
 
 func trigger_dash(input_dir: Vector2, p_basis: Basis) -> bool:
 	if dashes > 0 and not is_dashing and not is_slamming and dash_interval_timer <= 0.0:
@@ -306,6 +208,7 @@ func trigger_dash(input_dir: Vector2, p_basis: Basis) -> bool:
 		dash_timer = DASH_DUR
 		dash_interval_timer = dash_min_interval
 		dashes -= 1
+		dash_charges_changed.emit(dashes)
 		if dash_timer_cd <= 0.0:
 			dash_timer_cd = dash_cd
 		

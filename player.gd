@@ -27,6 +27,11 @@ var max_health: int = 100
 var health: int = 100
 var is_dead: bool = false
 
+signal health_changed(current: int, maximum: int)
+signal died
+signal speed_updated(speed: float, bhop_chain: int)
+signal blood_surf_status_changed(active: bool)
+
 # Настройки механики Wallrun и Wall-jump
 @export var wallrun_min_speed: float = 5.0
 @export var wallrun_speed: float = 11.0
@@ -102,19 +107,6 @@ var wallrun_exhausted: bool = false
 @onready var collision_shape = $CollisionShape3D
 @onready var weapons = $WeaponManager
 @onready var skills = $SkillManager
-@onready var speed_label = $HUD/SpeedLabel 
-@onready var blood_buff_label = get_node_or_null("HUD/BloodBuffLabel")
-@onready var health_bar: ProgressBar = get_node_or_null("HUD/HealthBar")
-@onready var hp_text: Label = get_node_or_null("HUD/HealthBar/HPText")
-@onready var health_label: Label = hp_text
-@onready var crosshair = get_node_or_null("HUD/Crosshair")
-
-var _health_bg_style: StyleBoxFlat
-var _health_fill_style: StyleBoxFlat
-var _health_tween: Tween = null
-var _last_displayed_health: int = -1
-@onready var game_over_screen = get_node_or_null("HUD/GameOverScreen")
-@onready var restart_button = get_node_or_null("HUD/GameOverScreen/VBoxContainer/RestartButton")
 @onready var post_process_rect: ColorRect = get_node_or_null("CanvasLayer/ColorRect")
 @onready var left_wall_ray: RayCast3D = get_node_or_null("LeftWallRay")
 @onready var right_wall_ray: RayCast3D = get_node_or_null("RightWallRay")
@@ -157,7 +149,7 @@ func _ready():
 	prev_air_time = 0.0
 	bhop_chain = 0
 	health = max_health
-	_setup_health_bar()
+	health_changed.emit(health, max_health)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	collision_shape.shape = collision_shape.shape.duplicate()
 	floor_snap_length = 0.4 
@@ -167,13 +159,6 @@ func _ready():
 	
 	if skills:
 		skills.dash_min_interval = dash_min_interval
-		
-	if game_over_screen:
-		game_over_screen.visible = false
-	if crosshair:
-		crosshair.visible = true
-	if restart_button:
-		restart_button.pressed.connect(restart_game)
 		
 	var gm = _get_game_manager()
 	if gm and not gm.game_over_triggered.is_connected(_on_game_over_triggered):
@@ -220,19 +205,9 @@ func _process(_delta):
 		return
 		
 	var current_speed: float = Vector2(velocity.x, velocity.z).length()
-	var bhop_text = ""
-	if bhop_chain > 0:
-		bhop_text = (" (BHOP x" + str(bhop_chain) + ")")
-	speed_label.text = "SPEED: " + str(snapped(current_speed, 0.1)) + bhop_text
-	if health != _last_displayed_health:
-		_update_health_display(true)
-	weapons.update_hud(has_infinite_ammo())
-	
-	if blood_buff_label:
-		var blood_surf = is_sliding and is_on_blood
-		blood_buff_label.visible = blood_surf
-		if blood_surf:
-			blood_buff_label.text = "★ BLOOD SURF (MOMENTUM +4%) ★"
+	speed_updated.emit(current_speed, bhop_chain)
+	var blood_surf = is_sliding and is_on_blood
+	blood_surf_status_changed.emit(blood_surf)
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
@@ -731,73 +706,13 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 		
 	return vel_2d
 
-func _setup_health_bar():
-	if not health_bar:
-		return
-		
-	_health_bg_style = StyleBoxFlat.new()
-	_health_bg_style.bg_color = Color(0.08, 0.08, 0.09, 0.85)
-	_health_bg_style.border_color = Color(0.35, 0.35, 0.38, 0.9)
-	_health_bg_style.set_border_width_all(2)
-	_health_bg_style.set_corner_radius_all(3)
-	
-	_health_fill_style = StyleBoxFlat.new()
-	_health_fill_style.bg_color = Color(0.2, 0.85, 0.3, 1.0)
-	_health_fill_style.set_corner_radius_all(2)
-	
-	health_bar.add_theme_stylebox_override("background", _health_bg_style)
-	health_bar.add_theme_stylebox_override("fill", _health_fill_style)
-	
-	health_bar.max_value = max_health
-	health_bar.value = health
-	_update_health_display(false)
-
-func _update_health_display(animate: bool = true):
-	_last_displayed_health = health
-	var current_hp = max(0, health)
-	
-	if hp_text:
-		hp_text.text = "%d / %d" % [current_hp, max_health]
-		
-	if not health_bar:
-		return
-		
-	health_bar.max_value = max_health
-	
-	# Пороги здоровья:
-	# > 50%: Зеленый / нейтральный
-	# 25% - 50%: Желтый
-	# < 25%: Красный критический
-	var ratio = float(current_hp) / float(max_health) if max_health > 0 else 0.0
-	var target_color: Color
-	if ratio > 0.5:
-		target_color = Color(0.2, 0.85, 0.3, 1.0)
-	elif ratio >= 0.25:
-		target_color = Color(0.95, 0.8, 0.15, 1.0)
-	else:
-		target_color = Color(0.95, 0.2, 0.2, 1.0)
-		
-	if animate and is_inside_tree():
-		if _health_tween and _health_tween.is_valid():
-			_health_tween.kill()
-		_health_tween = create_tween().set_parallel(true)
-		_health_tween.tween_property(health_bar, "value", float(current_hp), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		if _health_fill_style:
-			_health_tween.tween_property(_health_fill_style, "bg_color", target_color, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	else:
-		if _health_tween and _health_tween.is_valid():
-			_health_tween.kill()
-		health_bar.value = float(current_hp)
-		if _health_fill_style:
-			_health_fill_style.bg_color = target_color
-
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
 	if is_dead or amount <= 0:
 		return
 	var reduction = get_bpm_damage_reduction()
 	var final_damage = max(1, int(round(float(amount) * (1.0 - reduction))))
 	health = max(0, health - final_damage)
-	_update_health_display(true)
+	health_changed.emit(health, max_health)
 	if skills is SkillManager:
 		skills.drop_bpm_on_damage()
 	if head:
@@ -813,7 +728,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 	var old_health = health
 	health = min(max_health, health + amount)
 	var _gained = health - old_health
-	_update_health_display(true)
+	health_changed.emit(health, max_health)
 	AudioManager.play_sound("player_heal")
 	_spawn_heal_feedback(amount, is_melee_bonus)
 
@@ -852,7 +767,8 @@ func die():
 		return
 	is_dead = true
 	health = 0
-	_update_health_display(false)
+	health_changed.emit(0, max_health)
+	died.emit()
 	end_wallrun()
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
@@ -875,10 +791,6 @@ func die():
 
 func _on_game_over_triggered():
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-	if game_over_screen:
-		game_over_screen.visible = true
-	if crosshair:
-		crosshair.visible = false
 
 func restart_game():
 	var gm = _get_game_manager()

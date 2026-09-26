@@ -5,6 +5,7 @@
 [ext_resource type="Shader" uid="uid://bybakgs8u2d75" path="res://player.gdshader" id="2_onrkg"]
 [ext_resource type="Script" uid="uid://b7npgm5hupagp" path="res://weapon_manager.gd" id="4_hqtel"]
 [ext_resource type="Script" uid="uid://dit7po0cp8fuh" path="res://skill_manager.gd" id="5_sweqy"]
+[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="6_hud"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wdtcp"]
 
@@ -468,6 +469,7 @@ shape = SubResource("SphereShape3D_3xd07")
 target_position = Vector3(0, -1.5, 0)
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=940516106]
+script = ExtResource("6_hud")
 
 [node name="Crosshair" type="ColorRect" parent="HUD" unique_id=1068199670]
 anchors_preset = 8
