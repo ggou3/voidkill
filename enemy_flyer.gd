@@ -166,9 +166,10 @@ func _physics_process(delta: float) -> void:
 func set_state(new_state: State) -> void:
 	if current_state == new_state or current_state == State.DEAD:
 		return
-	if (current_state == State.TELEGRAPH or current_state == State.FIRING) and new_state != State.TELEGRAPH and new_state != State.FIRING:
-		_end_firing()
+	var old_state = current_state
 	super.set_state(new_state)
+	if (old_state == State.TELEGRAPH or old_state == State.FIRING) and new_state != State.TELEGRAPH and new_state != State.FIRING:
+		_end_firing()
 
 func _process_idle(delta: float) -> void:
 	_maintain_hover_height(delta, Vector3.ZERO)
@@ -322,7 +323,7 @@ func _process_firing(delta: float) -> void:
 		
 	_update_boundary_visuals()
 	if laser_timer <= 0.0:
-		_end_firing()
+		set_state(State.CHASE)
 
 func _cast_laser_and_damage(eye_pos: Vector3) -> void:
 	var beam_end = eye_pos + current_beam_dir * 45.0
@@ -426,7 +427,6 @@ func _end_firing() -> void:
 		eye_light.light_energy = 1.8
 		
 	attack_cooldown_timer = randf_range(attack_cooldown_min, attack_cooldown_max)
-	set_state(State.CHASE)
 
 func _get_eye_position() -> Vector3:
 	return eye_emitter.global_position if eye_emitter else global_position + Vector3(0, 0.28, -0.25)
@@ -444,7 +444,7 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		return
 	if current_state == State.TELEGRAPH or current_state == State.FIRING:
 		if amount >= 25 or is_melee or is_shockwave or knockback_vector.length() >= 12.0:
-			_end_firing()
+			set_state(State.CHASE)
 	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 	knockback_velocity = knockback_vector * 0.8
 
@@ -452,7 +452,7 @@ func apply_vacuum_pull(pull_impulse: Vector3) -> void:
 	if current_state == State.DEAD:
 		return
 	if current_state == State.TELEGRAPH or current_state == State.FIRING:
-		_end_firing()
+		set_state(State.CHASE)
 	super.apply_vacuum_pull(pull_impulse)
 
 func die(death_info: Dictionary = {}) -> void:
