@@ -204,6 +204,12 @@ func _ready() -> void:
 	if head_hitbox:
 		head_hitbox.set_meta("enemy", self)
 		
+	if eyes:
+		var mat = eyes.get_surface_override_material(0)
+		if mat:
+			eyes_material = mat.duplicate()
+			eyes.set_surface_override_material(0, eyes_material)
+		
 	if detection_area:
 		detection_area.body_entered.connect(_on_detection_area_body_entered)
 		
