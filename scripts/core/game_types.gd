@@ -12,7 +12,7 @@ enum BPMTier {
 }
 
 ## Преобразует enum BPMTier в строковое представление
-static func tier_to_string(tier: BPMTier) -> String:
+func tier_to_string(tier: BPMTier) -> String:
 	match tier:
 		BPMTier.CALM:
 			return "CALM"
@@ -43,7 +43,7 @@ const DEBUG_ENABLED: bool = false
 ## Разрешает узел, способный принимать урон (метод take_damage).
 ## Проверяет сначала сам коллайдер, затем его метаданные "enemy", затем его родителя (например, Area3D HeadHitbox у врага).
 ## Возвращает найденный Node с методом take_damage либо null.
-static func resolve_damageable(collider: Node) -> Node:
+func resolve_damageable(collider: Node) -> Node:
 	if not is_instance_valid(collider):
 		return null
 	if collider.has_method("take_damage"):
@@ -60,7 +60,7 @@ static func resolve_damageable(collider: Node) -> Node:
 ## Разрешает узел врага (находится в группе "enemy").
 ## Проверяет сначала сам узел, затем его метаданные "enemy", затем его родителя (например, Area3D HeadHitbox у врага).
 ## Возвращает найденный Node в группе "enemy" либо null.
-static func resolve_enemy(node: Node) -> Node:
+func resolve_enemy(node: Node) -> Node:
 	if not is_instance_valid(node):
 		return null
 	if node.is_in_group("enemy"):
@@ -76,6 +76,6 @@ static func resolve_enemy(node: Node) -> Node:
 
 ## Централизованное отладочное логирование вместо прямого print().
 ## Выводит сообщения в консоль только при активном флаге DEBUG_ENABLED.
-static func debug_log(category: StringName, msg: String) -> void:
+func debug_log(category: StringName, msg: String) -> void:
 	if DEBUG_ENABLED:
 		print("[%s] %s" % [category, msg])

@@ -136,7 +136,7 @@ func trigger_poison_contagion(depth: int = 0) -> void:
 	const CONTAGION_RADIUS: float = 2.5
 	var actor_pos = actor.global_position if is_instance_valid(actor) else Vector3.ZERO
 	var cloud_pos = actor_pos + Vector3(0, 0.8, 0)
-	var actor_name = actor.name if is_instance_valid(actor) else "Enemy"
+	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	
 	GameTypes.debug_log(&"enemy", "[%s] POISON CONTAGION! depth: %d, radius: %.1fm" % [actor_name, depth, CONTAGION_RADIUS])
 	AudioManager.play_sound("flask_splash")
@@ -219,7 +219,7 @@ func add_needle(_is_blood_needle: bool = false) -> void:
 	needle_count = needle_timers.size()
 	effect_applied.emit(&"needle", needle_count)
 	visuals_need_update.emit(&"needle")
-	var actor_name = actor.name if is_instance_valid(actor) else "Enemy"
+	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	GameTypes.debug_log(&"enemy", "[%s] Needle stuck! Total needles: %d" % [actor_name, needle_count])
 
 func _process_needles(delta: float) -> void:
@@ -281,7 +281,7 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 			
 	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
 	
-	var actor_name = actor.name if is_instance_valid(actor) else "Enemy"
+	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	GameTypes.debug_log(&"enemy", "[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
 		actor_name, count, str(was_inflated), burst_radius, damage_per_needle, depth, nearby_enemies.size()
 	])
@@ -372,7 +372,7 @@ func inflate() -> void:
 	effect_applied.emit(&"inflation", 1)
 	visuals_need_update.emit(&"inflation")
 	
-	var actor_name = actor.name if is_instance_valid(actor) else "Enemy"
+	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	GameTypes.debug_log(&"enemy", "[%s] INFLATED with blood!" % actor_name)
 
 func trigger_inflation_explosion(depth: int = 0) -> void:
@@ -408,7 +408,7 @@ func trigger_inflation_explosion(depth: int = 0) -> void:
 	var base_heal: int = 35 if was_killed_melee else 15
 	var heal_amount: int = max(1, int(round(float(base_heal) * mult)))
 	
-	var actor_name = actor.name if is_instance_valid(actor) else "Enemy"
+	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	GameTypes.debug_log(&"enemy", "[%s] DETONATION! chain_depth: %d | mult: %.2f | dmg: %d | radius: %.2fm | heal: %d%s" % [
 		actor_name, depth, mult, explosion_damage, explosion_radius, heal_amount,
 		" (CHAIN LIMIT: NO FURTHER CHAIN DETONATIONS)" if depth >= 3 else ""
