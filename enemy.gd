@@ -1134,8 +1134,8 @@ func _apply_poison_tick(damage: int):
 	else:
 		_on_status_requests_damage(damage, &"poison")
 
-func add_needle():
-	_ensure_status_effect_component().add_needle()
+func add_needle(_is_blood_needle: bool = false):
+	_ensure_status_effect_component().add_needle(_is_blood_needle)
 
 func _update_needle_visuals():
 	if current_state == State.DEAD:
@@ -1621,15 +1621,31 @@ func die(death_info: Dictionary = {}):
 	queue_free()
 
 func _trigger_inflation_explosion(depth: int = 0) -> void:
-	if is_instance_valid(status_effect_component):
-		status_effect_component.trigger_inflation_explosion(depth)
+	_ensure_status_effect_component().trigger_inflation_explosion(depth)
+
+func trigger_inflation_explosion(depth: int = 0) -> void:
+	_trigger_inflation_explosion(depth)
 
 func _trigger_poison_contagion(depth: int = 0) -> void:
-	if is_instance_valid(status_effect_component):
-		status_effect_component.trigger_poison_contagion(depth)
+	_ensure_status_effect_component().trigger_poison_contagion(depth)
+
+func trigger_poison_contagion(depth: int = 0) -> void:
+	_trigger_poison_contagion(depth)
 
 func _trigger_needle_burst(was_inflated: bool, depth: int) -> void:
-	if is_instance_valid(status_effect_component):
-		status_effect_component.trigger_needle_burst(was_inflated, depth)
+	_ensure_status_effect_component().trigger_needle_burst(was_inflated, depth)
 
+func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
+	_trigger_needle_burst(was_inflated, depth)
 
+func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float) -> void:
+	_ensure_status_effect_component().spawn_explosion_shockwave(scene_root, pos, radius)
+
+func spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float) -> void:
+	_ensure_status_effect_component().spawn_explosion_shockwave(scene_root, pos, radius)
+
+func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float) -> void:
+	_ensure_status_effect_component().spawn_poison_cloud_visual(scene_root, cloud_pos, cloud_radius)
+
+func spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float) -> void:
+	_ensure_status_effect_component().spawn_poison_cloud_visual(scene_root, cloud_pos, cloud_radius)

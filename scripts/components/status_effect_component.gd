@@ -174,6 +174,9 @@ func trigger_poison_contagion(depth: int = 0) -> void:
 				enemy.apply_poison_dot(3.0, 3, 0.5, depth + 1)
 				GameTypes.debug_log(&"enemy", "[%s] CONTAGION INFECTED %s! Stack applied at depth %d" % [actor_name, enemy.name, depth + 1])
 
+func spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float) -> void:
+	_spawn_poison_cloud_visual(scene_root, cloud_pos, cloud_radius)
+
 func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radius: float) -> void:
 	var mesh_inst = MeshInstance3D.new()
 	var smesh = SphereMesh.new()
@@ -204,7 +207,7 @@ func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radi
 # ИГЛЫ (NEEDLES & BURST)
 # ==============================================================================
 
-func add_needle() -> void:
+func add_needle(_is_blood_needle: bool = false) -> void:
 	if is_actor_dead():
 		return
 	if is_instance_valid(actor) and "last_damage_weapon" in actor:
@@ -467,6 +470,9 @@ func trigger_inflation_explosion(depth: int = 0) -> void:
 			if player.has_method("heal"):
 				player.heal(heal_amount, was_killed_melee)
 
+func spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float) -> void:
+	_spawn_explosion_shockwave(scene_root, pos, radius)
+
 func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float) -> void:
 	var sphere = MeshInstance3D.new()
 	var smesh = SphereMesh.new()
@@ -487,7 +493,7 @@ func _spawn_explosion_shockwave(scene_root: Node, pos: Vector3, radius: float) -
 	scene_root.add_child(sphere)
 	sphere.global_position = pos
 	
-	var tween = create_tween().set_parallel(true)
+	var tween = sphere.create_tween().set_parallel(true)
 	tween.tween_property(sphere, "scale", Vector3(radius * 1.6, radius * 1.6, radius * 1.6), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(mat, "albedo_color:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(sphere.queue_free)
