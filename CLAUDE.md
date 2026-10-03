@@ -65,8 +65,8 @@ weapon_caliber/anvil/injector/sewing, `data/*.tres`), `ui/` (hud.gd), плюс
 ## 3. Этап 5 — ЗАКРЫТ. План рефакторинга выполнен целиком
 
 **Итог рефакторинга.** Было четыре файла-бога: enemy.gd 1862, weapon_manager.gd 1645,
-player.gd 1357, skill_manager.gd 489. Стало: enemy.gd 109, weapon_manager.gd 146,
-player.gd 713, skill_manager.gd 255. Логика разнесена по компонентам (`scripts/components/`,
+player.gd 1357, skill_manager.gd 489. Стало: enemy.gd 109, weapon_manager.gd 145,
+player.gd 548 (после выноса wallrun), skill_manager.gd 255. Логика разнесена по компонентам (`scripts/components/`,
 `scripts/player/`), базовым классам (`EnemyBase`/`EnemyGround`, `WeaponBase` + 4 оружия,
 `WeaponData`), HUD (`scripts/ui/hud.gd`) и автозагрузкам (`GameTypes`, `TracerPool`, `GameManager`).
 
