@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://0bd00q6imegi"]
 
-[ext_resource type="Script" uid="uid://hosq2a5ebky0" path="res://blood_pool.gd" id="1_4ykup"]
+[ext_resource type="Script" uid="uid://hosq2a5ebky0" path="res://scripts/effects/blood_pool.gd" id="1_4ykup"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_jq8tk"]
 size = Vector2(3.5, 3.5)

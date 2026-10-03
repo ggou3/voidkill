@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bqi0l10uhl7lw"]
 
-[ext_resource type="Script" uid="uid://dfl340l5yigqc" path="res://blood_splatter.gd" id="1_nd4dr"]
+[ext_resource type="Script" uid="uid://dfl340l5yigqc" path="res://scripts/effects/blood_splatter.gd" id="1_nd4dr"]
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_jq8tk"]
 direction = Vector3(0, 0, 1)
