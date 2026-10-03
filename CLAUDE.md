@@ -62,7 +62,13 @@ weapon_caliber/anvil/injector/sewing, `data/*.tres`), `ui/` (hud.gd), плюс
 - 4.3 `WeaponCaliber`, `WeaponAnvil`, `WeaponInjector`, `WeaponSewing`. Менеджер делегирует
   `w.fire()` / `w.alt_fire()`. weapon_manager 1113 → 306.
 
-## 3. Этап 5 — состояние и что осталось
+## 3. Этап 5 — ЗАКРЫТ. План рефакторинга выполнен целиком
+
+**Итог рефакторинга.** Было четыре файла-бога: enemy.gd 1862, weapon_manager.gd 1645,
+player.gd 1357, skill_manager.gd 489. Стало: enemy.gd 109, weapon_manager.gd 146,
+player.gd 713, skill_manager.gd 255. Логика разнесена по компонентам (`scripts/components/`,
+`scripts/player/`), базовым классам (`EnemyBase`/`EnemyGround`, `WeaponBase` + 4 оружия,
+`WeaponData`), HUD (`scripts/ui/hud.gd`) и автозагрузкам (`GameTypes`, `TracerPool`, `GameManager`).
 
 **5.1 Единый HUD — СДЕЛАНО** (`b966a92`, на момент написания последний коммит ветки).
 `scripts/ui/hud.gd` (`class_name HUD extends CanvasLayer`, 436 строк) висит на узле `HUD`
@@ -116,35 +122,40 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
   подписки, не разобравшись. HUD подписан только на `hud_popup_requested` обоих источников
   (VARIETY — BPMSystem, BLOOD SLAM — SkillManager).
 
-**5.4 GameManager.** Перенести Game Over и рестарт из `scripts/player/player_health.gd`
-(`die` → `gm.trigger_game_over()`, `_on_game_over_triggered`, `restart_game`), удалить закомментированные заготовки
-в `scripts/game_manager.gd` (score, current_wave, enemies_alive, PAUSED, add_score,
-start_next_wave, toggle_pause). Счёт не реализован (есть только в roadmap DESIGN.md) — это
-будущая фича, не рефакторинг; в 5.4 его не трогаем.
+**5.4 GameManager — СДЕЛАНО** (`b13ebeb` — очередь Инъектора, `49e6014` — GameManager).
+- Схема: `Player._ready()` вызывает `GameManager.register_player(self)` (и после перезагрузки
+  сцены); GameManager подписан на `Player.died` и сам решает о Game Over — `trigger_game_over()`
+  переводит в `GAME_OVER`, освобождает курсор, эмитит `game_over_triggered` (HUD показывает экран).
+  `PlayerHealth` о GameManager не знает — при смерти только эмитит `died`. Рестарт —
+  `GameManager.restart_game()` (R в `GameManager._input` и кнопка HUD); `Player.restart_game()`
+  удалён. Закомментированные заготовки (счёт, волны, пауза) и заглушки
+  `activate_blood_buff`/`has_blood_buff` удалены.
+- Строки: game_manager.gd 64 → 45, player_health.gd 109 → 86, bpm_system.gd 164 → 157,
+  player.gd 712 → 713.
+- Порядок при смерти внутри кадра сместился: теперь Game Over → HUD обнуляет HP → сброс
+  движения (было: HUD → сброс → Game Over). Взаимных зависимостей нет.
+- Попутные фиксы смерти (вне плана): автоогонь WeaponManager (`6761223`) и очередь
+  Инъектора (`b13ebeb`) проверяют `is_dead`. Других отложенных по таймеру выстрелов нет.
 
-**Отложено (не блокирует этап 5):**
-- Часть скриптов и все `.tscn` в корне. Перемещать ТОЛЬКО через редактор Godot —
-  агент сломает ссылки в `.tscn`.
-- DESIGN.md разросся: 138 КБ на начало рефакторинга → ~190 КБ (дописывали после каждого
-  шага) — стоит разбить.
+**Отложено — очередь работ после рефакторинга:**
+- Вынос wallrun из player.gd в отдельный файл — единственный путь довести player.gd ниже 600 строк.
+- `exclude` в физ-запросах мили и парирования (`player_combat.gd`) получает узлы вместо
+  `Array[RID]` — исключение не срабатывает; маскируется тем, что луч стартует внутри капсулы
+  игрока. Правильно — `[player.get_rid()]`.
+- `enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"`, а он называется
+  `WeaponManager` — оружие-убийца всегда `"unknown"`, бонус VARIETY работает неверно.
+- Blood Slam (`skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
+  начисляет.
+- DESIGN.md строка 47: моментум кровавого сёрфа +0.05/сек, в коде +0.04 — решить, что правда.
+- `weapon_manager.gd`: поле `skill_manager` объявлено, но не используется.
+- Мёртвая переменная `_gained` в `PlayerHealth.heal()`.
+- Перенос файлов из корня `res://` в `scripts/` — ТОЛЬКО через редактор Godot, агент сломает
+  ссылки в `.tscn`.
+- Разбиение DESIGN.md: 138 КБ на начало рефакторинга → ~190 КБ.
 - ПКМ Швейной машины захардкожен мимо WeaponData (`weapon_sewing.gd`: `ALT_COOLDOWN`,
   `BARRAGE_AMMO_COST`, `NEEDLE_COUNT`, `NEEDLE_DAMAGE`).
 - `was_killed_by_melee` / `was_killed_by_shockwave` / `last_damage_weapon` дублируются:
   в `HealthComponent`, в словаре сигнала `died` и полями на `EnemyBase`.
-- Баг (не правился по правилу 1): `exclude` в физ-запросах мили и парирования
-  (`player_combat.gd`) получает узлы вместо `Array[RID]` — исключение не срабатывает;
-  маскируется тем, что луч стартует внутри капсулы игрока. Правильно — `[player.get_rid()]`.
-- Мёртвая переменная `_gained` в `PlayerHealth.heal()`.
-- `enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"`, а он называется
-  `WeaponManager` — фоллбек всегда даёт `"unknown"`, бонус за разнообразие (попап VARIETY)
-  работает неверно.
-- Blood Slam (`skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
-  начисляет.
-- DESIGN.md строка 47: моментум от кровавого сёрфа указан +0.05/сек, в коде +0.04 — решить,
-  что правда.
-- `weapon_manager.gd`: поле `skill_manager` объявлено, но не используется.
-- `activate_blood_buff` / `has_blood_buff` (BPMSystem) — пустые заглушки, никто не вызывает,
-  кандидаты на удаление.
 
 ## 4. Правила работы
 1. Поведение игры не меняется. Баланс, урон, скорости, тайминги, визуал — нетронуты.
