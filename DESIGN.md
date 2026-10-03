@@ -541,8 +541,8 @@
 - **HealthComponent** (`res://scripts/components/health_component.gd`, `class_name HealthComponent`) — инкапсулирует расчёт и хранение здоровья, обработку урона, учёт глубин цепных реакций (`explosion_chain_depth`, `slam_chain_depth`), фиксацию флагов типа убийства (`was_killed_by_melee`, `was_killed_by_shockwave`, `last_damage_weapon`, `is_execute`).
 - **Сигналы**:
   - `damaged(amount: int, is_crit: bool, hit_pos: Vector3)` — оповещение о нанесении урона (спавн всплывающих цифр урона и VFX брызг крови).
-  - `died(info: Dictionary)` — словарь `info` передаёт `is_headshot`, `is_execute`, `hit_pos`, `knockback`, `source_chain_depth`, `explosion_chain_depth`, `slam_chain_depth`.
-  - **Единственный источник правды о способе убийства** — поля `was_killed_by_melee`, `was_killed_by_shockwave`, `last_damage_weapon` на `HealthComponent`. Дубликаты на `EnemyBase` и в словаре `died` (оставленные на Шаге 3.1 ради совместимости) удалены; `EnemyBase.die()` и `StatusEffectComponent` читают и пишут только компонент.
+  - `died(info: Dictionary)` — словарь `info` передаёт `is_headshot`, `is_execute`, `hit_pos`, `knockback`, `source_chain_depth`.
+  - **Единственный источник правды о способе убийства и глубинах цепей** — поля `was_killed_by_melee`, `was_killed_by_shockwave`, `last_damage_weapon`, `explosion_chain_depth`, `slam_chain_depth` на `HealthComponent`. Дубликаты на `EnemyBase` и в словаре `died` (оставленные на Шаге 3.1 ради совместимости) удалены; `EnemyBase`, `EnemyGround` (wall slam) и `StatusEffectComponent` читают и пишут только компонент.
   - `health_changed(current: int, maximum: int)` — реактивное обновление отладочного HP-бара.
 - **Интеграция с Enemy**:
   - В `enemy.gd` метод `take_damage()` стал тонкой обёрткой: обрабатывает локальные физические реакции CharacterBody3D (отброс, сброс прыжков, прерывание выпада lunge, таймер соударения со стеной `wall_slam_timer`, агр из IDLE в CHASE) и делегирует урон в `health_component.take_damage(...)`.

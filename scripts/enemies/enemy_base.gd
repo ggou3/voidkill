@@ -42,8 +42,6 @@ var fear_check_timer: float = 0.0
 var flee_timer: float = 0.0
 
 var last_headshot_bonus_frame: int = -1
-var explosion_chain_depth: int = 0
-var slam_chain_depth: int = 0
 
 var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
@@ -534,8 +532,6 @@ func die(death_info: Dictionary = {}) -> void:
 	AudioManager.play_sound("enemy_death")
 	
 	if not death_info.is_empty():
-		explosion_chain_depth = death_info.get("explosion_chain_depth", explosion_chain_depth)
-		slam_chain_depth = death_info.get("slam_chain_depth", slam_chain_depth)
 		if death_info.get("source_chain_depth", -1) >= 3:
 			is_inflated = false
 		if death_info.get("is_headshot", false):
@@ -543,11 +539,8 @@ func die(death_info: Dictionary = {}) -> void:
 				eyes.visible = false
 			if head_mesh:
 				head_mesh.visible = false
-	elif is_instance_valid(health_component):
-		explosion_chain_depth = health_component.explosion_chain_depth
-		slam_chain_depth = health_component.slam_chain_depth
 
-	# Источник правды о способе убийства — HealthComponent
+	# Источник правды о способе убийства и глубинах цепей — HealthComponent
 	var has_health = is_instance_valid(health_component)
 	var killed_by_melee: bool = health_component.was_killed_by_melee if has_health else false
 	var killed_by_shockwave: bool = health_component.was_killed_by_shockwave if has_health else false
@@ -592,7 +585,7 @@ func die(death_info: Dictionary = {}) -> void:
 			det_col.set_deferred("disabled", true)
 			
 	var was_inflated = is_inflated
-	var chain_depth = health_component.explosion_chain_depth if is_instance_valid(health_component) else explosion_chain_depth
+	var chain_depth = health_component.explosion_chain_depth if is_instance_valid(health_component) else 0
 	if needle_count > 0:
 		_trigger_needle_burst(was_inflated, chain_depth)
 
@@ -745,7 +738,6 @@ func _on_status_requests_damage(amount: int, kind: StringName) -> void:
 			if is_instance_valid(player):
 				start_chase(player)
 		if health <= 0:
-			explosion_chain_depth = 0
 			if is_instance_valid(health_component):
 				health_component.explosion_chain_depth = 0
 			set_state(State.DEAD)

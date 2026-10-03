@@ -711,7 +711,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 	var base_wall_damage = mini(int(round(saturated_damage)), int(wall_slam_max_damage))
 	
 	# Глубина цепи wall slam хранится в HealthComponent (записывается при уроне ударной волной)
-	var slam_depth: int = health_component.slam_chain_depth if is_instance_valid(health_component) else slam_chain_depth
+	var slam_depth: int = health_component.slam_chain_depth if is_instance_valid(health_component) else 0
 	var my_mult: float = 1.0
 	if slam_depth == 0:
 		my_mult = 1.0
@@ -770,7 +770,6 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 	_update_health_bar()
 	_spawn_damage_number(wall_damage, col.get_position(), false)
 	if health <= 0:
-		explosion_chain_depth = 0
 		if is_instance_valid(health_component):
 			health_component.explosion_chain_depth = 0
 		var player = get_tree().get_first_node_in_group("player")
