@@ -562,8 +562,8 @@ func die(death_info: Dictionary = {}) -> void:
 		if was_killed_by_shockwave or was_killed_by_melee:
 			weapon_used = "melee"
 		elif weapon_used == "":
-			var weapons_mgr = player.get_node_or_null("Weapons")
-			if is_instance_valid(weapons_mgr) and "current_weapon_index" in weapons_mgr:
+			var weapons_mgr = player.weapons if player is Player else null
+			if weapons_mgr is WeaponManager:
 				match weapons_mgr.current_weapon_index:
 					0: weapon_used = "caliber0"
 					1: weapon_used = "anvil"
