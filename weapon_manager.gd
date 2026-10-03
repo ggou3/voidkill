@@ -79,7 +79,7 @@ func _process(delta: float) -> void:
 
 	# Автоматическая стрельба при удержании ЛКМ
 	if current_weapon_index < weapons.size() and weapons[current_weapon_index].data and weapons[current_weapon_index].data.is_automatic:
-		if Input.is_action_pressed("shoot") and not is_reloading and weapons[current_weapon_index].can_fire():
+		if Input.is_action_pressed("shoot") and not is_reloading and weapons[current_weapon_index].can_fire() and not (player_node is Player and player_node.is_dead):
 			var inf = false
 			if player_node is Player:
 				inf = player_node.bpm_system.has_infinite_ammo()
