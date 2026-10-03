@@ -710,19 +710,21 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 	var saturated_damage = wall_slam_max_damage * (1.0 - exp(-raw_wall_damage / wall_slam_max_damage))
 	var base_wall_damage = mini(int(round(saturated_damage)), int(wall_slam_max_damage))
 	
+	# Глубина цепи wall slam хранится в HealthComponent (записывается при уроне ударной волной)
+	var slam_depth: int = health_component.slam_chain_depth if is_instance_valid(health_component) else slam_chain_depth
 	var my_mult: float = 1.0
-	if slam_chain_depth == 0:
+	if slam_depth == 0:
 		my_mult = 1.0
-	elif slam_chain_depth == 1:
+	elif slam_depth == 1:
 		my_mult = 0.60
-	elif slam_chain_depth == 2:
+	elif slam_depth == 2:
 		my_mult = 0.35
 	else:
 		my_mult = 0.20
-		
+
 	var wall_damage = int(round(base_wall_damage * my_mult))
 	GameTypes.debug_log(&"enemy", "[%s] Wall slam! Speed: %.1f, chain_depth: %d, damage: %d (base: %d)" % [
-		name, impact_speed, slam_chain_depth, wall_damage, base_wall_damage
+		name, impact_speed, slam_depth, wall_damage, base_wall_damage
 	])
 	
 	var other = col.get_collider()
@@ -733,7 +735,7 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 		else:
 			target = GameTypes.resolve_damageable(other)
 		if target and target != self and target.has_method("take_damage"):
-			var next_depth = slam_chain_depth + 1
+			var next_depth = slam_depth + 1
 			var next_mult: float = 1.0
 			if next_depth == 1:
 				next_mult = 0.60
@@ -769,6 +771,8 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 	_spawn_damage_number(wall_damage, col.get_position(), false)
 	if health <= 0:
 		explosion_chain_depth = 0
+		if is_instance_valid(health_component):
+			health_component.explosion_chain_depth = 0
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()
