@@ -39,9 +39,7 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 func heal(amount: int, is_melee_bonus: bool = false):
 	if is_dead or amount <= 0:
 		return
-	var old_health = health
 	health = min(max_health, health + amount)
-	var _gained = health - old_health
 	health_changed.emit(health, max_health)
 	AudioManager.play_sound("player_heal")
 	_spawn_heal_feedback(amount, is_melee_bonus)

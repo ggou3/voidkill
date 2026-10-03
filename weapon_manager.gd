@@ -25,7 +25,6 @@ var is_bursting: bool:
 		return false
 
 @onready var head = $"../Head"
-@onready var skill_manager = get_node_or_null("../SkillManager")
 
 func _ready() -> void:
 	_init_weapons()
