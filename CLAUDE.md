@@ -74,15 +74,34 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 Строки: player.gd 1362 → 1274, weapon_manager.gd 306 → 146, skill_manager.gd 490 → 393.
 Ручная проверка в игре после 5.1 мне неизвестна — уточнить у пользователя.
 
-**5.2 Разбор player.gd** (сейчас 1274 строки). Вынести `player_combat.gd` (мили
-`perform_melee`, конусная волна `spawn_cone_shockwave_vfx`, парирование
-`_check_and_deflect_projectiles`/`_spawn_deflect_*`) и `player_health.gd` (`take_damage`,
-`heal`, `_spawn_heal_feedback`, `die`). В player.gd — только движение. Цель — ≤ 600 строк.
+**5.2 Разбор player.gd — СДЕЛАНО** (`875132f`).
+- `scripts/player/player_combat.gd` (`class_name PlayerCombat extends Node`, 521 строка):
+  `perform_melee` (одиночный удар + конусная волна), execute-добивание, парирование
+  (`_check_and_deflect_projectiles`, `_spawn_deflect_flash`, `_spawn_deflect_feedback`),
+  `spawn_cone_shockwave_vfx`, все `@export` мили/конуса, `melee_timer` и `recent_peak_speed`
+  (`tick_cooldown`, `track_peak_speed` зовутся из `Player._physics_process` в прежних точках кадра).
+- `scripts/player/player_health.gd` (`class_name PlayerHealth extends Node`, 109 строк):
+  `max_health`, `health`, `is_dead`, `take_damage`, `heal`, `_spawn_heal_feedback`, `die`,
+  связь с GameManager (`trigger_game_over`, `game_over_triggered`, `restart_game`).
+- Связь: узлы `PlayerHealth` и `PlayerCombat` — дети Player в player.tscn; Player держит
+  прямые ссылки (`$PlayerHealth`, `$PlayerCombat`) и в `_ready()` вызывает `setup(self)`.
+  `health` / `max_health` / `is_dead` на Player — проксирующие свойства; `take_damage`, `heal`,
+  `restart_game` — делегирующие методы. Сигналы `health_changed` / `died` объявлены на Player
+  и ретранслируются из PlayerHealth — HUD и внешний код не правились. Сброс движения при
+  смерти — в `Player._on_health_died` (порядок прежний: HUD → сброс → `trigger_game_over`).
+- Строки: player.gd 1274 → 720, player_combat.gd 521, player_health.gd 109.
+- Цель ≤ 600 строк НЕ достигнута: в player.gd осталось только движение. Дальше сокращать
+  можно лишь выносом wallrun в отдельный файл — кандидат на отдельный шаг, 5.3 не блокирует.
 
 **5.3 BPM в единственного владельца.** Вынести BPM из skill_manager.gd в
-`scripts/player/bpm_system.gd`. Удалить прокси в player.gd (`has_infinite_ammo`,
-`get_bpm_ratio`, `get_current_max_speed`, `get_bpm_damage_reduction` — проверить, что из них
-прокси, а что логика движения). Фоллбек `_get_bpm_tier()` после этапа 4 живёт уже не в
+`scripts/player/bpm_system.gd`. Разбор «прокси» в player.gd:
+- `has_infinite_ammo` — чистый прокси (тир == OVERDRIVE у SkillManager).
+- `get_bpm_ratio` — логика BPM (нормализация `(bpm-50)/150`), место в BPM-системе.
+- `get_current_max_speed` — логика движения (lerp `normal_max_speed`→`blood_buffed_max_speed`
+  по ratio), остаётся в player.gd.
+- `get_bpm_damage_reduction` — правило баланса, ближе к PlayerHealth или BPM-системе.
+
+Фоллбек `_get_bpm_tier()` после этапа 4 живёт уже не в
 weapon_manager, а в `scripts/weapons/weapon_base.gd` (ищет `../SkillManager`, затем `player.skills`).
 
 **5.4 GameManager.** Перенести Game Over и рестарт из player.gd (`die` → `gm.trigger_game_over()`,
@@ -101,6 +120,10 @@ start_next_wave, toggle_pause). Счёт не реализован (есть т�
   `BARRAGE_AMMO_COST`, `NEEDLE_COUNT`, `NEEDLE_DAMAGE`).
 - `was_killed_by_melee` / `was_killed_by_shockwave` / `last_damage_weapon` дублируются:
   в `HealthComponent`, в словаре сигнала `died` и полями на `EnemyBase`.
+- Баг (не правился по правилу 1): `exclude` в физ-запросах мили и парирования
+  (`player_combat.gd`) получает узлы вместо `Array[RID]` — исключение не срабатывает;
+  маскируется тем, что луч стартует внутри капсулы игрока. Правильно — `[player.get_rid()]`.
+- Мёртвая переменная `_gained` в `PlayerHealth.heal()`.
 
 ## 4. Правила работы
 1. Поведение игры не меняется. Баланс, урон, скорости, тайминги, визуал — нетронуты.
