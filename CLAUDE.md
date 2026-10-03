@@ -104,8 +104,8 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 Фоллбек `_get_bpm_tier()` после этапа 4 живёт уже не в
 weapon_manager, а в `scripts/weapons/weapon_base.gd` (ищет `../SkillManager`, затем `player.skills`).
 
-**5.4 GameManager.** Перенести Game Over и рестарт из player.gd (`die` → `gm.trigger_game_over()`,
-`_on_game_over_triggered`, `restart_game`), удалить закомментированные заготовки
+**5.4 GameManager.** Перенести Game Over и рестарт из `scripts/player/player_health.gd`
+(`die` → `gm.trigger_game_over()`, `_on_game_over_triggered`, `restart_game`), удалить закомментированные заготовки
 в `scripts/game_manager.gd` (score, current_wave, enemies_alive, PAUSED, add_score,
 start_next_wave, toggle_pause). Счёт не реализован (есть только в roadmap DESIGN.md) — это
 будущая фича, не рефакторинг; в 5.4 его не трогаем.
@@ -114,8 +114,7 @@ start_next_wave, toggle_pause). Счёт не реализован (есть т�
 - Часть скриптов и все `.tscn` в корне. Перемещать ТОЛЬКО через редактор Godot —
   агент сломает ссылки в `.tscn`.
 - DESIGN.md разросся: 138 КБ на начало рефакторинга → ~190 КБ (дописывали после каждого
-  шага) — стоит разбить. Местами устарел:
-  «player.gd ~700 строк» в разделе 7 неверно.
+  шага) — стоит разбить.
 - ПКМ Швейной машины захардкожен мимо WeaponData (`weapon_sewing.gd`: `ALT_COOLDOWN`,
   `BARRAGE_AMMO_COST`, `NEEDLE_COUNT`, `NEEDLE_DAMAGE`).
 - `was_killed_by_melee` / `was_killed_by_shockwave` / `last_damage_weapon` дублируются:
