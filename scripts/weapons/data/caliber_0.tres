@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://budg66vj5prkx"]
 
-[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1_weapondata"]
+[ext_resource type="Script" uid="uid://djyjte4ebe4e2" path="res://scripts/weapons/weapon_data.gd" id="1_weapondata"]
 
 [resource]
 script = ExtResource("1_weapondata")
@@ -8,17 +8,12 @@ weapon_id = &"caliber_0"
 name = "КАЛИБР-0"
 max_ammo = 4
 damage = 70
-pellets = 1
-spread = 0.0
-fire_rate = 1.0
 reload_time = 1.1
 cam_shake = 0.09
 weapon_kick = 0.35
 knockback = 4.5
-upward_kick = 0.0
 headshot_multiplier = 2.2
 air_multiplier = 2.0
 has_vacuum = true
 vacuum_radius = 2.5
 vacuum_force = 25.6
-is_automatic = false

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://d1qocbt0u2ejq"]
 
-[ext_resource type="Script" path="res://scripts/weapons/weapon_data.gd" id="1_weapondata"]
+[ext_resource type="Script" uid="uid://djyjte4ebe4e2" path="res://scripts/weapons/weapon_data.gd" id="1_weapondata"]
 
 [resource]
 script = ExtResource("1_weapondata")
@@ -8,17 +8,10 @@ weapon_id = &"injector"
 name = "ИНЪЕКТОР"
 max_ammo = 6
 damage = 10
-pellets = 1
 spread = 0.045
 fire_rate = 0.28
 reload_time = 1.4
 cam_shake = 0.025
 weapon_kick = 0.08
 knockback = 1.5
-upward_kick = 0.0
 headshot_multiplier = 1.5
-air_multiplier = 1.0
-has_vacuum = false
-vacuum_radius = 0.0
-vacuum_force = 0.0
-is_automatic = false
