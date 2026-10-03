@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_bomber.gd" id="1_bomber"]
+[ext_resource type="Script" uid="uid://el0rjyyefgls" path="res://scripts/enemies/enemy_bomber.gd" id="1_bomber"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bomber"]
 radius = 0.32

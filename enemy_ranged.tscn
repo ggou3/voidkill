@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_ranged.gd" id="1_ranged"]
+[ext_resource type="Script" uid="uid://cx3i5jmxfth3y" path="res://scripts/enemies/enemy_ranged.gd" id="1_ranged"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
 radius = 0.36

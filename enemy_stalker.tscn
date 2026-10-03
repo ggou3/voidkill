@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_stalker.gd" id="1_stalker"]
-[ext_resource type="Shader" path="res://stalker_distortion.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://b614faa0lxdd3" path="res://scripts/enemies/enemy_stalker.gd" id="1_stalker"]
+[ext_resource type="Shader" uid="uid://cxeb51aian8lj" path="res://stalker_distortion.gdshader" id="2_shader"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_stalker"]
 radius = 0.34

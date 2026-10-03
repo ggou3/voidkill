@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_hunter.gd" id="1_hunter"]
+[ext_resource type="Script" uid="uid://dgbklb30lbd5u" path="res://scripts/enemies/enemy_hunter.gd" id="1_hunter"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hunter"]
 radius = 0.38

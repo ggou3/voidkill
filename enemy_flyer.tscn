@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_flyer.gd" id="1_flyer"]
+[ext_resource type="Script" uid="uid://532ichhk205" path="res://scripts/enemies/enemy_flyer.gd" id="1_flyer"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_body"]
 radius = 0.48

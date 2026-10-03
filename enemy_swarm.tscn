@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_swarm.gd" id="1_swarm"]
+[ext_resource type="Script" uid="uid://b232ow0r20j10" path="res://scripts/enemies/enemy_swarm.gd" id="1_swarm"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_swarm"]
 radius = 0.22

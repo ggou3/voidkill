@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_turret.gd" id="1_turret"]
+[ext_resource type="Script" uid="uid://ca0msj7frqnhe" path="res://scripts/enemies/enemy_turret.gd" id="1_turret"]
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_collision"]
 height = 1.35

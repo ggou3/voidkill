@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://rkw44u1bvqo3"]
 
-[ext_resource type="Script" uid="uid://n81thag53g2p" path="res://enemy.gd" id="1_7k104"]
-[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
-[ext_resource type="Script" path="res://scripts/components/status_effect_component.gd" id="3_status"]
-[ext_resource type="Script" path="res://scripts/components/enemy_health_bar.gd" id="4_health_bar"]
+[ext_resource type="Script" uid="uid://n81thag53g2p" path="res://scripts/enemies/enemy.gd" id="1_7k104"]
+[ext_resource type="Script" uid="uid://cgc03silunrrk" path="res://scripts/components/health_component.gd" id="2_health"]
+[ext_resource type="Script" uid="uid://crtyldtnikxf4" path="res://scripts/components/status_effect_component.gd" id="3_status"]
+[ext_resource type="Script" uid="uid://dnied5svgoyn0" path="res://scripts/components/enemy_health_bar.gd" id="4_health_bar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
 radius = 0.36
@@ -52,7 +52,6 @@ shape = SubResource("CapsuleShape3D_3xd07")
 
 [node name="HeadHitbox" type="Area3D" parent="." unique_id=991122334 groups=["enemy_head"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
-collision_layer = 1
 collision_mask = 0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox" unique_id=991122335]
@@ -76,9 +75,8 @@ mesh = SubResource("BoxMesh_3xd07")
 surface_material_override/0 = SubResource("StandardMaterial3D_6fhyq")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="." unique_id=1412095861]
-target_desired_distance = 1.5
 path_desired_distance = 0.8
-avoidance_enabled = false
+target_desired_distance = 1.5
 radius = 0.3
 neighbor_distance = 3.0
 max_neighbors = 3
@@ -86,7 +84,6 @@ time_horizon_agents = 1.5
 
 [node name="DetectionArea" type="Area3D" parent="." unique_id=314159265]
 collision_layer = 0
-collision_mask = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea" unique_id=271828182]
 shape = SubResource("SphereShape3D_detection")

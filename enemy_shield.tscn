@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://enemy_shield.gd" id="1_shield"]
+[ext_resource type="Script" uid="uid://8njsgjchvlmd" path="res://scripts/enemies/enemy_shield.gd" id="1_shield"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_shield"]
 radius = 0.38
