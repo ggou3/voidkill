@@ -64,10 +64,9 @@ func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3, is_melee: bo
 	damaged.emit(amount, is_headshot, hit_pos)
 	
 	if health <= 0 and prev_health > 0:
+		# Способ убийства (was_killed_by_*, last_damage_weapon) не дублируется в death_info —
+		# потребители читают его из полей HealthComponent.
 		var death_info: Dictionary = {
-			"killer_weapon": last_damage_weapon,
-			"was_melee": was_killed_by_melee,
-			"was_shockwave": was_killed_by_shockwave,
 			"is_headshot": is_headshot,
 			"is_execute": is_execute,
 			"hit_pos": hit_pos,

@@ -41,9 +41,6 @@ var last_hit_knockback: Vector3 = Vector3.ZERO
 var fear_check_timer: float = 0.0
 var flee_timer: float = 0.0
 
-var was_killed_by_melee: bool = false
-var was_killed_by_shockwave: bool = false
-var last_damage_weapon: String = ""
 var last_headshot_bonus_frame: int = -1
 var explosion_chain_depth: int = 0
 var slam_chain_depth: int = 0
@@ -537,9 +534,6 @@ func die(death_info: Dictionary = {}) -> void:
 	AudioManager.play_sound("enemy_death")
 	
 	if not death_info.is_empty():
-		was_killed_by_melee = death_info.get("was_melee", was_killed_by_melee)
-		was_killed_by_shockwave = death_info.get("was_shockwave", was_killed_by_shockwave)
-		last_damage_weapon = death_info.get("killer_weapon", last_damage_weapon)
 		explosion_chain_depth = death_info.get("explosion_chain_depth", explosion_chain_depth)
 		slam_chain_depth = death_info.get("slam_chain_depth", slam_chain_depth)
 		if death_info.get("source_chain_depth", -1) >= 3:
@@ -550,16 +544,19 @@ func die(death_info: Dictionary = {}) -> void:
 			if head_mesh:
 				head_mesh.visible = false
 	elif is_instance_valid(health_component):
-		was_killed_by_melee = health_component.was_killed_by_melee
-		was_killed_by_shockwave = health_component.was_killed_by_shockwave
-		last_damage_weapon = health_component.last_damage_weapon
 		explosion_chain_depth = health_component.explosion_chain_depth
 		slam_chain_depth = health_component.slam_chain_depth
-	
+
+	# Источник правды о способе убийства — HealthComponent
+	var has_health = is_instance_valid(health_component)
+	var killed_by_melee: bool = health_component.was_killed_by_melee if has_health else false
+	var killed_by_shockwave: bool = health_component.was_killed_by_shockwave if has_health else false
+	var killer_weapon: String = health_component.last_damage_weapon if has_health else ""
+
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and "bpm_system" in player and is_instance_valid(player.bpm_system):
-		var weapon_used = last_damage_weapon
-		if was_killed_by_shockwave or was_killed_by_melee:
+		var weapon_used = killer_weapon
+		if killed_by_shockwave or killed_by_melee:
 			weapon_used = "melee"
 		elif weapon_used == "":
 			var weapons_mgr = player.weapons if player is Player else null
@@ -574,7 +571,7 @@ func die(death_info: Dictionary = {}) -> void:
 				weapon_used = "unknown"
 				
 		if player.bpm_system.has_method("record_kill_bpm"):
-			player.bpm_system.record_kill_bpm(weapon_used, was_killed_by_shockwave)
+			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave)
 	
 	if hp_sprite:
 		hp_sprite.visible = false
@@ -737,7 +734,6 @@ func _on_status_requests_damage(amount: int, kind: StringName) -> void:
 	if current_state == State.DEAD:
 		return
 	if kind == &"poison":
-		last_damage_weapon = "injector"
 		if is_instance_valid(health_component):
 			health_component.last_damage_weapon = "injector"
 		health -= amount

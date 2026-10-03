@@ -79,11 +79,9 @@ func remove_slow() -> void:
 func apply_poison_dot(duration: float = 3.0, damage_per_tick: int = 3, interval: float = 0.5, chain_depth: int = 0) -> void:
 	if is_actor_dead():
 		return
-	if is_instance_valid(actor) and "last_damage_weapon" in actor:
-		actor.last_damage_weapon = "injector"
 	if is_instance_valid(health_component):
 		health_component.last_damage_weapon = "injector"
-		
+
 	if poison_stacks.size() < MAX_POISON_STACKS:
 		poison_stacks.append({
 			"duration": duration,
@@ -210,8 +208,6 @@ func _spawn_poison_cloud_visual(scene_root: Node, cloud_pos: Vector3, cloud_radi
 func add_needle(_is_blood_needle: bool = false) -> void:
 	if is_actor_dead():
 		return
-	if is_instance_valid(actor) and "last_damage_weapon" in actor:
-		actor.last_damage_weapon = "sewing"
 	if is_instance_valid(health_component):
 		health_component.last_damage_weapon = "sewing"
 		
@@ -363,11 +359,9 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 func inflate() -> void:
 	if is_inflated or is_actor_dead():
 		return
-	if is_instance_valid(actor) and "last_damage_weapon" in actor:
-		actor.last_damage_weapon = "injector"
 	if is_instance_valid(health_component):
 		health_component.last_damage_weapon = "injector"
-		
+
 	is_inflated = true
 	effect_applied.emit(&"inflation", 1)
 	visuals_need_update.emit(&"inflation")
@@ -402,9 +396,7 @@ func trigger_inflation_explosion(depth: int = 0) -> void:
 	var was_killed_melee: bool = false
 	if is_instance_valid(health_component):
 		was_killed_melee = health_component.was_killed_by_melee
-	elif is_instance_valid(actor) and "was_killed_by_melee" in actor:
-		was_killed_melee = actor.was_killed_by_melee
-		
+
 	var base_heal: int = 35 if was_killed_melee else 15
 	var heal_amount: int = max(1, int(round(float(base_heal) * mult)))
 	
