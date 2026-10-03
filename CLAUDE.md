@@ -93,16 +93,28 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - Цель ≤ 600 строк НЕ достигнута: в player.gd осталось только движение. Дальше сокращать
   можно лишь выносом wallrun в отдельный файл — кандидат на отдельный шаг, 5.3 не блокирует.
 
-**5.3 BPM в единственного владельца.** Вынести BPM из skill_manager.gd в
-`scripts/player/bpm_system.gd`. Разбор «прокси» в player.gd:
-- `has_infinite_ammo` — чистый прокси (тир == OVERDRIVE у SkillManager).
-- `get_bpm_ratio` — логика BPM (нормализация `(bpm-50)/150`), место в BPM-системе.
-- `get_current_max_speed` — логика движения (lerp `normal_max_speed`→`blood_buffed_max_speed`
-  по ratio), остаётся в player.gd.
-- `get_bpm_damage_reduction` — правило баланса, ближе к PlayerHealth или BPM-системе.
-
-Фоллбек `_get_bpm_tier()` после этапа 4 живёт уже не в
-weapon_manager, а в `scripts/weapons/weapon_base.gd` (ищет `../SkillManager`, затем `player.skills`).
+**5.3 BPM в единственного владельца — СДЕЛАНО** (`8372fc4`).
+- `scripts/player/bpm_system.gd` (`class_name BPMSystem extends Node`, 164 строки), узел
+  `BPMSystem` — ребёнок Player в player.tscn, `setup(self)` из `Player._ready()`. Перенесено
+  побуквенно из skill_manager.gd: `bpm`, `MIN_BPM`/`MAX_BPM`, `time_since_bpm_gain`, пассивный
+  спад, `add_bpm`, `record_kill_bpm` (+`last_kill_weapon`, бонус VARIETY), `drop_bpm_on_damage`,
+  `force_max_bpm`, `get_bpm_tier`, моментум (`combat_momentum`, `time_since_momentum_gain`,
+  `add_combat_momentum`, непрерывные источники и спад), `activate_blood_buff`/`has_blood_buff`.
+  Из player.gd: `get_bpm_ratio`, `get_bpm_damage_reduction`, `has_infinite_ammo` (прокси удалены).
+  `get_current_max_speed` остался в player.gd (логика движения), читает `bpm_system.get_bpm_ratio()`.
+- Фоллбек `_get_bpm_tier()` удалён из weapon_base.gd; оружие читает
+  `_get_player().bpm_system.get_bpm_tier()`.
+- Все потребители переведены на `player.bpm_system`: враги (EnemyBase Fear Chain и выход из
+  FLEE, EnemyGround, EnemyRanged, EnemyTurret, EnemyHunter — сырое `bpm >= 140.0`, начисление
+  за убийство/хедшот), оружие, WeaponManager (INF-патроны автоогня), PlayerHealth, шейдер
+  `overdrive_factor`, HUD. SkillManager — только дэш и слэм (+ `hud_popup_requested` для BLOOD SLAM).
+- Строки: skill_manager.gd 393 → 255, player.gd 720 → 712, bpm_system.gd 164,
+  weapon_base.gd 222 → 211.
+- ВАЖНО: HUD НИКОГДА не был подписан на `bpm_changed` / `tier_changed` / `momentum_changed` —
+  он каждый кадр читает `bpm_system.bpm`, `get_bpm_tier()`, `combat_momentum` в `_process`.
+  Сигналы переехали в BPMSystem и подписчиков не имеют. Это не баг 5.1/5.3 — не «чинить»
+  подписки, не разобравшись. HUD подписан только на `hud_popup_requested` обоих источников
+  (VARIETY — BPMSystem, BLOOD SLAM — SkillManager).
 
 **5.4 GameManager.** Перенести Game Over и рестарт из `scripts/player/player_health.gd`
 (`die` → `gm.trigger_game_over()`, `_on_game_over_triggered`, `restart_game`), удалить закомментированные заготовки
@@ -123,6 +135,16 @@ start_next_wave, toggle_pause). Счёт не реализован (есть т�
   (`player_combat.gd`) получает узлы вместо `Array[RID]` — исключение не срабатывает;
   маскируется тем, что луч стартует внутри капсулы игрока. Правильно — `[player.get_rid()]`.
 - Мёртвая переменная `_gained` в `PlayerHealth.heal()`.
+- `enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"`, а он называется
+  `WeaponManager` — фоллбек всегда даёт `"unknown"`, бонус за разнообразие (попап VARIETY)
+  работает неверно.
+- Blood Slam (`skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
+  начисляет.
+- DESIGN.md строка 47: моментум от кровавого сёрфа указан +0.05/сек, в коде +0.04 — решить,
+  что правда.
+- `weapon_manager.gd`: поле `skill_manager` объявлено, но не используется.
+- `activate_blood_buff` / `has_blood_buff` (BPMSystem) — пустые заглушки, никто не вызывает,
+  кандидаты на удаление.
 
 ## 4. Правила работы
 1. Поведение игры не меняется. Баланс, урон, скорости, тайминги, визуал — нетронуты.
@@ -184,6 +206,11 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
 - **Проксирующие свойства**: когда состояние уезжает в компонент, поле на владельце
   оформляется свойством с get/set к компоненту — внешний код (`e.health`, `e.needle_count`,
   `"health" in e`) работает без правок. Сработало четыре раза.
+- **Строковые проверки молчат при переезде состояния**: `"skills" in player`,
+  `"bpm" in player.skills`, `has_method("...")` после переноса полей в другой узел не дают
+  ошибки компиляции, а молча возвращают дефолт (BPM 0, OVERDRIVE никогда). При переносе
+  состояния между узлами — поиск по строковым именам (`"bpm"`, `"skills"`, имена методов
+  в `has_method`), а не только по обращениям через точку.
 - **Порядок `_ready()`**: дочерние узлы готовы раньше родителя; HUD подключается через
   `call_deferred`.
 - **Таймеры компонентов**: при выносе тиков в компонент удалять циклы и у наследников без
