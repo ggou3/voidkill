@@ -30,6 +30,9 @@ func _fire_injector_burst() -> void:
 			break
 		if weapon_manager and weapon_manager.current_weapon_index != slot_index:
 			break
+		var player = _get_player()
+		if player is Player and player.is_dead:
+			break
 		if head:
 			head.add_recoil(data.cam_shake, data.weapon_kick)
 			head.trigger_muzzle_flash(false)
