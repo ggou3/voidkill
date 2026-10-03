@@ -27,12 +27,7 @@ signal died
 signal speed_updated(speed: float, bhop_chain: int)
 signal blood_surf_status_changed(active: bool)
 
-# Настройки механики Wallrun и Wall-jump
-@export var wallrun_min_speed: float = 5.0
-@export var wallrun_speed: float = 11.0
-@export var wallrun_max_duration: float = 1.2
-@export var wallrun_jump_vertical_boost: float = 0.7
-@export var wallrun_jump_horizontal_boost: float = 8.0
+# Настройки Wall-jump (параметры wallrun — на узле PlayerWallrun)
 @export var wall_jump_cooldown: float = 0.35
 
 # Настройки отзывчивости управления (Coyote time и Jump buffer)
@@ -69,23 +64,14 @@ var prev_air_time: float = 0.0
 var bhop_chain: int = 0
 var footstep_timer: float = 0.0
 
-var is_wallrunning: bool = false
-var wallrun_side: float = 0.0 # -1.0 = стена слева, 1.0 = стена справа
-var wallrun_timer: float = 0.0
-var wallrun_normal: Vector3 = Vector3.ZERO
-var wallrun_cooldown: float = 0.0
-var last_wallrun_normal: Vector3 = Vector3.ZERO
-var wallrun_exhausted: bool = false
-
 @onready var head = $Head
 @onready var collision_shape = $CollisionShape3D
 @onready var weapons = $WeaponManager
 @onready var skills = $SkillManager
 @onready var post_process_rect: ColorRect = get_node_or_null("CanvasLayer/ColorRect")
-@onready var left_wall_ray: RayCast3D = get_node_or_null("LeftWallRay")
-@onready var right_wall_ray: RayCast3D = get_node_or_null("RightWallRay")
 @onready var health_component: PlayerHealth = $PlayerHealth
 @onready var combat: PlayerCombat = $PlayerCombat
+@onready var wallrun: PlayerWallrun = $PlayerWallrun
 @onready var bpm_system: BPMSystem = $BPMSystem
 
 # Проксирующие свойства к PlayerHealth: внешний код (враги, HUD) обращается к player.health / is_dead напрямую
@@ -115,12 +101,6 @@ func get_current_max_speed() -> float:
 	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_system.get_bpm_ratio())
 
 func _ready():
-	is_wallrunning = false
-	wallrun_side = 0.0
-	wallrun_timer = 0.0
-	wallrun_cooldown = 0.0
-	last_wallrun_normal = Vector3.ZERO
-	wallrun_exhausted = false
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
 	has_jumped = false
@@ -132,6 +112,7 @@ func _ready():
 	health_component.died.connect(_on_health_died)
 	health_component.setup(self)
 	combat.setup(self)
+	wallrun.setup(self)
 	bpm_system.setup(self)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	collision_shape.shape = collision_shape.shape.duplicate()
@@ -232,12 +213,11 @@ func _physics_process(delta):
 		time_on_ground = 0.0
 		coyote_timer -= delta
 	
-	if wallrun_cooldown > 0.0:
-		wallrun_cooldown -= delta
+	wallrun.tick_cooldown(delta)
 
 	# Воспроизведение звуков шагов при беге/ходьбе по земле или wallrun
 	var is_walking_on_floor = is_on_floor() and not is_sliding and not skills.is_dashing and not skills.is_slamming and current_horiz_speed > 1.5
-	var is_stepping = is_walking_on_floor or (is_wallrunning and current_horiz_speed > 3.0)
+	var is_stepping = is_walking_on_floor or (wallrun.is_wallrunning and current_horiz_speed > 3.0)
 	if is_stepping:
 		footstep_timer -= delta
 		if footstep_timer <= 0.0:
@@ -247,27 +227,14 @@ func _physics_process(delta):
 	else:
 		footstep_timer = min(footstep_timer, 0.15)
 
-	# Проверка условий входа в wallrun
-	if not is_on_floor() and not is_wallrunning and not skills.is_dashing and not skills.is_slamming and wallrun_cooldown <= 0.0:
-		if current_horiz_speed >= wallrun_min_speed:
-			var wall_info = check_wallrun_wall()
-			if wall_info.found:
-				var is_same_wall = wallrun_exhausted and (wall_info.normal.dot(last_wallrun_normal) > 0.7)
-				if not is_same_wall:
-					var vel_h = Vector3(velocity.x, 0, velocity.z).normalized()
-					# Игрок движется в сторону стены или вдоль неё (не от неё)
-					if vel_h.dot(wall_info.normal) < 0.2:
-						start_wallrun(wall_info.normal, wall_info.side)
+	# Вход в wallrun / выход при дэше или слэме
+	wallrun.update_entry_and_exit()
 
-	# Если во время wallrun активирован дэш или слэм — выходим из wallrun
-	if is_wallrunning and (skills.is_dashing or skills.is_slamming):
-		end_wallrun()
-	
-	head.update_visuals(delta, current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun_side if is_wallrunning else 0.0)
+	head.update_visuals(delta, current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun.wallrun_side if wallrun.is_wallrunning else 0.0)
 
 	var wants_crouch = Input.is_action_pressed("slide")
 
-	if wants_crouch and not is_crouched and not skills.is_slamming and not is_wallrunning:
+	if wants_crouch and not is_crouched and not skills.is_slamming and not wallrun.is_wallrunning:
 		is_crouched = true
 		collision_shape.shape.height = 1.0
 		collision_shape.position.y = -0.5
@@ -285,7 +252,7 @@ func _physics_process(delta):
 		is_sliding = false
 
 	# Гравитация в воздухе (при wallrun гравитация своя, существенно сниженная)
-	if not is_on_floor() and not skills.is_dashing and not skills.is_slamming and not is_wallrunning:
+	if not is_on_floor() and not skills.is_dashing and not skills.is_slamming and not wallrun.is_wallrunning:
 		velocity.y -= gravity * 2.5 * delta
 
 	if Input.is_action_just_pressed("jump") and not skills.is_slamming:
@@ -301,8 +268,8 @@ func _physics_process(delta):
 	var vel_2d = Vector2(velocity.x, velocity.z)
 
 	if not skills.is_slamming and not skills.is_dashing:
-		if is_wallrunning:
-			process_wallrun_physics(delta, input_dir)
+		if wallrun.is_wallrunning:
+			wallrun.process_wallrun_physics(delta, input_dir)
 		elif is_sliding and not has_jumped:
 			vel_2d = handle_slide_physics(vel_2d, direction, delta)
 			velocity.x = vel_2d.x
@@ -339,10 +306,7 @@ func _physics_process(delta):
 		wall_jump_count = 0
 		wall_jump_timer = 0.0
 		last_wall_jump_normal = Vector3.ZERO
-		if is_wallrunning:
-			end_wallrun()
-		wallrun_exhausted = false
-		last_wallrun_normal = Vector3.ZERO
+		wallrun.on_landed()
 		if velocity.y <= 0.0:
 			has_jumped = false
 	
@@ -428,28 +392,12 @@ func handle_jump() -> bool:
 		AudioManager.play_sound("jump")
 		return true
 				
-	elif is_wallrunning:
-		# Пологий прыжок из состояния wallrun:
-		# Умеренный вертикальный импульс + сохранение набранного импульса вперед + отталкивание от стены
-		var forward = -transform.basis.z
-		forward.y = 0.0
-		var wall_tangent = (forward - wallrun_normal * forward.dot(wallrun_normal)).normalized()
-		var cur_speed = Vector2(velocity.x, velocity.z).length()
-		
-		velocity.y = JUMP_VELOCITY * wallrun_jump_vertical_boost
-		var jump_horiz = (wallrun_normal * wallrun_jump_horizontal_boost) + (wall_tangent * max(cur_speed, wallrun_speed) * 1.05)
-		var jump_h_len = jump_horiz.length()
-		if jump_h_len > cap:
-			jump_horiz = jump_horiz.normalized() * cap
-		velocity.x = jump_horiz.x
-		velocity.z = jump_horiz.z
-		
-		head.add_recoil(0.08, 0.0)
-		wallrun_cooldown = 0.25
-		end_wallrun()
+	elif wallrun.is_wallrunning:
+		# Прыжок со стены во время wallrun (импульс и выход из wallrun — в PlayerWallrun)
+		var wall_normal = wallrun.jump_off_wall(cap)
 		wall_jump_count = 1
 		wall_jump_timer = wall_jump_cooldown
-		last_wall_jump_normal = wallrun_normal
+		last_wall_jump_normal = wall_normal
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
 		has_jumped = true
@@ -489,116 +437,6 @@ func handle_jump() -> bool:
 		return true
 		
 	return false
-
-func check_wallrun_wall() -> Dictionary:
-	var result = { "found": false, "normal": Vector3.ZERO, "side": 0.0 }
-	
-	if left_wall_ray:
-		left_wall_ray.force_raycast_update()
-		if left_wall_ray.is_colliding():
-			var n = left_wall_ray.get_collision_normal()
-			if abs(n.y) < 0.25:
-				result.found = true
-				result.normal = n
-				result.side = -1.0
-				return result
-				
-	if right_wall_ray:
-		right_wall_ray.force_raycast_update()
-		if right_wall_ray.is_colliding():
-			var n = right_wall_ray.get_collision_normal()
-			if abs(n.y) < 0.25:
-				result.found = true
-				result.normal = n
-				result.side = 1.0
-				return result
-				
-	if is_on_wall():
-		var n = get_wall_normal()
-		if abs(n.y) < 0.25:
-			var side_dot = (-n).dot(transform.basis.x)
-			var side = 1.0 if side_dot > 0.0 else -1.0
-			result.found = true
-			result.normal = n
-			result.side = side
-			return result
-			
-	return result
-
-func start_wallrun(normal: Vector3, side: float):
-	is_wallrunning = true
-	wallrun_side = side
-	wallrun_normal = normal
-	wallrun_timer = 0.0
-	wall_jump_count = 0
-	wallrun_exhausted = false
-	coyote_timer = 0.0
-	
-	# Срезаем падение вниз при входе в wallrun
-	if velocity.y < 0.0:
-		velocity.y = 0.0
-	elif velocity.y > 2.5:
-		velocity.y = 2.5
-
-func end_wallrun():
-	if not is_wallrunning:
-		return
-	last_wallrun_normal = wallrun_normal
-	wallrun_exhausted = true
-	is_wallrunning = false
-	wallrun_side = 0.0
-	wallrun_timer = 0.0
-	wallrun_cooldown = 0.2
-
-func process_wallrun_physics(delta: float, input_dir: Vector2):
-	wallrun_timer += delta
-	
-	# Если игрок жмет "назад" (S), прекращаем wallrun
-	if input_dir.y > 0.5:
-		end_wallrun()
-		return
-		
-	# Проверяем, что стена всё ещё рядом или истекло максимальное время
-	var wall_info = check_wallrun_wall()
-	if not wall_info.found or wallrun_timer >= wallrun_max_duration:
-		end_wallrun()
-		return
-		
-	wallrun_normal = wall_info.normal
-	wallrun_side = wall_info.side
-	
-	# Направление взгляда игрока в горизонтальной плоскости
-	var forward = -transform.basis.z
-	forward.y = 0.0
-	if forward.length_squared() > 0.001:
-		forward = forward.normalized()
-	else:
-		forward = -Vector3.FORWARD
-		
-	# Касательная к стене
-	var wall_tangent = (forward - wallrun_normal * forward.dot(wallrun_normal)).normalized()
-	
-	# Если игрок отвернулся от стены слишком сильно (> 75 градусов)
-	if wall_tangent.dot(forward) < 0.25:
-		end_wallrun()
-		return
-		
-	# Поддерживаем и разгоняем скорость вдоль стены вплоть до общего потолка скорости (14.5..25.0 м/с)
-	var cur_horiz = Vector2(velocity.x, velocity.z).length()
-	var max_cap = get_current_max_speed()
-	var run_speed = clamp(max(cur_horiz, wallrun_speed) + delta * 2.0, wallrun_speed, max_cap)
-		
-	var move_vel = wall_tangent * run_speed
-	
-	# Небольшой прижим к стене (0.8 м/с), предотвращающий случайный отрыв
-	velocity.x = move_vel.x - wallrun_normal.x * 0.8
-	velocity.z = move_vel.z - wallrun_normal.z * 0.8
-	
-	# Постепенное медленное снижение по вертикали во время wallrun,
-	# усиливающееся ближе к истечению времени (ощущение ослабевающего зацепа)
-	var t_ratio = clamp(wallrun_timer / wallrun_max_duration, 0.0, 1.0)
-	var slip_accel = lerp(gravity * 0.12, gravity * 1.5, t_ratio * t_ratio)
-	velocity.y -= slip_accel * delta
 
 func handle_slide_physics(vel_2d: Vector2, direction: Vector3, delta: float) -> Vector2:
 	var bpm_r = bpm_system.get_bpm_ratio()
@@ -693,7 +531,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 ## Ретрансляция смерти подписчикам Player и сброс состояния движения
 func _on_health_died():
 	died.emit()
-	end_wallrun()
+	wallrun.end_wallrun()
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
 	has_jumped = false

@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/player/player_health.gd" id="7_health"]
 [ext_resource type="Script" path="res://scripts/player/player_combat.gd" id="8_combat"]
 [ext_resource type="Script" path="res://scripts/player/bpm_system.gd" id="9_bpm"]
+[ext_resource type="Script" path="res://scripts/player/player_wallrun.gd" id="10_wallrun"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wdtcp"]
 
@@ -70,6 +71,9 @@ script = ExtResource("7_health")
 
 [node name="PlayerCombat" type="Node" parent="." unique_id=1600772402]
 script = ExtResource("8_combat")
+
+[node name="PlayerWallrun" type="Node" parent="." unique_id=1600772404]
+script = ExtResource("10_wallrun")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1530288551]
 shape = SubResource("CapsuleShape3D_wdtcp")
