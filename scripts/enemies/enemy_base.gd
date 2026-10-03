@@ -301,11 +301,11 @@ func _process_flee(delta: float) -> void:
 		
 	var player_bpm: float = 0.0
 	var is_overdrive: bool = false
-	if "skills" in target_player and is_instance_valid(target_player.skills):
-		if "bpm" in target_player.skills:
-			player_bpm = target_player.skills.bpm
-		if target_player.skills.has_method("get_bpm_tier"):
-			is_overdrive = (target_player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+	if "bpm_system" in target_player and is_instance_valid(target_player.bpm_system):
+		if "bpm" in target_player.bpm_system:
+			player_bpm = target_player.bpm_system.bpm
+		if target_player.bpm_system.has_method("get_bpm_tier"):
+			is_overdrive = (target_player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
 		else:
 			is_overdrive = (player_bpm >= 180.0)
 	if not is_overdrive:
@@ -371,11 +371,11 @@ func _process_fear_chain_check(delta: float) -> void:
 		
 	var player_bpm: float = 0.0
 	var is_overdrive: bool = false
-	if "skills" in player and is_instance_valid(player.skills):
-		if "bpm" in player.skills:
-			player_bpm = player.skills.bpm
-		if player.skills.has_method("get_bpm_tier"):
-			is_overdrive = (player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+	if "bpm_system" in player and is_instance_valid(player.bpm_system):
+		if "bpm" in player.bpm_system:
+			player_bpm = player.bpm_system.bpm
+		if player.bpm_system.has_method("get_bpm_tier"):
+			is_overdrive = (player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
 		else:
 			is_overdrive = (player_bpm >= 180.0)
 	if not is_overdrive:
@@ -557,7 +557,7 @@ func die(death_info: Dictionary = {}) -> void:
 		slam_chain_depth = health_component.slam_chain_depth
 	
 	var player = get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player) and "skills" in player and is_instance_valid(player.skills):
+	if is_instance_valid(player) and "bpm_system" in player and is_instance_valid(player.bpm_system):
 		var weapon_used = last_damage_weapon
 		if was_killed_by_shockwave or was_killed_by_melee:
 			weapon_used = "melee"
@@ -573,8 +573,8 @@ func die(death_info: Dictionary = {}) -> void:
 			else:
 				weapon_used = "unknown"
 				
-		if player.skills.has_method("record_kill_bpm"):
-			player.skills.record_kill_bpm(weapon_used, was_killed_by_shockwave)
+		if player.bpm_system.has_method("record_kill_bpm"):
+			player.bpm_system.record_kill_bpm(weapon_used, was_killed_by_shockwave)
 	
 	if hp_sprite:
 		hp_sprite.visible = false
@@ -764,9 +764,9 @@ func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:
 		if cur_frame != last_headshot_bonus_frame:
 			last_headshot_bonus_frame = cur_frame
 			var player_node = get_tree().get_first_node_in_group("player")
-			if is_instance_valid(player_node) and "skills" in player_node and is_instance_valid(player_node.skills):
-				player_node.skills.add_bpm(1.5)
-				GameTypes.debug_log(&"enemy", "[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.skills.bpm)
+			if is_instance_valid(player_node) and "bpm_system" in player_node and is_instance_valid(player_node.bpm_system):
+				player_node.bpm_system.add_bpm(1.5)
+				GameTypes.debug_log(&"enemy", "[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.bpm_system.bpm)
 				
 	_spawn_hit_blood_splatter(amount, hit_pos, is_crit, last_hit_knockback)
 

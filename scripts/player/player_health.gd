@@ -32,12 +32,12 @@ func _get_game_manager() -> Node:
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
 	if is_dead or amount <= 0:
 		return
-	var reduction = player.get_bpm_damage_reduction()
+	var reduction = player.bpm_system.get_bpm_damage_reduction()
 	var final_damage = max(1, int(round(float(amount) * (1.0 - reduction))))
 	health = max(0, health - final_damage)
 	health_changed.emit(health, max_health)
-	if player.skills is SkillManager:
-		player.skills.drop_bpm_on_damage()
+	if player.bpm_system is BPMSystem:
+		player.bpm_system.drop_bpm_on_damage()
 	if player.head:
 		player.head.add_recoil(0.25, 0.0)
 	if knockback_vector != Vector3.ZERO:

@@ -41,7 +41,7 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 		return
 		
 	# BPM-гейт: ПКМ доступен ТОЛЬКО на тире OVERDRIVE
-	if _get_bpm_tier() != GameTypes.BPMTier.OVERDRIVE:
+	if _get_player().bpm_system.get_bpm_tier() != GameTypes.BPMTier.OVERDRIVE:
 		AudioManager.play_sound("dry_fire")
 		return
 		

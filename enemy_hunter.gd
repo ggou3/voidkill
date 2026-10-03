@@ -102,8 +102,8 @@ func _on_detection_area_body_entered(body: Node3D) -> void:
 
 func _get_player_bpm() -> float:
 	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player) and "skills" in player and is_instance_valid(player.skills) and "bpm" in player.skills:
-		return player.skills.bpm
+	if is_instance_valid(player) and "bpm_system" in player and is_instance_valid(player.bpm_system) and "bpm" in player.bpm_system:
+		return player.bpm_system.bpm
 	return 50.0
 
 func _physics_process(delta: float) -> void:

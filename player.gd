@@ -89,6 +89,7 @@ var wallrun_exhausted: bool = false
 @onready var right_wall_ray: RayCast3D = get_node_or_null("RightWallRay")
 @onready var health_component: PlayerHealth = $PlayerHealth
 @onready var combat: PlayerCombat = $PlayerCombat
+@onready var bpm_system: BPMSystem = $BPMSystem
 
 # Проксирующие свойства к PlayerHealth: внешний код (враги, HUD) обращается к player.health / is_dead напрямую
 var max_health: int:
@@ -113,18 +114,8 @@ var is_dead: bool:
 func is_blood_active() -> bool:
 	return is_on_blood
 
-func has_infinite_ammo() -> bool:
-	return skills is SkillManager and skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE
-
-func get_bpm_ratio() -> float:
-	var bpm_val = skills.bpm if is_instance_valid(skills) else 50.0
-	return clampf((bpm_val - 50.0) / 150.0, 0.0, 1.0)
-
 func get_current_max_speed() -> float:
-	return lerp(normal_max_speed, blood_buffed_max_speed, get_bpm_ratio())
-
-func get_bpm_damage_reduction() -> float:
-	return lerp(0.0, 0.30, get_bpm_ratio())
+	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_system.get_bpm_ratio())
 
 func _ready():
 	is_wallrunning = false
@@ -144,6 +135,7 @@ func _ready():
 	health_component.died.connect(_on_health_died)
 	health_component.setup(self)
 	combat.setup(self)
+	bpm_system.setup(self)
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	collision_shape.shape = collision_shape.shape.duplicate()
 	floor_snap_length = 0.4 
@@ -168,9 +160,9 @@ func _input(event):
 		elif event.keycode == KEY_4: weapons.switch_weapon(3)
 			
 	if event.is_action_pressed("shoot"):
-		weapons.shoot(has_infinite_ammo())
+		weapons.shoot(bpm_system.has_infinite_ammo())
 	elif event.is_action_pressed("alt_fire") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
-		weapons.alt_shoot(has_infinite_ammo())
+		weapons.alt_shoot(bpm_system.has_infinite_ammo())
 	if event.is_action_pressed("reload"):
 		weapons.reload()
 		
@@ -187,8 +179,8 @@ func _input(event):
 	if event.is_action_pressed("melee") and not event.is_echo():
 		combat.perform_melee()
 	if event.is_action_pressed("debug_max_bpm") or (event is InputEventKey and event.pressed and not event.is_echo() and (event.keycode == KEY_T or event.physical_keycode == KEY_T)):
-		if skills is SkillManager:
-			skills.force_max_bpm()
+		if bpm_system is BPMSystem:
+			bpm_system.force_max_bpm()
 
 func _process(_delta):
 	if is_dead:
@@ -201,7 +193,7 @@ func _process(_delta):
 	
 	if post_process_rect and post_process_rect.material:
 		post_process_rect.material.set_shader_parameter("player_speed", current_speed)
-		var current_bpm: float = skills.bpm if is_instance_valid(skills) else 50.0
+		var current_bpm: float = bpm_system.bpm if is_instance_valid(bpm_system) else 50.0
 		# Интерполяция внутри тира OVERDRIVE: нелинейный рост (pow 0.6) для усиления контраста на подходе к пику
 		var overdrive_factor: float = pow(clampf((current_bpm - 180.0) / 20.0, 0.0, 1.0), 0.6)
 		post_process_rect.material.set_shader_parameter("overdrive_factor", overdrive_factor)
@@ -408,7 +400,7 @@ func handle_jump() -> bool:
 			and speed_2d >= (WALK_SPEED * 0.7)
 			
 		if is_clean_bhop:
-			var bpm_r = get_bpm_ratio()
+			var bpm_r = bpm_system.get_bpm_ratio()
 			if not was_sliding:
 				var mult = lerp(bhop_speed_multiplier, bhop_blood_speed_multiplier, bpm_r)
 				var boosted = clamp(speed_2d * mult, speed_2d, cap)
@@ -426,8 +418,8 @@ func handle_jump() -> bool:
 			head.add_recoil(lerp(0.035, 0.045, bpm_r), 0.0)
 			time_on_ground = 0.0
 			prev_air_time = 0.0
-			if skills is SkillManager:
-				skills.add_combat_momentum(0.04)
+			if bpm_system is BPMSystem:
+				bpm_system.add_combat_momentum(0.04)
 				
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
@@ -608,7 +600,7 @@ func process_wallrun_physics(delta: float, input_dir: Vector2):
 	velocity.y -= slip_accel * delta
 
 func handle_slide_physics(vel_2d: Vector2, direction: Vector3, delta: float) -> Vector2:
-	var bpm_r = get_bpm_ratio()
+	var bpm_r = bpm_system.get_bpm_ratio()
 	if direction:
 		var current_slide_speed = vel_2d.length()
 		if current_slide_speed > 0.1:
@@ -649,12 +641,12 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 				var cur_wish_speed = vel_2d.dot(wish_dir)
 				var add_speed = air_wish_cap - cur_wish_speed
 				if add_speed > 0.0:
-					var eff_accel = air_accel * lerp(1.0, 1.3, get_bpm_ratio())
+					var eff_accel = air_accel * lerp(1.0, 1.3, bpm_system.get_bpm_ratio())
 					var accel_amount = min(eff_accel * delta, add_speed)
 					vel_2d += wish_dir * accel_amount
 				
 				# Плавный CPM поворот вектора скорости без потери набранной величины скорости
-				var steer_rate = lerp(1.5, 2.4, get_bpm_ratio())
+				var steer_rate = lerp(1.5, 2.4, bpm_system.get_bpm_ratio())
 				if vel_2d.length_squared() > 0.001:
 					vel_2d = vel_2d.normalized().lerp(wish_dir, steer_rate * delta).normalized() * vel_2d.length()
 		else:

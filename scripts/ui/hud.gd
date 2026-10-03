@@ -4,7 +4,7 @@ extends CanvasLayer
 ## Единый менеджер пользовательского интерфейса (HUD).
 ## Инкапсулирует отображение полосы здоровья, слотов оружия, счётчика дэшей,
 ## BPM, боевого моментума, всплывающих комбо-сообщений и экрана Game Over.
-## Подписывается на сигналы игровых систем (Player, WeaponManager, SkillManager, GameManager).
+## Подписывается на сигналы игровых систем (Player, WeaponManager, SkillManager, BPMSystem, GameManager).
 
 # Ссылки на дочерние UI-узлы сцены HUD
 @onready var crosshair: ColorRect = get_node_or_null("Crosshair")
@@ -24,6 +24,7 @@ extends CanvasLayer
 var player: Player = null
 var weapon_manager: WeaponManager = null
 var skill_manager: SkillManager = null
+var bpm_system: BPMSystem = null
 
 # Визуальные стили и твины полосы здоровья
 var _health_bg_style: StyleBoxFlat
@@ -76,6 +77,12 @@ func _connect_systems() -> void:
 	if sm is SkillManager:
 		skill_manager = sm
 		skill_manager.hud_popup_requested.connect(show_popup)
+
+	# Подключение к BPMSystem
+	var bs = get_node_or_null("../BPMSystem")
+	if bs is BPMSystem:
+		bpm_system = bs
+		bpm_system.hud_popup_requested.connect(show_popup)
 
 	# Подключение к WeaponManager
 	var wm = get_node_or_null("../WeaponManager")
@@ -180,14 +187,14 @@ func _on_blood_surf_changed(active: bool) -> void:
 
 func _process_skill_hud(delta: float) -> void:
 	# 1. BPM
-	if bpm_label:
-		var bpm_val = skill_manager.bpm
-		var tier = skill_manager.get_bpm_tier()
+	if bpm_label and bpm_system:
+		var bpm_val = bpm_system.bpm
+		var tier = bpm_system.get_bpm_tier()
 		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm_val)), GameTypes.tier_to_string(tier)]
 		
 	# 2. Combat Momentum
-	if momentum_label:
-		var combat_momentum = skill_manager.combat_momentum
+	if momentum_label and bpm_system:
+		var combat_momentum = bpm_system.combat_momentum
 		if combat_momentum <= 1.001:
 			momentum_idle_timer += delta
 		else:
@@ -350,7 +357,7 @@ func _process_weapon_hud(_delta: float) -> void:
 	if weapon_ui_slots.size() != weapon_manager.weapons.size():
 		_rebuild_weapon_slots()
 		
-	var has_infinite_ammo = player.has_infinite_ammo() if is_instance_valid(player) else false
+	var has_infinite_ammo = bpm_system.has_infinite_ammo() if is_instance_valid(bpm_system) else false
 	
 	for i in range(weapon_manager.weapons.size()):
 		if i >= weapon_ui_slots.size():

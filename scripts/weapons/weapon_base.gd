@@ -59,7 +59,7 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 			target = GameTypes.resolve_damageable(collider)
 			
 	# Вакуумный след для оружия с поддержкой гравипула (Калибр-0 в OVERDRIVE)
-	if data and data.has_vacuum and not is_alt and _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
+	if data and data.has_vacuum and not is_alt and _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
 		_apply_vacuum_wake(start_pos, hit_pos, data.vacuum_radius, data.vacuum_force, target)
 		
 	if not is_instance_valid(target) or not target.has_method("take_damage"):
@@ -89,7 +89,7 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	
 	# Режимы стакинга множителей (MULTIPLICATIVE в OVERDRIVE, ADDITIVE иначе)
 	if is_headshot and is_airborne:
-		if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
+		if _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
 			total_mult = hs_mult * air_mult
 		else:
 			total_mult = 1.0 + (hs_mult - 1.0) + (air_mult - 1.0)
@@ -103,7 +103,7 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	
 	# Логирование критических попаданий
 	if is_headshot and is_airborne:
-		var stack_mode = "MULTIPLICATIVE" if _get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE else "ADDITIVE"
+		var stack_mode = "MULTIPLICATIVE" if _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE else "ADDITIVE"
 		GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HEADSHOT! (%.1fx, %s) Damage: %d | Base: %d" % [target.name, total_mult, stack_mode, final_dmg, int(base_dmg)])
 	elif is_airborne and (data and data.air_multiplier > 1.0):
 		GameTypes.debug_log(&"weapon", "[%s] AIRBORNE HIT! (%.1fx) Damage: %d | Base: %d" % [target.name, total_mult, final_dmg, int(base_dmg)])
@@ -140,17 +140,6 @@ func _get_head() -> Head:
 	if weapon_manager and is_instance_valid(weapon_manager.head):
 		return weapon_manager.head as Head
 	return null
-
-## Определение текущего BPM-тира игрока
-func _get_bpm_tier() -> GameTypes.BPMTier:
-	var skill_mgr = get_node_or_null("../SkillManager")
-	if not skill_mgr:
-		var player = _get_player()
-		if is_instance_valid(player) and "skills" in player:
-			skill_mgr = player.skills
-	if skill_mgr is SkillManager:
-		return skill_mgr.get_bpm_tier()
-	return GameTypes.BPMTier.CALM
 
 ## Получение стартовой точки вылета снаряда / трейсера (дуло оружия)
 func _get_muzzle_position() -> Vector3:

@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="6_hud"]
 [ext_resource type="Script" path="res://scripts/player/player_health.gd" id="7_health"]
 [ext_resource type="Script" path="res://scripts/player/player_combat.gd" id="8_combat"]
+[ext_resource type="Script" path="res://scripts/player/bpm_system.gd" id="9_bpm"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wdtcp"]
 
@@ -644,3 +645,6 @@ script = ExtResource("4_hqtel")
 
 [node name="SkillManager" type="Node" parent="." unique_id=1194782515]
 script = ExtResource("5_sweqy")
+
+[node name="BPMSystem" type="Node" parent="." unique_id=1600772403]
+script = ExtResource("9_bpm")

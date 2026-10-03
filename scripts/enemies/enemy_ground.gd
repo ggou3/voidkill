@@ -521,11 +521,11 @@ func _process_flee(delta: float) -> void:
 		
 	var player_bpm: float = 0.0
 	var is_overdrive: bool = false
-	if "skills" in target_player and is_instance_valid(target_player.skills):
-		if "bpm" in target_player.skills:
-			player_bpm = target_player.skills.bpm
-		if target_player.skills.has_method("get_bpm_tier"):
-			is_overdrive = (target_player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+	if "bpm_system" in target_player and is_instance_valid(target_player.bpm_system):
+		if "bpm" in target_player.bpm_system:
+			player_bpm = target_player.bpm_system.bpm
+		if target_player.bpm_system.has_method("get_bpm_tier"):
+			is_overdrive = (target_player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
 		else:
 			is_overdrive = (player_bpm >= 180.0)
 	if not is_overdrive:

@@ -124,11 +124,11 @@ func _process_fear_chain_check(_delta: float) -> void:
 	var is_overdrive = false
 	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
 		var player_bpm: float = 0.0
-		if "skills" in player and is_instance_valid(player.skills):
-			if "bpm" in player.skills:
-				player_bpm = player.skills.bpm
-			if player.skills.has_method("get_bpm_tier"):
-				is_overdrive = (player.skills.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
+		if "bpm_system" in player and is_instance_valid(player.bpm_system):
+			if "bpm" in player.bpm_system:
+				player_bpm = player.bpm_system.bpm
+			if player.bpm_system.has_method("get_bpm_tier"):
+				is_overdrive = (player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
 			else:
 				is_overdrive = (player_bpm >= 180.0)
 			
