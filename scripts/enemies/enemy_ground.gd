@@ -15,7 +15,6 @@ extends EnemyBase
 @export var lunge_speed: float = 25.0
 @export var lunge_damage: int = 20
 @export var lunge_telegraph_time: float = 0.38
-@export var lunge_dash_time: float = 0.30
 @export var lunge_cooldown: float = 4.5
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")

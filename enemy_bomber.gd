@@ -28,8 +28,6 @@ var body_material: StandardMaterial3D = null
 @onready var core_light: OmniLight3D = get_node_or_null("CoreLight")
 @onready var body_mesh_inst: MeshInstance3D = get_node_or_null("MeshInstance3D")
 
-const CORE_IDLE_COLOR = Color(1.0, 0.15, 0.05)
-const BODY_IDLE_COLOR = Color(0.09, 0.04, 0.04)
 const OVERHEAT_COLOR = Color(1.0, 0.35, 0.1)
 
 func _ready() -> void:

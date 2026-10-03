@@ -23,7 +23,6 @@ var indicator_mat_right: StandardMaterial3D = null
 var barrier_tween: Tween = null
 var indicator_tween: Tween = null
 
-@onready var shield_plate: MeshInstance3D = get_node_or_null("ShieldPlate")
 @onready var shield_barrier: MeshInstance3D = get_node_or_null("ShieldBarrier")
 @onready var damage_indicator_left: MeshInstance3D = get_node_or_null("DamageIndicatorLeft")
 @onready var damage_indicator_right: MeshInstance3D = get_node_or_null("DamageIndicatorRight")

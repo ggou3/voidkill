@@ -27,7 +27,6 @@ var spawn_position: Vector3 = Vector3.ZERO
 var base_fixed_basis: Basis = Basis.IDENTITY
 var last_known_player_pos: Vector3 = Vector3.ZERO
 var lost_los_timer: float = 0.0
-var has_target_lock: bool = false
 var is_telegraphing: bool = false
 var is_in_lockdown: bool = false
 

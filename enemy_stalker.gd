@@ -41,7 +41,6 @@ var stalker_shader_mat: ShaderMaterial = null
 var hit_flash_tween: Tween = null
 
 const STALKER_EYES_COLOR = Color(0.85, 0.25, 1.0)
-const STALKER_BODY_COLOR = Color(0.12, 0.05, 0.18)
 
 func _ready() -> void:
 	super._ready()

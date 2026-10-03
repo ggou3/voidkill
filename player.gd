@@ -7,7 +7,6 @@ const JUMP_VELOCITY = 11.0
 
 const GROUND_ACCEL = 14.0
 const GROUND_FRICTION = 14.0
-const AIR_ACCEL = 1.5
 const AIR_FRICTION = 0.0
 
 const MIN_SLIDE_SPEED = 7.0
@@ -31,9 +30,7 @@ signal blood_surf_status_changed(active: bool)
 # Настройки механики Wallrun и Wall-jump
 @export var wallrun_min_speed: float = 5.0
 @export var wallrun_speed: float = 11.0
-@export var wallrun_max_speed: float = 25.0
 @export var wallrun_max_duration: float = 1.2
-@export var wallrun_gravity_scale: float = 0.08
 @export var wallrun_jump_vertical_boost: float = 0.7
 @export var wallrun_jump_horizontal_boost: float = 8.0
 @export var wall_jump_cooldown: float = 0.35

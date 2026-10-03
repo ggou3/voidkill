@@ -145,8 +145,9 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - Blood Slam (`skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
   начисляет.
 - DESIGN.md строка 47: моментум кровавого сёрфа +0.05/сек, в коде +0.04 — решить, что правда.
-- `weapon_manager.gd`: поле `skill_manager` объявлено, но не используется.
-- Мёртвая переменная `_gained` в `PlayerHealth.heal()`.
+- Довести использование именованных масок слоёв — `GameTypes.LAYER_*` объявлены (этап 1), но
+  нигде не используются: в коде числом задана маска в `enemy_bomber.gd` (`collision_mask = 1`),
+  остальные маски/слои выставлены числами в `.tscn`.
 - Перенос файлов из корня `res://` в `scripts/` — ТОЛЬКО через редактор Godot, агент сломает
   ссылки в `.tscn`.
 - Разбиение DESIGN.md: 138 КБ на начало рефакторинга → ~190 КБ.
