@@ -146,6 +146,10 @@ func _ready():
 	if skills:
 		skills.dash_min_interval = dash_min_interval
 
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.register_player(self)
+
 func _input(event):
 	if is_dead:
 		return
@@ -681,16 +685,13 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 
 	return vel_2d
 
-# --- Делегирование в PlayerHealth (внешние вызовы: враги, снаряды, статус-эффекты, HUD) ---
+# --- Делегирование в PlayerHealth (внешние вызовы: враги, снаряды, статус-эффекты) ---
 
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO):
 	health_component.take_damage(amount, knockback_vector, hit_pos)
 
 func heal(amount: int, is_melee_bonus: bool = false):
 	health_component.heal(amount, is_melee_bonus)
-
-func restart_game():
-	health_component.restart_game()
 
 ## Ретрансляция смерти подписчикам Player и сброс состояния движения
 func _on_health_died():

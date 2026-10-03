@@ -155,10 +155,3 @@ func get_bpm_damage_reduction() -> float:
 ## Бесконечные патроны в тире OVERDRIVE
 func has_infinite_ammo() -> bool:
 	return get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE
-
-# Устаревшие методы кровавого баффа (заменены BPM-системой)
-func activate_blood_buff():
-	pass
-
-func has_blood_buff() -> bool:
-	return false

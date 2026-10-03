@@ -437,7 +437,5 @@ func _on_restart_pressed() -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm and gm.has_method("restart_game"):
 		gm.restart_game()
-	elif player and player.has_method("restart_game"):
-		player.restart_game()
 	else:
 		get_tree().reload_current_scene()

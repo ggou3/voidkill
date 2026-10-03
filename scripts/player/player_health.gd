@@ -1,8 +1,9 @@
 class_name PlayerHealth
 extends Node
 
-## Здоровье игрока: HP, получение урона (со снижением от BPM), лечение, смерть и связь с GameManager.
-## Сигналы ретранслируются через Player (health_changed, died), поэтому подписчики (HUD) работают с Player.
+## Здоровье игрока: HP, получение урона (со снижением от BPM), лечение, смерть.
+## Сигналы ретранслируются через Player (health_changed, died), поэтому подписчики (HUD, GameManager) работают с Player.
+## Решение о Game Over принимает GameManager по сигналу died.
 
 signal health_changed(current: int, maximum: int)
 signal died
@@ -12,22 +13,12 @@ var health: int = 100
 var is_dead: bool = false
 
 var player: Player
-var game_manager: Node
 
 func setup(p: Player) -> void:
 	player = p
 	is_dead = false
 	health = max_health
 	health_changed.emit(health, max_health)
-	game_manager = get_node_or_null("/root/GameManager")
-	var gm = _get_game_manager()
-	if gm and not gm.game_over_triggered.is_connected(_on_game_over_triggered):
-		gm.game_over_triggered.connect(_on_game_over_triggered)
-
-func _get_game_manager() -> Node:
-	if not game_manager and is_inside_tree():
-		game_manager = get_node_or_null("/root/GameManager")
-	return game_manager
 
 func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
 	if is_dead or amount <= 0:
@@ -85,7 +76,7 @@ func _spawn_heal_feedback(heal_amount: int, is_melee_bonus: bool = false):
 	tween.tween_property(label, "modulate:a", 0.0, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
-## Смерть игрока. Сброс состояния движения выполняет Player в обработчике сигнала died.
+## Смерть игрока. Сброс движения выполняет Player, Game Over — GameManager (оба по сигналу died).
 func die():
 	if is_dead:
 		return
@@ -93,17 +84,3 @@ func die():
 	health = 0
 	health_changed.emit(0, max_health)
 	died.emit()
-
-	var gm = _get_game_manager()
-	if gm:
-		gm.trigger_game_over()
-
-func _on_game_over_triggered():
-	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-
-func restart_game():
-	var gm = _get_game_manager()
-	if gm:
-		gm.restart_game()
-	else:
-		get_tree().reload_current_scene()
