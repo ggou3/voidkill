@@ -6,6 +6,8 @@
 [ext_resource type="Script" uid="uid://b7npgm5hupagp" path="res://weapon_manager.gd" id="4_hqtel"]
 [ext_resource type="Script" uid="uid://dit7po0cp8fuh" path="res://skill_manager.gd" id="5_sweqy"]
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="6_hud"]
+[ext_resource type="Script" path="res://scripts/player/player_health.gd" id="7_health"]
+[ext_resource type="Script" path="res://scripts/player/player_combat.gd" id="8_combat"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_wdtcp"]
 
@@ -61,6 +63,12 @@ radius = 0.8
 
 [node name="Player" type="CharacterBody3D" unique_id=1600772311 groups=["player"]]
 script = ExtResource("1_4flbx")
+
+[node name="PlayerHealth" type="Node" parent="." unique_id=1600772401]
+script = ExtResource("7_health")
+
+[node name="PlayerCombat" type="Node" parent="." unique_id=1600772402]
+script = ExtResource("8_combat")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1530288551]
 shape = SubResource("CapsuleShape3D_wdtcp")
