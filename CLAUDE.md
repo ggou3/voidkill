@@ -10,17 +10,30 @@ CALM/PUMPING/SURGING/OVERDRIVE). Источник истины по дизайн
 Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPool`.
 Скриптам-автозагрузкам `class_name` НЕ добавлять (конфликт с именем синглтона).
 
-Раскладка: часть скриптов и все `.tscn` в корне `res://` (player.gd, weapon_manager.gd,
-skill_manager.gd, head.gd, enemy*.gd, projectile_enemy.gd, blood_*.gd). Новое — в `scripts/`:
-`core/` (game_types, tracer_pool), `components/` (health_component, status_effect_component,
-enemy_health_bar), `enemies/` (enemy_base, enemy_ground), `weapons/` (weapon_data, weapon_base,
-weapon_caliber/anvil/injector/sewing, `data/*.tres`), `ui/` (hud.gd), плюс
-`audio_manager.gd`, `game_manager.gd`.
+Раскладка — все скрипты в `scripts/` (перенесены редактором в `5760953`, `0f13848`):
+- `core/` — game_types, tracer_pool (автозагрузки)
+- `components/` — health_component, status_effect_component, enemy_health_bar
+- `enemies/` — enemy_base, enemy_ground, enemy (ближний), enemy_ranged/bomber/shield/hunter/
+  swarm/stalker/turret/flyer
+- `player/` — player, head, skill_manager (дэш, слэм), bpm_system, player_health,
+  player_combat, player_wallrun
+- `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing,
+  projectile_enemy (вражеский снаряд), `data/*.tres`
+- `effects/` — blood_pool, blood_splatter
+- `ui/` — hud
+- корень `scripts/` — audio_manager, game_manager (автозагрузки)
+
+В корне `res://` остались только сцены (`*.tscn`), шейдеры (`*.gdshader`), ресурсы навмеша
+(`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`, `project.godot` и документы.
+Пути в `preload("res://...")` указывают на сцены в корне — при переносе сцен их править.
 
 ## 2. Архитектурный рефакторинг (ветка `Refactoring`)
 Было четыре файла-бога: `enemy.gd` (1862), `weapon_manager.gd` (1645), `player.gd` (1357),
 `skill_manager.gd` (489) — цифры на `dfe7da8`, до рефакторинга. Один коммит на шаг.
 Цифры ниже — `git show <commit>:<file>`, полные строки.
+Имена файлов без папки в разделах 2–3 — как они лежали на момент коммита (до переноса в
+`scripts/` в `5760953`/`0f13848` — в корне). Для `git show <старый коммит>:<файл>` нужен
+старый путь, например `git show dfe7da8:enemy.gd`.
 
 **Этап 1 — GameTypes и типизация** (`1b40191`, `6213d10`, `17c3998`, `dc736e6`, `0cbbe5c`)
 - `scripts/core/game_types.gd` (autoload): enum `BPMTier {CALM, PUMPING, SURGING, OVERDRIVE}`
@@ -152,14 +165,15 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - ~~`enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"` вместо
   `WeaponManager`~~ — исправлено в `7a85047`. Затрагивало только убийства, где ни один источник
   урона не пометил оружие (фоллбек давал `"unknown"`); обычные убийства и VARIETY работали.
-- Blood Slam (`skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
+- Blood Slam (`scripts/player/skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
   начисляет.
 - DESIGN.md строка 47: моментум кровавого сёрфа +0.05/сек, в коде +0.04 — решить, что правда.
 - Довести использование именованных масок слоёв — `GameTypes.LAYER_*` объявлены (этап 1), но
-  нигде не используются: в коде числом задана маска в `enemy_bomber.gd` (`collision_mask = 1`),
+  нигде не используются: в коде числом задана маска в `scripts/enemies/enemy_bomber.gd` (`collision_mask = 1`),
   остальные маски/слои выставлены числами в `.tscn`.
-- Перенос файлов из корня `res://` в `scripts/` — ТОЛЬКО через редактор Godot, агент сломает
-  ссылки в `.tscn`.
+- (Необязательно) Перенос сцен и шейдеров из корня в `scenes/` и `shaders/` — ТОЛЬКО через
+  редактор Godot, агент сломает ссылки в `.tscn`. После переноса поправить строковые пути в
+  `preload("res://*.tscn")` (enemy_base, enemy_ranged, skill_manager, status_effect_component).
 - Разбиение DESIGN.md: 138 КБ на начало рефакторинга → ~190 КБ.
 - Параметры ПКМ других оружий в коде мимо WeaponData (ПКМ Швейной уже в группе «Альт-огонь»).
   Решить, что выносить: часть — внутреннее устройство оружия и должна остаться в коде
@@ -256,5 +270,5 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
   Неиспользуемые параметры обязательных сигнатур — с `_`.
 
 ## 7. Git
-Ветка `Refactoring` от `main` (merge-base `3223c0a` — этапы 1–2 уже есть и в main).
-Репозиторий: https://github.com/ggou3/voidkill
+Работаем прямо в `main` (ветка `Refactoring` влита fast-forward, отдельные ветки для мелких
+независимых задач не нужны). Репозиторий: https://github.com/ggou3/voidkill
