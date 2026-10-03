@@ -137,8 +137,18 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - Попутные фиксы смерти (вне плана): автоогонь WeaponManager (`6761223`) и очередь
   Инъектора (`b13ebeb`) проверяют `is_dead`. Других отложенных по таймеру выстрелов нет.
 
+**После плана — вынос wallrun — СДЕЛАНО** (`cc46074`).
+- `scripts/player/player_wallrun.gd` (`class_name PlayerWallrun extends Node`, 199 строк), узел
+  `PlayerWallrun`, `setup(self)`. Player зовёт его в прежних точках кадра: `tick_cooldown` →
+  `update_entry_and_exit` → `process_wallrun_physics` → `on_landed`; прыжок со стены —
+  `jump_off_wall(cap)`. Поля обычного wall-jump (`wall_jump_count/timer`, `last_wall_jump_normal`,
+  `wall_jump_cooldown`) остались на Player.
+- Строки: player.gd 710 → 548 (цель ≤ 600 достигнута), player_wallrun.gd 199.
+
 **Отложено — очередь работ после рефакторинга:**
-- Вынос wallrun из player.gd в отдельный файл — единственный путь довести player.gd ниже 600 строк.
+- Расхождение DESIGN.md с кодом: «продлённая длительность wallrun» описана в «Тирах баффов»
+  BPM (DESIGN.md, раздел 5; к какому тиру — не указано), но никогда не была реализована — `wallrun_max_duration` это константа
+  1.2 без связи с BPM. Решить: реализовать или убрать из описания.
 - ~~`enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"` вместо
   `WeaponManager`~~ — исправлено в `7a85047`. Затрагивало только убийства, где ни один источник
   урона не пометил оружие (фоллбек давал `"unknown"`); обычные убийства и VARIETY работали.

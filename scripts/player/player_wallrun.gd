@@ -194,6 +194,5 @@ func jump_off_wall(cap: float) -> Vector3:
 	player.velocity.z = jump_horiz.z
 
 	player.head.add_recoil(0.08, 0.0)
-	wallrun_cooldown = 0.25
 	end_wallrun()
 	return wallrun_normal
