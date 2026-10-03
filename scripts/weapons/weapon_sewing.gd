@@ -5,11 +5,7 @@ extends WeaponBase
 ## ЛКМ: Автоматическая стрельба иглами (6 HP, 10 выстр/с), иглы застревают во враге (add_needle).
 ## ПКМ: Заградительный веерный залп: 12 игл веером (конус 35-40°), урон 4 HP за иглу,
 ## расход 10 игл из общего магазина, независимый кулдаун 1.5с.
-
-const ALT_COOLDOWN: float = 1.5
-const BARRAGE_AMMO_COST: int = 10
-const NEEDLE_COUNT: int = 12
-const NEEDLE_DAMAGE: int = 4
+## Параметры ПКМ — в группе «Альт-огонь» ресурса sewing_machine.tres.
 
 func _init() -> void:
 	if not data:
@@ -47,14 +43,14 @@ func alt_fire(has_infinite_ammo: bool = false) -> void:
 		return
 		
 	# Тратит 10 игл из общего магазина ЛКМ; если меньше 10 — недоступен (dry_fire)
-	if weapon_manager and weapon_manager.ammos[slot_index] < BARRAGE_AMMO_COST:
+	if weapon_manager and weapon_manager.ammos[slot_index] < data.alt_ammo_cost:
 		AudioManager.play_sound("dry_fire")
 		return
-		
+
 	if not has_infinite_ammo and weapon_manager:
-		weapon_manager.ammos[slot_index] -= BARRAGE_AMMO_COST
-		
-	alt_timer = ALT_COOLDOWN
+		weapon_manager.ammos[slot_index] -= data.alt_ammo_cost
+
+	alt_timer = data.alt_cooldown
 	_fire_sewing_barrage()
 
 func _fire_sewing_barrage() -> void:
@@ -70,8 +66,9 @@ func _fire_sewing_barrage() -> void:
 	var start_pos = _get_muzzle_position()
 	
 	# Веерный разброс 12 игл широким сектором (конус разброса 35-40 градусов)
-	for i in range(NEEDLE_COUNT):
-		var h_frac = (float(i) / float(NEEDLE_COUNT - 1)) * 2.0 - 1.0 # от -1.0 до +1.0
+	var needle_count = data.alt_projectile_count
+	for i in range(needle_count):
+		var h_frac = (float(i) / float(needle_count - 1)) * 2.0 - 1.0 # от -1.0 до +1.0
 		var spread_x = (h_frac * 0.34) + randf_range(-0.03, 0.03) # дуга ~38 градусов
 		var spread_y = randf_range(-0.16, 0.16) # вертикальный разброс ~18 градусов
 		
@@ -99,9 +96,9 @@ func _fire_sewing_barrage() -> void:
 				if target != null and target.has_method("take_damage"):
 					var flat_dir = Vector3(aim_dir.x, 0.0, aim_dir.z).normalized()
 					var knockback_vector = flat_dir * 1.5 + Vector3.UP * 0.5
-					var final_dmg = NEEDLE_DAMAGE
+					var final_dmg = data.alt_damage
 					if is_headshot:
-						final_dmg = int(round(float(NEEDLE_DAMAGE) * 1.5))
+						final_dmg = int(round(float(data.alt_damage) * data.headshot_multiplier))
 						
 					if target.has_method("add_needle"):
 						target.add_needle()
@@ -112,7 +109,7 @@ func _fire_sewing_barrage() -> void:
 		
 	head.raycast.target_position = Vector3(0, 0, -100)
 	var remaining_ammo = weapon_manager.ammos[slot_index] if weapon_manager else 0
-	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [NEEDLE_COUNT, remaining_ammo])
+	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Barrage fired! Needles: %d | Ammos remaining: %d" % [needle_count, remaining_ammo])
 
 func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	if alt_timer > 0.0:

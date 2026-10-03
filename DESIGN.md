@@ -646,6 +646,7 @@
   - `air_multiplier: float`: множитель урона по воздушным целям (2.0 для Калибр-0, 1.0 для остальных).
   - `has_vacuum: bool`, `vacuum_radius: float`, `vacuum_force: float`: параметры гравитационного следа пули (2.5м радиус, 25.6 сила для Калибр-0).
   - `is_automatic: bool`: флаг автоматической непрерывной стрельбы при удержании ЛКМ (true для Швейной машины).
+  - Группа `@export_group("Альт-огонь")` (0 = поле не используется оружием): `alt_cooldown: float`, `alt_ammo_cost: int`, `alt_projectile_count: int`, `alt_damage: int`. Сейчас заполнена только у Швейной машины (1.5с, 10 игл, 12 игл, 4 HP) — константы `ALT_COOLDOWN`, `BARRAGE_AMMO_COST`, `NEEDLE_COUNT`, `NEEDLE_DAMAGE` удалены из `weapon_sewing.gd`; хедшот залпа берёт `headshot_multiplier` (1.5) вместо литерала. Параметры ПКМ Наковальни, Инъектора и Калибр-0 пока в коде.
 - **Файлы ресурсов (`res://scripts/weapons/data/`)**:
   - `caliber_0.tres`, `anvil.tres`, `injector.tres`, `sewing_machine.tres` с побуквенно перенесёнными параметрами и исчерпывающими комментариями.
 - **Интеграция с WeaponManager**:

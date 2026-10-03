@@ -161,8 +161,16 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - Перенос файлов из корня `res://` в `scripts/` — ТОЛЬКО через редактор Godot, агент сломает
   ссылки в `.tscn`.
 - Разбиение DESIGN.md: 138 КБ на начало рефакторинга → ~190 КБ.
-- ПКМ Швейной машины захардкожен мимо WeaponData (`weapon_sewing.gd`: `ALT_COOLDOWN`,
-  `BARRAGE_AMMO_COST`, `NEEDLE_COUNT`, `NEEDLE_DAMAGE`).
+- Параметры ПКМ других оружий в коде мимо WeaponData (ПКМ Швейной уже в группе «Альт-огонь»).
+  Решить, что выносить: часть — внутреннее устройство оружия и должна остаться в коде
+  (геометрия веера, радиусы коллизий, длина луча), в ресурс — только настройки баланса.
+  - Наковальня: `ALT_COOLDOWN` 1.2с, `PISTON_RANGE` 5.0м, `ENEMY_COL_RADIUS` 0.38, толчок 42 м/с,
+    `FLOOR_SPLASH_RADIUS` 2.0м, цепочка самоподброса 1.0 → 0.6 → 0.35 (+ ~60 литералов в файле).
+  - Инъектор: `ALT_COOLDOWN` 4.5с (раздутие). ЛКМ-параметры в коде: `BURST_COUNT` 3,
+    `BURST_INTERVAL` 0.07с, яд 3.0с / 3 тика / 0.5с.
+  - Калибр-0: свой кулдаун ПКМ не задан — `data.fire_rate` (фоллбек 0.45), гейт OVERDRIVE,
+    расход всего барабана, `MAX_BEAM_DIST` 120м.
+  - Швейная (остаток залпа): отдача 0.06/0.22, геометрия веера 0.34/±0.03/±0.16, отброс 1.5/0.5.
 - `was_killed_by_melee` / `was_killed_by_shockwave` / `last_damage_weapon` дублируются:
   в `HealthComponent`, в словаре сигнала `died` и полями на `EnemyBase`.
 
