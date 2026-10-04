@@ -148,12 +148,12 @@ func process_slam(_delta, vel: Vector3) -> Vector3:
 				if pool is BloodPool:
 					pool.expand_temporarily(1.4, 4.0)
 					
-			# +10 BPM запланированы под механику REDLINE (см. DESIGN.md), сейчас не начисляются
+			# Попап кровавого слэма (BPM не начисляется: слэм — контроль толпы)
 			show_hud_popup("★ BLOOD SLAM ★")
 			
 			# Визуальный эффект расширяющейся волны крови
 			_spawn_blood_slam_vfx(player.global_position, effective_aoe)
-			GameTypes.debug_log(&"bpm", "[BLOOD SLAM] Enhanced shockwave! AOE: %.1fm, +10 BPM, expanded %d blood pool(s)" % [
+			GameTypes.debug_log(&"bpm", "[BLOOD SLAM] Enhanced shockwave! AOE: %.1fm, expanded %d blood pool(s)" % [
 				effective_aoe, nearby_blood_pools.size()
 			])
 		else:
