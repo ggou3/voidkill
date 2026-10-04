@@ -745,7 +745,8 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 			target = other.get_meta("enemy") if other.has_meta("enemy") else other.get_parent()
 		else:
 			target = GameTypes.resolve_damageable(other)
-		if target and target != self and target.has_method("take_damage"):
+		# Игрок в цепочку не входит: впечатанный в него враг не наносит урона и цепочку не продолжает
+		if target and target != self and not (target is Player) and target.has_method("take_damage"):
 			var next_depth = slam_depth + 1
 			var next_mult: float = 1.0
 			if next_depth == 1:
