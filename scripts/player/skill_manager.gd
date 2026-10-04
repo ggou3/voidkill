@@ -9,10 +9,19 @@ const MAX_DASH = 3
 const DASH_DUR = 0.15
 
 const SLAM_SPEED = 60.0
-const BOUNCE_VEL = 14.0
 const SLAM_AOE = 6.0
-const SLAM_DMG = 30
+const SLAM_DMG = 10
 const SLAM_CD = 4.0
+# Слэм — контроль толпы: горизонтальный разброс волной, без подброса.
+# Максимум строго ниже порога wall slam врагов (16 м/с), чтобы разброс не превращался в урон о стены.
+const SLAM_KNOCKBACK_CENTER = 14.0
+const SLAM_KNOCKBACK_EDGE = 6.0
+# Расталкивание врагов под игроком во время падения (без урона)
+const SLAM_DESCENT_PUSH_RADIUS = 1.6
+const SLAM_DESCENT_PUSH_SPEED = 8.0
+# Проход сквозь врагов во время падения: снимок врагов в этом горизонтальном радиусе на старте слэма
+const SLAM_PASSTHROUGH_RADIUS = 3.0
+const SLAM_PASSTHROUGH_TIMEOUT = 0.5
 
 var dashes = MAX_DASH
 var dash_timer_cd = 0.0
@@ -24,13 +33,15 @@ var dash_current_speed: float = 16.0
 
 var is_slamming = false
 var slam_timer = 0.0
+# Враги, с которыми на время слэма отключены столкновения (в обе стороны)
+var slam_passthrough_bodies: Array[Node3D] = []
+var slam_passthrough_timer: float = 0.0
 
 signal dash_charges_changed(count: int)
 signal hud_popup_requested(text: String)
 
 @onready var player = $".."
 @onready var head = $"../Head"
-@onready var slam_ray = $"../SlamRay"
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 func _ready():
@@ -104,31 +115,25 @@ func process_dash(delta, vel: Vector3) -> Vector3:
 func trigger_slam():
 	if not player.is_on_floor() and not is_slamming and slam_timer <= 0:
 		is_slamming = true
+		_begin_slam_passthrough()
 
-func process_slam(_delta, vel: Vector3) -> Vector3:
+## Прерывание слэма (смерть игрока): сброс состояния и немедленное снятие исключений столкновений
+func cancel_slam() -> void:
+	is_slamming = false
+	_release_slam_passthrough(true)
+
+func process_slam(delta, vel: Vector3) -> Vector3:
+	_update_slam_passthrough(delta)
 	if not is_slamming: return vel
-	
-	slam_ray.force_shapecast_update()
-	var hit_enemy = false
-	
-	if slam_ray.is_colliding():
-		for i in range(slam_ray.get_collision_count()):
-			var hit = slam_ray.get_collider(i)
-			if hit != null and hit.has_method("take_damage"):
-				hit_enemy = true
-				is_slamming = false
-				vel.y = BOUNCE_VEL
-				add_dash_charge()
-				hit.take_damage(100, Vector3.DOWN, hit.global_position, true, false, false, false, -1, "melee")
-				head.add_recoil(0.1, 0.0)
-				slam_timer = SLAM_CD
-				AudioManager.play_sound("slam_impact")
-				break
-				
-	if not hit_enemy and player.is_on_floor():
+
+	# Слэм всегда долетает до земли (сквозь врагов) и по пути расталкивает врагов под игроком
+	_push_enemies_below()
+
+	if player.is_on_floor():
 		is_slamming = false
 		vel.y = 0
 		slam_timer = SLAM_CD
+		slam_passthrough_timer = SLAM_PASSTHROUGH_TIMEOUT
 		
 		# Проверка наличия лужи крови в радиусе обычного слэма + 2 метра (8.0м) или нахождения на крови
 		var search_radius: float = SLAM_AOE + 2.0
@@ -160,18 +165,93 @@ func process_slam(_delta, vel: Vector3) -> Vector3:
 			head.add_recoil(0.25, 0.0)
 			AudioManager.play_sound("slam_impact")
 		
+		# Волна: небольшой урон + горизонтальный разброс от центра (сильнее в центре, слабее на краю)
 		var enemies = player.get_tree().get_nodes_in_group("enemy")
 		for e in enemies:
 			if is_instance_valid(e):
-				if player.global_position.distance_to(e.global_position) <= effective_aoe:
-					e.take_damage(SLAM_DMG, (e.global_position - player.global_position).normalized(), e.global_position, true, false, true, false, -1, "melee")
-					
+				var dist = player.global_position.distance_to(e.global_position)
+				if dist <= effective_aoe:
+					var t = clampf(dist / effective_aoe, 0.0, 1.0)
+					var knock_speed = lerp(SLAM_KNOCKBACK_CENTER, SLAM_KNOCKBACK_EDGE, t)
+					var knock_vec = _flat_dir_from_player(e) * knock_speed
+					e.take_damage(SLAM_DMG, knock_vec, e.global_position, false, false, true, false, -1, "slam")
+
 	if is_slamming:
 		vel.y = -SLAM_SPEED
 		vel.x = 0
 		vel.z = 0
 		
 	return vel
+
+## Горизонтальное направление от оси падения игрока к врагу
+func _flat_dir_from_player(e: Node3D) -> Vector3:
+	var flat = Vector3(e.global_position.x - player.global_position.x, 0.0, e.global_position.z - player.global_position.z)
+	if flat.length_squared() > 0.0025:
+		return flat.normalized()
+	# Враг точно на оси падения — толкаем по направлению взгляда игрока
+	var fwd = -player.transform.basis.z
+	return Vector3(fwd.x, 0.0, fwd.z).normalized()
+
+## Во время падения враги под игроком отъезжают в сторону от оси падения (без урона, без подброса).
+## Скорость отброса доводится до SLAM_DESCENT_PUSH_SPEED, а не накапливается покадрово.
+func _push_enemies_below() -> void:
+	for e in player.get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(e) or not (e is EnemyBase):
+			continue
+		if e.global_position.y > player.global_position.y + 0.5:
+			continue
+		var flat = Vector2(e.global_position.x - player.global_position.x, e.global_position.z - player.global_position.z)
+		if flat.length() > SLAM_DESCENT_PUSH_RADIUS:
+			continue
+		var dir = _flat_dir_from_player(e)
+		var outward = e.knockback_velocity.dot(dir)
+		if outward < SLAM_DESCENT_PUSH_SPEED:
+			e.apply_vacuum_pull(dir * (SLAM_DESCENT_PUSH_SPEED - outward))
+
+## Снимок врагов в радиусе падения: на время слэма столкновения с ними отключены в обе стороны,
+## чтобы игрок не вставал на голову врага и всегда долетал до земли.
+func _begin_slam_passthrough() -> void:
+	_release_slam_passthrough(true)
+	for e in player.get_tree().get_nodes_in_group("enemy"):
+		if not is_instance_valid(e) or not (e is PhysicsBody3D):
+			continue
+		var flat = Vector2(e.global_position.x - player.global_position.x, e.global_position.z - player.global_position.z)
+		if flat.length() <= SLAM_PASSTHROUGH_RADIUS:
+			player.add_collision_exception_with(e)
+			e.add_collision_exception_with(player)
+			slam_passthrough_bodies.append(e)
+
+## После приземления: исключение снимается с врага, как только он вышел из капсулы игрока
+## по горизонтали; по истечении SLAM_PASSTHROUGH_TIMEOUT — со всех оставшихся.
+func _update_slam_passthrough(delta: float) -> void:
+	if slam_passthrough_bodies.is_empty() or is_slamming:
+		return
+	slam_passthrough_timer -= delta
+	_release_slam_passthrough(slam_passthrough_timer <= 0.0)
+
+func _release_slam_passthrough(release_all: bool) -> void:
+	var remaining: Array[Node3D] = []
+	for e in slam_passthrough_bodies:
+		if not is_instance_valid(e):
+			continue
+		if release_all or _is_outside_player_capsule(e):
+			if is_instance_valid(player):
+				player.remove_collision_exception_with(e)
+				e.remove_collision_exception_with(player)
+		else:
+			remaining.append(e)
+	slam_passthrough_bodies = remaining
+
+func _is_outside_player_capsule(e: Node3D) -> bool:
+	var flat = Vector2(e.global_position.x - player.global_position.x, e.global_position.z - player.global_position.z)
+	return flat.length() > _body_radius(player) + _body_radius(e)
+
+## Горизонтальный радиус тела по его CollisionShape3D (с учётом масштаба узла)
+func _body_radius(body: Node3D) -> float:
+	var cs = body.get_node_or_null("CollisionShape3D") as CollisionShape3D
+	if cs and cs.shape and "radius" in cs.shape:
+		return cs.shape.radius * absf(cs.global_transform.basis.get_scale().x)
+	return 0.5
 
 func _find_nearby_blood_pools(impact_pos: Vector3, search_radius: float) -> Array[Node]:
 	var blood_pools = player.get_tree().get_nodes_in_group("blood_pool")

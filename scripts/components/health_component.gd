@@ -50,10 +50,15 @@ func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3, is_melee: bo
 	elif amount > 0:
 		was_killed_by_shockwave = false
 		
-	was_killed_by_melee = is_melee or is_shockwave or is_execute
+	# Волна слэма — ударная волна по физике (wall slam, цепи, стан), но не мили:
+	# убийство засчитывается оружию "slam" без мили-бонусов.
+	var is_slam = weapon_source == "slam"
+	was_killed_by_melee = (is_melee or is_shockwave or is_execute) and not is_slam
 	last_is_execute = is_execute
-	
-	if is_melee or is_shockwave or is_execute:
+
+	if is_slam:
+		last_damage_weapon = "slam"
+	elif is_melee or is_shockwave or is_execute:
 		last_damage_weapon = "melee"
 	elif weapon_source != "":
 		last_damage_weapon = weapon_source

@@ -532,6 +532,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 func _on_health_died():
 	died.emit()
 	wallrun.end_wallrun()
+	skills.cancel_slam()
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
 	has_jumped = false
