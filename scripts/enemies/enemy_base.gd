@@ -545,15 +545,13 @@ func die(death_info: Dictionary = {}) -> void:
 	var killed_by_melee: bool = health_component.was_killed_by_melee if has_health else false
 	var killed_by_shockwave: bool = health_component.was_killed_by_shockwave if has_health else false
 	var killer_weapon: String = health_component.last_damage_weapon if has_health else ""
-	# Убийство волной слэма — обычное убийство оружием "slam" (без бонуса ударной волны мили)
-	var killed_by_slam: bool = killer_weapon == "slam"
 
 	var player = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(player) and "bpm_system" in player and is_instance_valid(player.bpm_system):
+		# Метку оружия последнего удара ставит HealthComponent.record_hit_source:
+		# мили и мили-ударная волна — "melee", ударная волна оружия ("slam", "anvil") — само оружие
 		var weapon_used = killer_weapon
-		if killed_by_slam:
-			weapon_used = "slam"
-		elif killed_by_shockwave or killed_by_melee:
+		if weapon_used == "" and (killed_by_shockwave or killed_by_melee):
 			weapon_used = "melee"
 		elif weapon_used == "":
 			var weapons_mgr = player.weapons if player is Player else null
@@ -568,7 +566,8 @@ func die(death_info: Dictionary = {}) -> void:
 				weapon_used = "unknown"
 				
 		if player.bpm_system.has_method("record_kill_bpm"):
-			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave and not killed_by_slam)
+			# Бонус ударной волны (+8.0 вместо +5.5) — только у мили-ударной волны (конусная волна мили)
+			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave and weapon_used == "melee")
 	
 	if hp_sprite:
 		hp_sprite.visible = false

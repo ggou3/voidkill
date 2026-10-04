@@ -19,6 +19,11 @@ extends EnemyBase
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var wall_slam_timer: float = 0.0
+# Источник толчка, открывшего окно wall slam. Запоминается в момент толчка отдельно от
+# HealthComponent, чтобы урон в полёте (тик яда) не перезаписал автора удара о стену.
+var wall_slam_source_weapon: String = ""
+var wall_slam_source_melee: bool = false
+var wall_slam_source_shockwave: bool = false
 var pre_move_velocity: Vector3 = Vector3.ZERO
 var path_update_timer: float = 0.0
 const PATH_UPDATE_INTERVAL: float = 0.35
@@ -683,10 +688,16 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		wall_slam_timer = 0.8 if is_shockwave else 0.4
 		velocity.x = knockback_vector.x
 		velocity.z = knockback_vector.z
+		wall_slam_source_weapon = weapon_source
+		wall_slam_source_melee = is_melee or is_execute
+		wall_slam_source_shockwave = is_shockwave
 	elif is_melee:
 		wall_slam_timer = 0.25
 		velocity.x = knockback_vector.x
 		velocity.z = knockback_vector.z
+		wall_slam_source_weapon = weapon_source
+		wall_slam_source_melee = true
+		wall_slam_source_shockwave = false
 
 	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
@@ -745,7 +756,8 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 				next_mult = 0.20
 			var collateral_damage = int(round(base_wall_damage * next_mult))
 			GameTypes.debug_log(&"enemy", "[%s] Collateral hit %s! Depth: %d, damage: %d" % [name, target.name, next_depth, collateral_damage])
-			target.take_damage(collateral_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), false, false, true, false, next_depth)
+			# Источник цепочки (кто толкнул первого) передаётся соседу вместе с глубиной
+			target.take_damage(collateral_damage, -col.get_normal() * 12.0 + Vector3.UP * 4.0, col.get_position(), wall_slam_source_melee, false, true, false, next_depth, wall_slam_source_weapon)
 	
 	if blood_splatter_scene:
 		var splatter = blood_splatter_scene.instantiate()
@@ -766,12 +778,13 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 	knockback_velocity = Vector3.ZERO
 	velocity = velocity.slide(col.get_normal()) * 0.2
 	
+	# Удар о стену — последний удар; его автор — тот, кто толкнул (запомнен в момент толчка)
+	if is_instance_valid(health_component):
+		health_component.record_hit_source(wall_damage, wall_slam_source_melee, false, wall_slam_source_shockwave, -1, wall_slam_source_weapon)
 	health -= wall_damage
 	_update_health_bar()
 	_spawn_damage_number(wall_damage, col.get_position(), false)
 	if health <= 0:
-		if is_instance_valid(health_component):
-			health_component.explosion_chain_depth = 0
 		var player = get_tree().get_first_node_in_group("player")
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()

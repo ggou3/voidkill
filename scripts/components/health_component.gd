@@ -74,14 +74,16 @@ func record_hit_source(amount: int, is_melee: bool = false, is_execute: bool = f
 	elif amount > 0:
 		was_killed_by_shockwave = false
 
-	# Волна слэма — ударная волна по физике (wall slam, цепи, стан), но не мили:
-	# убийство засчитывается оружию "slam" без мили-бонусов.
-	var is_slam = weapon_source == "slam"
-	was_killed_by_melee = (is_melee or is_shockwave or is_execute) and not is_slam
+	# Ударная волна оружия с собственной меткой (волна слэма "slam", поршень Наковальни "anvil")
+	# работает как ударная волна по физике (wall slam, цепи, стан), но не мили:
+	# убийство засчитывается этому оружию без мили-бонусов. Метка "melee" или её отсутствие —
+	# мили-ударная волна (конусная волна мили, цепочка wall slam от мили).
+	var credits_weapon = weapon_source != "" and weapon_source != "melee"
+	was_killed_by_melee = is_melee or is_execute or (is_shockwave and not credits_weapon)
 	last_is_execute = is_execute
 
-	if is_slam:
-		last_damage_weapon = "slam"
+	if credits_weapon and not is_melee and not is_execute:
+		last_damage_weapon = weapon_source
 	elif is_melee or is_shockwave or is_execute:
 		last_damage_weapon = "melee"
 	elif weapon_source != "":
