@@ -148,7 +148,7 @@ func process_slam(_delta, vel: Vector3) -> Vector3:
 				if pool is BloodPool:
 					pool.expand_temporarily(1.4, 4.0)
 					
-			# Мгновенный разовый бонус +10 BPM
+			# +10 BPM запланированы под механику REDLINE (см. DESIGN.md), сейчас не начисляются
 			show_hud_popup("★ BLOOD SLAM ★")
 			
 			# Визуальный эффект расширяющейся волны крови

@@ -165,8 +165,8 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - ~~`enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"` вместо
   `WeaponManager`~~ — исправлено в `7a85047`. Затрагивало только убийства, где ни один источник
   урона не пометил оружие (фоллбек давал `"unknown"`); обычные убийства и VARIETY работали.
-- Blood Slam (`scripts/player/skill_manager.gd`, `process_slam`): комментарий и лог обещают +10 BPM, код не
-  начисляет.
+- Blood Slam +10 BPM (`scripts/player/skill_manager.gd`, `process_slam`) — не баг, задел под механику
+  REDLINE, спецификация в DESIGN.md (раздел 9, «REDLINE — выход за предел 200 BPM»).
 - DESIGN.md строка 47: моментум кровавого сёрфа +0.05/сек, в коде +0.04 — решить, что правда.
 - Довести использование именованных масок слоёв — `GameTypes.LAYER_*` объявлены (этап 1), но
   нигде не используются: в коде числом задана маска в `scripts/enemies/enemy_bomber.gd` (`collision_mask = 1`),
