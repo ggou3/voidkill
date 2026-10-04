@@ -60,9 +60,6 @@ shader_parameter/speed_threshold = 14.5
 shader_parameter/max_speed_threshold = 19.5
 shader_parameter/overdrive_factor = 0.0
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_3xd07"]
-radius = 0.8
-
 [node name="Player" type="CharacterBody3D" unique_id=1600772311 groups=["player"]]
 script = ExtResource("1_4flbx")
 
@@ -476,10 +473,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="SlamRay" type="ShapeCast3D" parent="." unique_id=1360980467]
-shape = SubResource("SphereShape3D_3xd07")
-target_position = Vector3(0, -1.5, 0)
 
 [node name="HUD" type="CanvasLayer" parent="." unique_id=940516106]
 script = ExtResource("6_hud")
