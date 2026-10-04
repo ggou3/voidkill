@@ -731,8 +731,10 @@ func _on_status_requests_damage(amount: int, kind: StringName) -> void:
 	if current_state == State.DEAD:
 		return
 	if kind == &"poison":
+		# Тик яда идёт мимо take_damage (свой зелёный номер, без звука удара и брызг),
+		# но источник удара фиксируется тем же путём, что и у обычного урона
 		if is_instance_valid(health_component):
-			health_component.last_damage_weapon = "injector"
+			health_component.record_hit_source(amount, false, false, false, -1, "injector")
 		health -= amount
 		_update_health_bar()
 		var hit_pos = global_position + Vector3(randf_range(-0.15, 0.15), 0.85 + randf_range(-0.1, 0.1), randf_range(-0.15, 0.15))
@@ -742,8 +744,6 @@ func _on_status_requests_damage(amount: int, kind: StringName) -> void:
 			if is_instance_valid(player):
 				start_chase(player)
 		if health <= 0:
-			if is_instance_valid(health_component):
-				health_component.explosion_chain_depth = 0
 			set_state(State.DEAD)
 
 func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:

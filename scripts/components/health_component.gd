@@ -38,34 +38,12 @@ func is_dead() -> bool:
 func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	if is_dead():
 		return
-		
-	if source_chain_depth >= 0:
-		explosion_chain_depth = source_chain_depth + 1
-	else:
-		explosion_chain_depth = 0
-		
-	if is_shockwave:
-		slam_chain_depth = max(0, source_chain_depth)
-		was_killed_by_shockwave = true
-	elif amount > 0:
-		was_killed_by_shockwave = false
-		
-	# Волна слэма — ударная волна по физике (wall slam, цепи, стан), но не мили:
-	# убийство засчитывается оружию "slam" без мили-бонусов.
-	var is_slam = weapon_source == "slam"
-	was_killed_by_melee = (is_melee or is_shockwave or is_execute) and not is_slam
-	last_is_execute = is_execute
 
-	if is_slam:
-		last_damage_weapon = "slam"
-	elif is_melee or is_shockwave or is_execute:
-		last_damage_weapon = "melee"
-	elif weapon_source != "":
-		last_damage_weapon = weapon_source
-		
+	record_hit_source(amount, is_melee, is_execute, is_shockwave, source_chain_depth, weapon_source)
+
 	var prev_health = health
 	health = max(0, health - amount)
-	
+
 	damaged.emit(amount, is_headshot, hit_pos)
 	
 	if health <= 0 and prev_health > 0:
@@ -80,3 +58,31 @@ func take_damage(amount: int, knockback: Vector3, hit_pos: Vector3, is_melee: bo
 			"source_chain_depth": source_chain_depth
 		}
 		died.emit(death_info)
+
+## Фиксирует источник удара: способ убийства (was_killed_by_*, last_damage_weapon) и глубины цепей.
+## Вызывается из take_damage и из путей урона в обход него (тик яда), чтобы убийство
+## всегда засчитывалось источнику последнего удара.
+func record_hit_source(amount: int, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
+	if source_chain_depth >= 0:
+		explosion_chain_depth = source_chain_depth + 1
+	else:
+		explosion_chain_depth = 0
+
+	if is_shockwave:
+		slam_chain_depth = max(0, source_chain_depth)
+		was_killed_by_shockwave = true
+	elif amount > 0:
+		was_killed_by_shockwave = false
+
+	# Волна слэма — ударная волна по физике (wall slam, цепи, стан), но не мили:
+	# убийство засчитывается оружию "slam" без мили-бонусов.
+	var is_slam = weapon_source == "slam"
+	was_killed_by_melee = (is_melee or is_shockwave or is_execute) and not is_slam
+	last_is_execute = is_execute
+
+	if is_slam:
+		last_damage_weapon = "slam"
+	elif is_melee or is_shockwave or is_execute:
+		last_damage_weapon = "melee"
+	elif weapon_source != "":
+		last_damage_weapon = weapon_source
