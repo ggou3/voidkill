@@ -12,6 +12,13 @@
   `trigger_game_over()` переводит в `GAME_OVER`, освобождает курсор и эмитит `game_over_triggered`
   (на него подписан HUD — экран Game Over). Закомментированные заготовки (score, волны, пауза) удалены —
   вернуть при реализации соответствующих фич из roadmap.
+  - **Уровни** (каркас уровней, см. [levels.md](levels.md)): `LevelController` регистрируется через
+    `register_level()`. Тогда `restart_game()` (R / «Возродиться») — возрождение на последнем
+    чекпоинте (`level.respawn_player`, сигнал `player_respawned`), а `restart_level()` — перезагрузка
+    сцены. Состояние `LEVEL_COMPLETE`: `complete_level()` (из `LevelExit`, только при всех
+    зачищенных секторах) ставит дерево на паузу и эмитит `level_completed(stats)`. Статистика
+    уровня: `level_time`, `kills`, `damage_taken`, `overdrive_time`, `deaths`. Вне уровня (`level`
+    не зарегистрирован) поведение прежнее — перезапуск сцены.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameManager` — конфликтует с именем автозагрузки.
 - **AudioManager** (`res://scripts/audio_manager.gd`) — процедурная генерация звуков через
   `AudioStreamGenerator` (без внешних аудиофайлов). `AudioManager.play_sound(name: String)`.

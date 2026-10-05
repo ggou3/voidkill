@@ -22,10 +22,13 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
   projectile_enemy (вражеский снаряд), `data/*.tres`
 - `effects/` — blood_pool, blood_splatter
 - `ui/` — hud
+- `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
-В корне `res://` остались только сцены (`*.tscn`), шейдеры (`*.gdshader`), ресурсы навмеша
-(`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`, `project.godot` и документы.
+Уровни — `levels/*.tscn` (сейчас `levels/demo_level.tscn`), новые шейдеры — `shaders/`
+(`blood_barrier.gdshader`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
+(`*.gdshader`), ресурсы навмеша (`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`,
+`project.godot` и документы.
 Пути в `preload("res://...")` указывают на сцены в корне — при переносе сцен их править.
 
 ## 2. Архитектурный рефакторинг (ветка `Refactoring`)
@@ -158,6 +161,14 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
   `jump_off_wall(cap)`. Поля обычного wall-jump (`wall_jump_count/timer`, `last_wall_jump_normal`,
   `wall_jump_cooldown`) остались на Player.
 - Строки: player.gd 710 → 548 (цель ≤ 600 достигнута), player_wallrun.gd 199.
+
+**Каркас уровней — СДЕЛАНО** (`db15d7e` компоненты, `9b35090` чекпоинты, `ba4eb41` статистика и
+экран конца, `19cf34f` демо-уровень). Описание и формула рейтинга — `docs/levels.md`.
+- Сон врагов до активации сектора — без правок поведения врагов: `process_mode = DISABLED` +
+  временное удаление из группы `"enemy"`. Не «чинить» врагов под сектор флагами.
+- Смерть на уровне — возрождение на чекпоинте (`GameManager.restart_game` → `LevelController.respawn_player`
+  → `Player.respawn`), перезапуск уровня — `GameManager.restart_level`. Вне уровня — перезапуск сцены.
+- Демо-уровень запекает навмеш в рантайме (`bake_navigation_on_ready`); перегородки вне `NavigationRegion3D`.
 
 **Отложено — очередь работ после рефакторинга:**
 - **Расхождения документации с кодом** (выявлены при разбиении DESIGN.md, при переносе НЕ правились):
