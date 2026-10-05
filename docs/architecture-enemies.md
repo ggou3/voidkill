@@ -56,11 +56,10 @@
 
 ### Иерархия классов врагов (EnemyBase и EnemyGround) — ✅ Реализован (Шаг 3.4)
 - **EnemyBase** (`res://scripts/enemies/enemy_base.gd`, `class_name EnemyBase extends CharacterBody3D`, 789 строк) — базовый абстрактный класс для всех типов врагов (наземных и летающих):
-  - FSM-машина: `enum State { IDLE, CHASE, ATTACK, LUNGE, FLEE, DEAD }`, диспетчер состояний в `_physics_process(delta)`, централизованный `set_state(new_state)`.
+  - FSM-машина: `enum State { IDLE, CHASE, ATTACK, LUNGE, TELEGRAPH, FIRING, DEAD }` (`FLEE` удалён вместе с Fear Chain), диспетчер состояний в `_physics_process(delta)`, централизованный `set_state(new_state)`.
   - Перцепция и целеуказание: `target_player`, `start_chase(player)`, `detection_range`, `reaction_delay`, `_has_line_of_sight_to(target)`, реакция `_on_detection_area_body_entered`.
   - Владение компонентами: жизненный цикл и ленивое создание `HealthComponent`, `StatusEffectComponent`, `EnemyHealthBar`.
   - Полный фасад свойств и методов: `slow_factor`, `poison_stacks`, `needle_count`, `is_inflated`, `add_slow`, `apply_poison_dot`, `add_needle`, `inflate`, триггеры детонаций (`trigger_inflation_explosion`, `trigger_poison_contagion`, `trigger_needle_burst`), спавн эффектов ударных волн и ядовитых облаков.
-  - Система паники (Fear Chain): `_process_fear_chain_check(delta)`, таймер `flee_timer`, базовый `_process_flee(delta)`, `_resume_from_flee()`.
   - Урон, смерть и VFX: `take_damage(...)`, `die(death_info)`, всплывающие цифры урона `_spawn_damage_number`, генерация брызг крови `_spawn_hit_blood_splatter`, спавн лужи крови `BloodPool`, физика гравипула `apply_vacuum_pull`.
   - Полное отсутствие привязок к 2D/наземной навигации (`NavigationAgent3D` и проверка пола отсутствуют).
 - **EnemyGround** (`res://scripts/enemies/enemy_ground.gd`, `class_name EnemyGround extends EnemyBase`, 772 строки) — базовый класс для всех наземных врагов:
@@ -89,12 +88,12 @@
     - **Раздутие (Inflation)**: анимация раздутия с пульсацией глаз, разрушительная кровавая детонация при гибели (`trigger_inflation_explosion`).
     - **Замедление (Slow)**: множитель `slow_factor` с динамическим снижением скорости полёта при попадании колбы замедления.
   - Дедуплицированы процедуры построения геометрии лазера и секторов прицеливания (`_orient_cylinder_between`, `_cast_boundary_line`).
-  - Задействованы виртуальные диспетчеры базового класса `_process_telegraph(delta)`, `_process_firing(delta)`, `_apply_flee_movement(delta)`.
+  - Задействованы виртуальные диспетчеры базового класса `_process_telegraph(delta)`, `_process_firing(delta)`.
   - Размер файла сокращён с 875 до 447 строк (сокращение на 49%, строго в пределах нормы <= 500 строк).
 - **Рефакторинг турели (`EnemyTurret`, `enemy_turret.gd`)**:
   - Переведена с `res://enemy.gd` на наследование `extends EnemyRanged`.
   - Из `EnemyRanged` выделены виртуальные методы `_get_projectile_spawn_position()` и `_play_attack_flash()`, благодаря чему в `EnemyTurret` полностью удалены дублированный спавн снарядов, расчёт траекторий и звуки выстрела: турель переопределяет точки ствола и вызывает `super.perform_attack()`.
-  - Сохранена полная стационарность (`_apply_movement` с `velocity = Vector3.ZERO`), фиксация базы (`base_mount.global_transform.basis = base_fixed_basis`), и механика захвата в прицел (lockdown) с кулдауном.
+  - Сохранена полная стационарность (`_apply_movement` с `velocity = Vector3.ZERO`), фиксация базы (`base_mount.global_transform.basis = base_fixed_basis`). Защитный локдаун на OVERDRIVE удалён вместе с Fear Chain.
 - **Интеграция лазерной атаки в EnemyBase**:
   - В `EnemyBase.State` добавлены общие состояния `TELEGRAPH` и `FIRING` вместе с виртуальными методами `_process_telegraph(_delta)` и `_process_firing(_delta)`, что исключило конфликт затенения enum `State` в GDScript и стандартизировало обработку подготовки/стрельбы в общем цикле `_physics_process`.
 

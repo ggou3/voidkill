@@ -8,7 +8,6 @@ enum State {
 	LUNGE,
 	TELEGRAPH,
 	FIRING,
-	FLEE,
 	DEAD
 }
 
@@ -38,8 +37,6 @@ var hit_reaction_timer: float = 0.0
 var knockback_velocity: Vector3 = Vector3.ZERO
 var last_hit_knockback: Vector3 = Vector3.ZERO
 
-var fear_check_timer: float = 0.0
-var flee_timer: float = 0.0
 
 var last_headshot_bonus_frame: int = -1
 
@@ -209,7 +206,6 @@ func _ready() -> void:
 		detection_area.body_entered.connect(_on_detection_area_body_entered)
 		
 	_setup_health_bar()
-	fear_check_timer = randf_range(0.5, 2.5)
 
 func _setup_health_bar() -> void:
 	_ensure_health_bar().setup(
@@ -231,8 +227,7 @@ func _physics_process(delta: float) -> void:
 		
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
-		
-	_process_fear_chain_check(delta)
+
 	match current_state:
 		State.IDLE:
 			_process_idle(delta)
@@ -246,8 +241,6 @@ func _physics_process(delta: float) -> void:
 			_process_telegraph(delta)
 		State.FIRING:
 			_process_firing(delta)
-		State.FLEE:
-			_process_flee(delta)
 
 func set_state(new_state: State) -> void:
 	if current_state == new_state or current_state == State.DEAD:
@@ -289,40 +282,6 @@ func _process_telegraph(_delta: float) -> void:
 func _process_firing(_delta: float) -> void:
 	pass
 
-func _process_flee(delta: float) -> void:
-	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
-		set_state(State.IDLE)
-		return
-		
-	var player_bpm: float = 0.0
-	var is_overdrive: bool = false
-	if "bpm_system" in target_player and is_instance_valid(target_player.bpm_system):
-		if "bpm" in target_player.bpm_system:
-			player_bpm = target_player.bpm_system.bpm
-		if target_player.bpm_system.has_method("get_bpm_tier"):
-			is_overdrive = (target_player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
-		else:
-			is_overdrive = (player_bpm >= 180.0)
-	if not is_overdrive:
-		GameTypes.debug_log(&"enemy", "[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
-		_resume_from_flee()
-		return
-		
-	flee_timer -= delta
-	if flee_timer <= 0.0:
-		GameTypes.debug_log(&"enemy", "[%s] FLEE expired. Resuming normal behavior." % name)
-		_resume_from_flee()
-		return
-
-func _resume_from_flee() -> void:
-	flee_timer = 0.0
-	if is_instance_valid(target_player) and not ("is_dead" in target_player and target_player.is_dead):
-		var dist = global_position.distance_to(target_player.global_position)
-		if dist <= detection_range:
-			start_chase(target_player)
-			return
-	set_state(State.IDLE)
-
 func start_chase(player: Node3D) -> void:
 	target_player = player
 	set_state(State.CHASE)
@@ -348,45 +307,6 @@ func _has_line_of_sight_to(target: Node3D) -> bool:
 		return true
 	var col_obj = result.get("collider")
 	return is_instance_valid(col_obj) and (col_obj == target or col_obj.is_in_group("player"))
-
-func _process_fear_chain_check(delta: float) -> void:
-	if current_state != State.IDLE and current_state != State.CHASE:
-		return
-		
-	fear_check_timer -= delta
-	if fear_check_timer > 0.0:
-		return
-	fear_check_timer = 3.0
-	
-	var player = target_player
-	if not is_instance_valid(player):
-		player = get_tree().get_first_node_in_group("player")
-	if not is_instance_valid(player) or ("is_dead" in player and player.is_dead):
-		return
-		
-	var player_bpm: float = 0.0
-	var is_overdrive: bool = false
-	if "bpm_system" in player and is_instance_valid(player.bpm_system):
-		if "bpm" in player.bpm_system:
-			player_bpm = player.bpm_system.bpm
-		if player.bpm_system.has_method("get_bpm_tier"):
-			is_overdrive = (player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
-		else:
-			is_overdrive = (player_bpm >= 180.0)
-	if not is_overdrive:
-		return
-		
-	var dist = global_position.distance_to(player.global_position)
-	if dist > detection_range:
-		return
-	if not _has_line_of_sight_to(player):
-		return
-		
-	if randf() <= 0.40:
-		target_player = player
-		flee_timer = randf_range(4.0, 5.0)
-		GameTypes.debug_log(&"enemy", "[%s] FEAR CHAIN: Overdrive panic triggered (BPM: %.1f)! FLEE for %.2fs" % [name, player_bpm, flee_timer])
-		set_state(State.FLEE)
 
 func apply_vacuum_pull(pull_impulse: Vector3) -> void:
 	if current_state == State.DEAD:

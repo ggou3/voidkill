@@ -7,7 +7,6 @@ extends EnemyGround
 ## При BPM >= 140 немедленно начинает всеведущую охоту через всю арену.
 ## Скорость (13 -> 20 м/с) и урон (20 -> 35 HP) непрерывно скейлятся от BPM (140..200).
 ## Прожилки и серебристые глаза пульсируют в такт сердцебиению игрока.
-## Иммунен к Fear Chain (никогда не входит в State.FLEE).
 
 @export var hunter_max_health: int = 180
 @export var base_hunter_speed: float = 13.0
@@ -74,14 +73,7 @@ func _can_lunge_to_player() -> bool:
 func start_lunge() -> void:
 	pass
 
-func _process_fear_chain_check(_delta: float) -> void:
-	# Охотник бесстрашен и игнорирует панику Overdrive / Fear Chain
-	pass
-
 func set_state(new_state: State) -> void:
-	# Охотник никогда не спасается бегством
-	if new_state == State.FLEE:
-		return
 	if current_state == new_state or current_state == State.DEAD:
 		return
 	super.set_state(new_state)

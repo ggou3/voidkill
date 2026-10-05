@@ -103,7 +103,6 @@ func _physics_process(delta: float) -> void:
 				name, is_on_floor(), velocity.y, jump_timeout <= 0.0
 			])
 	else:
-		_process_fear_chain_check(delta)
 		match current_state:
 			State.IDLE:
 				_process_idle(delta)
@@ -117,9 +116,7 @@ func _physics_process(delta: float) -> void:
 				_process_telegraph(delta)
 			State.FIRING:
 				_process_firing(delta)
-			State.FLEE:
-				_process_flee(delta)
-			
+
 	pre_move_velocity = velocity
 	move_and_slide()
 	
@@ -147,9 +144,6 @@ func set_state(new_state: State) -> void:
 			is_jumping_link = false
 		State.LUNGE:
 			is_jumping_link = false
-		State.FLEE:
-			is_jumping_link = false
-			path_update_timer = 0.0
 		State.DEAD:
 			is_jumping_link = false
 
@@ -517,87 +511,6 @@ func _reset_lunge_visuals() -> void:
 			body_mesh.scale = Vector3.ONE
 			if head_mesh:
 				head_mesh.scale = Vector3.ONE
-
-func _process_flee(delta: float) -> void:
-	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):
-		set_state(State.IDLE)
-		return
-		
-	var player_bpm: float = 0.0
-	var is_overdrive: bool = false
-	if "bpm_system" in target_player and is_instance_valid(target_player.bpm_system):
-		if "bpm" in target_player.bpm_system:
-			player_bpm = target_player.bpm_system.bpm
-		if target_player.bpm_system.has_method("get_bpm_tier"):
-			is_overdrive = (target_player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
-		else:
-			is_overdrive = (player_bpm >= 180.0)
-	if not is_overdrive:
-		GameTypes.debug_log(&"enemy", "[%s] FLEE interrupted: Player left OVERDRIVE (BPM: %.1f). Resuming normal behavior." % [name, player_bpm])
-		_resume_from_flee()
-		return
-		
-	flee_timer -= delta
-	if flee_timer <= 0.0:
-		GameTypes.debug_log(&"enemy", "[%s] FLEE expired. Resuming normal behavior." % name)
-		_resume_from_flee()
-		return
-		
-	path_update_timer -= delta
-	if path_update_timer <= 0.0:
-		path_update_timer = PATH_UPDATE_INTERVAL
-		var base_away = (global_position - target_player.global_position)
-		base_away.y = 0.0
-		if base_away.length_squared() > 0.01:
-			base_away = base_away.normalized()
-		else:
-			base_away = -transform.basis.z.normalized()
-			
-		var best_flee_target = global_position + base_away * 12.0
-		if nav_agent:
-			var nav_map = nav_agent.get_navigation_map()
-			if nav_map.is_valid():
-				var max_player_dist = -1.0
-				var candidate_angles = [0.0, 0.785, -0.785, 1.57, -1.57]
-				for angle_offset in candidate_angles:
-					var candidate_dir = base_away.rotated(Vector3.UP, angle_offset)
-					var candidate_pos = global_position + candidate_dir * 12.0
-					var nav_pt = NavigationServer3D.map_get_closest_point(nav_map, candidate_pos)
-					var d_player = nav_pt.distance_squared_to(target_player.global_position)
-					if d_player > max_player_dist:
-						max_player_dist = d_player
-						best_flee_target = nav_pt
-				nav_agent.target_position = best_flee_target
-			else:
-				nav_agent.target_position = best_flee_target
-			
-	var next_path_pos = nav_agent.get_next_path_position() if nav_agent else global_position
-	var move_dir = next_path_pos - global_position
-	move_dir.y = 0.0
-	
-	if move_dir.length_squared() <= 0.01:
-		var direct_away = global_position - target_player.global_position
-		direct_away.y = 0.0
-		if direct_away.length_squared() > 0.01:
-			move_dir = direct_away
-			
-	if move_dir.length_squared() > 0.05:
-		move_dir = move_dir.normalized()
-		current_target_vel = move_dir * (move_speed * slow_factor)
-		if nav_agent and nav_agent.avoidance_enabled:
-			nav_agent.set_velocity(current_target_vel)
-		else:
-			_apply_movement(current_target_vel, delta)
-	else:
-		current_target_vel = Vector3.ZERO
-		if nav_agent and nav_agent.avoidance_enabled:
-			nav_agent.set_velocity(Vector3.ZERO)
-		else:
-			_apply_movement(Vector3.ZERO, delta)
-
-func _resume_from_flee() -> void:
-	repath_cooldown_timer = 0.0
-	super._resume_from_flee()
 
 func start_chase(player: Node3D) -> void:
 	if repath_cooldown_timer > 0.0:

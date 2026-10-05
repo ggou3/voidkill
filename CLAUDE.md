@@ -166,8 +166,7 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
     без `scripts/`.
   - `docs/enemies.md`, `docs/enemy-types.md`: автомат состояний и описания типов ссылаются на
     `enemy.gd`; враги наследуются от `EnemyGround` / `EnemyBase` / `EnemyRanged`.
-  - `docs/bpm.md`: `get_bpm_tier() -> String` — возвращает enum; «Fear Chain реализован в
-    enemy.gd» — теперь `enemy_base`; «Тиры баффов» — по коду не реализовано ничего, кроме
+  - `docs/bpm.md`: `get_bpm_tier() -> String` — возвращает enum; «Тиры баффов» — по коду не реализовано ничего, кроме
     снижения урона и bhop-множителя: ни восполнение дэша, ни длительность wallrun
     (`wallrun_max_duration` — константа 1.2), ни ёмкость барабана, ни пассивная перезарядка,
     ни бонус урона от BPM не зависят. Решить: реализовать или убрать из описания.

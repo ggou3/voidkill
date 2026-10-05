@@ -146,9 +146,7 @@ func _physics_process(delta: float) -> void:
 		attack_cooldown_timer -= delta
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
-		
-	_process_fear_chain_check(delta)
-	
+
 	match current_state:
 		State.IDLE:
 			_process_idle(delta)
@@ -158,9 +156,7 @@ func _physics_process(delta: float) -> void:
 			_process_telegraph(delta)
 		State.FIRING:
 			_process_firing(delta)
-		State.FLEE:
-			_process_flee(delta)
-			
+
 	move_and_slide()
 
 func set_state(new_state: State) -> void:
@@ -430,14 +426,6 @@ func _end_firing() -> void:
 
 func _get_eye_position() -> Vector3:
 	return eye_emitter.global_position if eye_emitter else global_position + Vector3(0, 0.28, -0.25)
-
-func _apply_flee_movement(delta: float) -> void:
-	var away = (global_position - target_player.global_position)
-	away.y = 0.0
-	if away.length_squared() > 0.01:
-		away = away.normalized()
-		_maintain_hover_height(delta, away * (move_speed * 1.1))
-		rotation.y = lerp_angle(rotation.y, atan2(away.x, away.z), min(1.0, 5.0 * delta))
 
 func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_melee: bool = false, is_execute: bool = false, is_shockwave: bool = false, is_headshot: bool = false, source_chain_depth: int = -1, weapon_source: String = "") -> void:
 	if current_state == State.DEAD:

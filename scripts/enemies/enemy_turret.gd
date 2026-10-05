@@ -7,9 +7,6 @@ extends EnemyRanged
 ## При обнаружении игрока в LOS разворачивается лицом к цели (поворот вокруг вертикальной оси Y).
 ## При потере LOS удерживает прицел на последней известной позиции 2.0 секунды, после чего возвращается в IDLE.
 ## Атака: projectile_enemy.tscn (унаследовано от EnemyRanged).
-## Fear Chain: не может убегать (State.FLEE заблокирован).
-## При OVERDRIVE игрока (BPM >= 180.0) переходит в защитный локдаун: прекращает огонь,
-## сворачивается / опускает ствол вниз, снижая угрозу.
 ## Здоровье: 90 HP.
 
 @export var turret_health: int = 90
@@ -21,16 +18,13 @@ extends EnemyRanged
 
 const SENSOR_BASE_COLOR: Color = Color(1.0, 0.48, 0.08)
 const SENSOR_TELEGRAPH_COLOR: Color = Color(1.0, 0.95, 0.35)
-const SENSOR_LOCKDOWN_COLOR: Color = Color(0.2, 0.08, 0.02)
 
 var spawn_position: Vector3 = Vector3.ZERO
 var base_fixed_basis: Basis = Basis.IDENTITY
 var last_known_player_pos: Vector3 = Vector3.ZERO
 var lost_los_timer: float = 0.0
 var is_telegraphing: bool = false
-var is_in_lockdown: bool = false
 
-var lockdown_tween: Tween = null
 var telegraph_tween: Tween = null
 var attack_flash_tween: Tween = null
 
@@ -67,8 +61,6 @@ func _ready() -> void:
 	_update_health_bar()
 
 func set_state(new_state: State) -> void:
-	if new_state == State.FLEE:
-		return # Fear Chain бегство заблокировано для стационарной турели
 	if new_state == State.CHASE:
 		if is_instance_valid(target_player):
 			super.set_state(State.ATTACK)
@@ -77,8 +69,6 @@ func set_state(new_state: State) -> void:
 		return
 	if new_state == State.DEAD:
 		_reset_telegraph()
-		if lockdown_tween and lockdown_tween.is_valid():
-			lockdown_tween.kill()
 		if telegraph_tween and telegraph_tween.is_valid():
 			telegraph_tween.kill()
 	elif current_state == State.ATTACK and new_state != State.ATTACK:
@@ -107,74 +97,11 @@ func take_damage(amount: int, _knockback_vector: Vector3, hit_pos: Vector3, is_m
 
 func die(death_info: Dictionary = {}) -> void:
 	_reset_telegraph()
-	if lockdown_tween and lockdown_tween.is_valid():
-		lockdown_tween.kill()
 	if telegraph_tween and telegraph_tween.is_valid():
 		telegraph_tween.kill()
 	if attack_flash_tween and attack_flash_tween.is_valid():
 		attack_flash_tween.kill()
 	super.die(death_info)
-
-func _process_fear_chain_check(_delta: float) -> void:
-	if current_state == State.DEAD:
-		return
-		
-	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
-	var is_overdrive = false
-	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-		var player_bpm: float = 0.0
-		if "bpm_system" in player and is_instance_valid(player.bpm_system):
-			if "bpm" in player.bpm_system:
-				player_bpm = player.bpm_system.bpm
-			if player.bpm_system.has_method("get_bpm_tier"):
-				is_overdrive = (player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
-			else:
-				is_overdrive = (player_bpm >= 180.0)
-			
-	if is_overdrive:
-		if not is_in_lockdown:
-			_enter_lockdown()
-	else:
-		if is_in_lockdown:
-			_exit_lockdown()
-
-func _enter_lockdown() -> void:
-	is_in_lockdown = true
-	_reset_telegraph()
-	
-	if lockdown_tween and lockdown_tween.is_valid():
-		lockdown_tween.kill()
-	lockdown_tween = create_tween().set_parallel(true)
-	
-	if barrel_pivot:
-		lockdown_tween.tween_property(barrel_pivot, "rotation:x", deg_to_rad(45.0), 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		lockdown_tween.tween_property(barrel_pivot, "position:y", 0.24, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if eyes_material:
-		lockdown_tween.tween_property(eyes_material, "emission", SENSOR_LOCKDOWN_COLOR, 0.35)
-		lockdown_tween.tween_property(eyes_material, "emission_energy_multiplier", 0.3, 0.35)
-	if turret_light:
-		lockdown_tween.tween_property(turret_light, "light_energy", 0.1, 0.35)
-		
-	GameTypes.debug_log(&"enemy", "[%s] TURRET LOCKDOWN: Player in OVERDRIVE! Ceased fire, tucked barrel." % name)
-
-func _exit_lockdown() -> void:
-	is_in_lockdown = false
-	
-	if lockdown_tween and lockdown_tween.is_valid():
-		lockdown_tween.kill()
-	lockdown_tween = create_tween().set_parallel(true)
-	
-	if barrel_pivot:
-		lockdown_tween.tween_property(barrel_pivot, "rotation:x", 0.0, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-		lockdown_tween.tween_property(barrel_pivot, "position:y", 0.35, 0.35).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	if eyes_material:
-		lockdown_tween.tween_property(eyes_material, "emission", SENSOR_BASE_COLOR, 0.3)
-		lockdown_tween.tween_property(eyes_material, "emission_energy_multiplier", 3.2, 0.3)
-	if turret_light:
-		lockdown_tween.tween_property(turret_light, "light_energy", 1.2, 0.3)
-		
-	attack_timer = max(attack_timer, 0.6)
-	GameTypes.debug_log(&"enemy", "[%s] TURRET RESTORE: Player exited OVERDRIVE. Resumed targeting." % name)
 
 func _process_idle(_delta: float) -> void:
 	velocity = Vector3.ZERO
@@ -217,20 +144,16 @@ func _process_attack(delta: float) -> void:
 			return
 			
 	# Поворот турели вокруг вертикальной оси Y к последней известной позиции цели
-	if not is_in_lockdown:
-		var to_target = last_known_player_pos - global_position
-		to_target.y = 0.0
-		if to_target.length_squared() > 0.01:
-			var target_angle = atan2(-to_target.x, -to_target.z)
-			var angle_diff = abs(wrapf(target_angle - rotation.y, -PI, PI))
-			if angle_diff > 0.02:
-				rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, turret_rotation_speed * delta))
-				
+	var to_target = last_known_player_pos - global_position
+	to_target.y = 0.0
+	if to_target.length_squared() > 0.01:
+		var target_angle = atan2(-to_target.x, -to_target.z)
+		var angle_diff = abs(wrapf(target_angle - rotation.y, -PI, PI))
+		if angle_diff > 0.02:
+			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, turret_rotation_speed * delta))
+
 	# Логика атаки и телеграфа
-	if is_in_lockdown:
-		_reset_telegraph()
-		attack_timer = max(attack_timer, 0.6)
-	elif has_los:
+	if has_los:
 		# Визуальный телеграф перед выстрелом (за 0.35с)
 		if attack_timer <= 0.35 and hit_reaction_timer <= 0.0 and not is_telegraphing:
 			_start_telegraph()
@@ -258,13 +181,13 @@ func _play_attack_flash() -> void:
 		attack_flash_tween.tween_property(eyes_material, "emission", SENSOR_BASE_COLOR, 0.22)
 
 func perform_attack() -> void:
-	if not is_inside_tree() or current_state == State.DEAD or is_in_lockdown:
+	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	_reset_telegraph()
 	super.perform_attack()
 
 func _start_telegraph() -> void:
-	if not is_inside_tree() or current_state == State.DEAD or is_in_lockdown:
+	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	is_telegraphing = true
 	if telegraph_tween and telegraph_tween.is_valid():
@@ -283,10 +206,10 @@ func _reset_telegraph() -> void:
 	if not is_telegraphing:
 		return
 	is_telegraphing = false
-	if eyes_material and not is_in_lockdown:
+	if eyes_material:
 		eyes_material.emission = SENSOR_BASE_COLOR
 		eyes_material.emission_energy_multiplier = 3.2
-	if turret_light and not is_in_lockdown:
+	if turret_light:
 		turret_light.light_energy = 1.2
 		turret_light.light_color = SENSOR_BASE_COLOR
 

@@ -70,8 +70,6 @@ func set_state(new_state: State) -> void:
 		State.ATTACK:
 			attack_timer = max(attack_timer, reaction_delay)
 			hit_reaction_timer = max(hit_reaction_timer, reaction_delay)
-		State.FLEE:
-			attack_timer = 1.0
 		State.DEAD:
 			attack_timer = 999999.0
 

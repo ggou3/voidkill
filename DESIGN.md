@@ -20,7 +20,7 @@
 - [docs/movement.md](docs/movement.md) — движение (bhop, wallrun, слайд, фидбек) и кровавая система (лужи, сёрф, кровавый слэм)
 - [docs/combat.md](docs/combat.md) — ближний удар и конусная волна, реакция врагов, слэм, хедшоты, синергии
 - [docs/weapons.md](docs/weapons.md) — ростер оружия: Калибр-0, Швейная машина, Инъектор, Кровавая наковальня; пассивная перезарядка
-- [docs/enemies.md](docs/enemies.md) — общий ИИ врагов: автомат состояний, Fear Chain, выпад
+- [docs/enemies.md](docs/enemies.md) — общий ИИ врагов: автомат состояний, выпад
 - [docs/enemy-types.md](docs/enemy-types.md) — девять типов врагов: дальник, летун, щитоносец, подрывник, охотник, турель, рой, соглядатай
 - [docs/bpm.md](docs/bpm.md) — BPM-система, тиры, моментум, OVERDRIVE; очки и лидерборд
 - [docs/redline.md](docs/redline.md) — REDLINE, выход за 200 BPM (запланировано)

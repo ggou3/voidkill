@@ -97,15 +97,7 @@ func set_visibility(val: float) -> void:
 func _physics_process(delta: float) -> void:
 	if current_state == State.DEAD:
 		return
-		
-	# Если враг в состоянии паники Fear Chain (OVERDRIVE) — раскрываем маскировку и уступаем логике бегства
-	if current_state == State.FLEE:
-		set_visibility(1.0)
-		if eyes:
-			eyes.visible = true
-		super._physics_process(delta)
-		return
-		
+
 	# Базовая гравитация
 	if not is_on_floor():
 		velocity.y -= gravity * 2.0 * delta
@@ -116,13 +108,7 @@ func _physics_process(delta: float) -> void:
 	
 	if hit_reaction_timer > 0.0:
 		hit_reaction_timer -= delta
-		
-	# Проверка Fear Chain на тире OVERDRIVE игрока
-	_process_fear_chain_check(delta)
-	if current_state == State.FLEE:
-		set_visibility(1.0)
-		return
-		
+
 	# Логика состояний Соглядатая
 	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
 	if not is_instance_valid(player) or ("is_dead" in player and player.is_dead):

@@ -224,25 +224,3 @@ func _reset_ranged_telegraph() -> void:
 		eyes_material.emission = EYES_BASE_COLOR
 	if antenna_material:
 		antenna_material.emission = EYES_BASE_COLOR
-
-func _process_fear_chain_check(delta: float) -> void:
-	if current_state == State.ATTACK:
-		fear_check_timer -= delta
-		if fear_check_timer <= 0.0:
-			fear_check_timer = 3.0
-			var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")
-			if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-				var is_overdrive = false
-				if "bpm_system" in player and is_instance_valid(player.bpm_system):
-					if player.bpm_system.has_method("get_bpm_tier"):
-						is_overdrive = (player.bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE)
-					elif "bpm" in player.bpm_system:
-						is_overdrive = (player.bpm_system.bpm >= 180.0)
-				if is_overdrive and global_position.distance_to(player.global_position) <= detection_range and _has_line_of_sight_to(player):
-					if randf() <= 0.40:
-						target_player = player
-						flee_timer = randf_range(4.0, 5.0)
-						GameTypes.debug_log(&"enemy", "[%s] FEAR CHAIN: Ranged enemy panicked! FLEE for %.2fs" % [name, flee_timer])
-						set_state(State.FLEE)
-						return
-	super._process_fear_chain_check(delta)
