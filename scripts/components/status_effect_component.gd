@@ -45,7 +45,9 @@ func is_actor_dead() -> bool:
 		return true
 	if is_instance_valid(health_component) and health_component.is_dead():
 		return true
-	if "current_state" in actor and actor.current_state == 3: # State.DEAD in Enemy
+	# Enum берётся через сам объект (actor.State), а не через EnemyBase: прямая ссылка на класс
+	# создаёт цикл зависимостей скриптов EnemyBase <-> StatusEffectComponent (утечки при выходе)
+	if "current_state" in actor and actor.current_state == actor.State.DEAD:
 		return true
 	if "health" in actor and actor.health <= 0:
 		return true
