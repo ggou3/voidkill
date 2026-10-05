@@ -98,6 +98,8 @@ func _connect_systems() -> void:
 			gm.game_over_triggered.connect(_on_game_over)
 		if not gm.player_respawned.is_connected(_on_player_respawned):
 			gm.player_respawned.connect(_on_player_respawned)
+		if not gm.level_completed.is_connected(_on_level_completed):
+			gm.level_completed.connect(_on_level_completed)
 
 func _process(delta: float) -> void:
 	if skill_manager:
@@ -476,6 +478,61 @@ func _on_restart_pressed() -> void:
 		gm.restart_game()
 	else:
 		get_tree().reload_current_scene()
+
+# --- Конец уровня ---
+
+## Экран конца уровня: время, убийства, урон, время в OVERDRIVE, смерти и буква рейтинга.
+## Дерево сцены на паузе, поэтому экран работает с PROCESS_MODE_ALWAYS.
+func _on_level_completed(stats: Dictionary) -> void:
+	if crosshair:
+		crosshair.visible = false
+	var screen = Control.new()
+	screen.name = "LevelCompleteScreen"
+	screen.process_mode = Node.PROCESS_MODE_ALWAYS
+	screen.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(screen)
+
+	var bg = ColorRect.new()
+	bg.color = Color(0.0, 0.0, 0.0, 0.8)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	screen.add_child(bg)
+
+	var box = VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.offset_left = -260.0
+	box.offset_top = -230.0
+	box.offset_right = 260.0
+	box.offset_bottom = 230.0
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 12)
+	screen.add_child(box)
+
+	_add_end_label(box, "УРОВЕНЬ ПРОЙДЕН", 48, Color(0.95, 0.15, 0.15))
+	var t: float = stats.get("time", 0.0)
+	_add_end_label(box, "Время: %d:%05.2f" % [int(t / 60.0), fmod(t, 60.0)], 24, Color.WHITE)
+	_add_end_label(box, "Убийства: %d" % stats.get("kills", 0), 24, Color.WHITE)
+	_add_end_label(box, "Полученный урон: %d" % stats.get("damage_taken", 0), 24, Color.WHITE)
+	_add_end_label(box, "Время в OVERDRIVE: %.1f с (%d%%)" % [stats.get("overdrive_time", 0.0), int(round(stats.get("overdrive_fraction", 0.0) * 100.0))], 24, Color.WHITE)
+	_add_end_label(box, "Смерти: %d" % stats.get("deaths", 0), 24, Color.WHITE)
+	_add_end_label(box, "РЕЙТИНГ: %s" % stats.get("rank", "-"), 64, Color(1.0, 0.82, 0.2))
+
+	var again = Button.new()
+	again.text = "Пройти заново (R)"
+	again.custom_minimum_size = Vector2(260, 50)
+	again.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	again.add_theme_font_size_override("font_size", 22)
+	again.pressed.connect(_on_restart_level_pressed)
+	box.add_child(again)
+
+func _add_end_label(parent: Control, text: String, font_size: int, color: Color) -> void:
+	var label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	parent.add_child(label)
 
 func _on_restart_level_pressed() -> void:
 	var gm = get_node_or_null("/root/GameManager")
