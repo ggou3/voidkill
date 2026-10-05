@@ -61,6 +61,19 @@ func _init_ammos() -> void:
 		ammos.append(max_a)
 		ammo_changed.emit(i, max_a, max_a)
 
+## Полный боезапас и сброс перезарядок и кулдаунов (возрождение на чекпоинте)
+func refill_all() -> void:
+	if is_reloading:
+		is_reloading = false
+		active_reload_timer = 0.0
+		reload_finished.emit(current_weapon_index)
+	for i in range(passive_reload_timers.size()):
+		passive_reload_timers[i] = 0.0
+	for w in weapons:
+		w.fire_timer = 0.0
+		w.alt_timer = 0.0
+	_init_ammos()
+
 func _process(delta: float) -> void:
 	var player_node = get_parent()
 

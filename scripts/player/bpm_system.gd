@@ -25,6 +25,17 @@ var player: Player
 func setup(p: Player) -> void:
 	player = p
 
+## Сброс к стартовым значениям (возрождение на чекпоинте): BPM 50, моментум ×1.0
+func reset_bpm() -> void:
+	bpm = MIN_BPM
+	time_since_bpm_gain = 0.0
+	last_kill_weapon = ""
+	combat_momentum = 1.0
+	time_since_momentum_gain = 0.0
+	bpm_changed.emit(bpm)
+	tier_changed.emit(get_bpm_tier())
+	momentum_changed.emit(combat_momentum)
+
 func _process(delta):
 	# BPM: прогрессивный пассивный спад при отсутствии событий роста:
 	# decay_rate = lerp(1.5, 7.0, (bpm - 50) / 150), задержка 2.0с (или 5.0с на пике bpm >= 195)

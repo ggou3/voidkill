@@ -531,6 +531,26 @@ func heal(amount: int, is_melee_bonus: bool = false):
 ## Ретрансляция смерти подписчикам Player и сброс состояния движения
 func _on_health_died():
 	died.emit()
+	_reset_movement_state()
+
+## Возрождение на чекпоинте: позиция и направление взгляда, полное HP, BPM 50, полный боезапас
+func respawn(at: Transform3D) -> void:
+	_reset_movement_state()
+	velocity = Vector3.ZERO
+	wall_jump_count = 0
+	wall_jump_timer = 0.0
+	last_wall_jump_normal = Vector3.ZERO
+	global_position = at.origin
+	rotation.y = at.basis.get_euler().y
+	head.rotation.x = 0.0
+	skills.reset_skills()
+	combat.reset_combat()
+	bpm_system.reset_bpm()
+	weapons.refill_all()
+	health_component.revive()
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _reset_movement_state() -> void:
 	wallrun.end_wallrun()
 	skills.cancel_slam()
 	coyote_timer = 0.0

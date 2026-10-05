@@ -19,6 +19,7 @@ extends CanvasLayer
 @onready var blood_buff_label: Label = get_node_or_null("BloodBuffLabel")
 @onready var game_over_screen: Control = get_node_or_null("GameOverScreen")
 @onready var restart_button: Button = get_node_or_null("GameOverScreen/VBoxContainer/RestartButton")
+var restart_level_button: Button = null
 
 # Ссылки на игровые системы
 var player: Player = null
@@ -95,6 +96,8 @@ func _connect_systems() -> void:
 	if gm and gm.has_signal("game_over_triggered"):
 		if not gm.game_over_triggered.is_connected(_on_game_over):
 			gm.game_over_triggered.connect(_on_game_over)
+		if not gm.player_respawned.is_connected(_on_player_respawned):
+			gm.player_respawned.connect(_on_player_respawned)
 
 func _process(delta: float) -> void:
 	if skill_manager:
@@ -432,10 +435,51 @@ func _on_game_over() -> void:
 		game_over_screen.visible = true
 	if crosshair:
 		crosshair.visible = false
+	# На уровне смерть ведёт к возрождению на чекпоинте; перезапуск уровня — отдельной кнопкой
+	var gm = get_node_or_null("/root/GameManager")
+	var on_level: bool = gm != null and gm.is_level_active()
+	var hint: Label = get_node_or_null("GameOverScreen/VBoxContainer/RestartHintLabel")
+	if hint:
+		hint.text = "Нажмите R, чтобы возродиться на чекпоинте" if on_level else "Нажмите R для перезапуска"
+	if restart_button:
+		restart_button.text = "Возродиться (R)" if on_level else "Перезапуск (R)"
+	if on_level:
+		_ensure_restart_level_button().visible = true
+	elif restart_level_button:
+		restart_level_button.visible = false
+
+func _on_player_respawned() -> void:
+	if game_over_screen:
+		game_over_screen.visible = false
+	if crosshair:
+		crosshair.visible = true
+
+func _ensure_restart_level_button() -> Button:
+	if restart_level_button:
+		return restart_level_button
+	restart_level_button = Button.new()
+	restart_level_button.name = "RestartLevelButton"
+	restart_level_button.text = "Начать уровень заново"
+	restart_level_button.custom_minimum_size = Vector2(240, 50)
+	restart_level_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	restart_level_button.add_theme_font_size_override("font_size", 22)
+	restart_level_button.pressed.connect(_on_restart_level_pressed)
+	if restart_button:
+		restart_button.get_parent().add_child(restart_level_button)
+	elif game_over_screen:
+		game_over_screen.add_child(restart_level_button)
+	return restart_level_button
 
 func _on_restart_pressed() -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm and gm.has_method("restart_game"):
 		gm.restart_game()
+	else:
+		get_tree().reload_current_scene()
+
+func _on_restart_level_pressed() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.restart_level()
 	else:
 		get_tree().reload_current_scene()

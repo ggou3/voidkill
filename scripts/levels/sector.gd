@@ -127,7 +127,8 @@ func _finish() -> void:
 ## Сброс незачищенного сектора после смерти игрока: враги возвращаются на исходные позиции
 ## с полным HP и засыпают, волны начнутся с первой при следующем входе в зону.
 func reset_sector() -> void:
-	if state == SectorState.CLEARED:
+	# Зачищенный остаётся зачищенным, спящий и так в исходном состоянии
+	if state != SectorState.ACTIVE:
 		return
 	for wave in _waves:
 		for e in wave.enemies:

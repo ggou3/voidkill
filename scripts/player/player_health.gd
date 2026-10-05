@@ -74,6 +74,12 @@ func _spawn_heal_feedback(heal_amount: int, is_melee_bonus: bool = false):
 	tween.tween_property(label, "modulate:a", 0.0, 0.7).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
+## Возрождение на чекпоинте: полное HP, снова жив
+func revive() -> void:
+	is_dead = false
+	health = max_health
+	health_changed.emit(health, max_health)
+
 ## Смерть игрока. Сброс движения выполняет Player, Game Over — GameManager (оба по сигналу died).
 func die():
 	if is_dead:

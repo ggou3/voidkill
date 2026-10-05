@@ -122,6 +122,17 @@ func cancel_slam() -> void:
 	is_slamming = false
 	_release_slam_passthrough(true)
 
+## Полные заряды дэша и сброс кулдаунов (возрождение на чекпоинте)
+func reset_skills() -> void:
+	cancel_slam()
+	slam_timer = 0.0
+	is_dashing = false
+	dash_timer = 0.0
+	dash_interval_timer = 0.0
+	dash_timer_cd = 0.0
+	dashes = MAX_DASH
+	dash_charges_changed.emit(dashes)
+
 func process_slam(delta, vel: Vector3) -> Vector3:
 	_update_slam_passthrough(delta)
 	if not is_slamming: return vel

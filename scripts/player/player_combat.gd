@@ -29,6 +29,12 @@ var player: Player
 func setup(p: Player) -> void:
 	player = p
 
+## Сброс кулдауна мили (возрождение на чекпоинте)
+func reset_combat() -> void:
+	melee_timer = 0.0
+	recent_peak_speed = 0.0
+	recent_peak_timer = 0.0
+
 func tick_cooldown(delta: float) -> void:
 	if melee_timer > 0.0:
 		melee_timer -= delta
