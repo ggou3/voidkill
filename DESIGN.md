@@ -24,6 +24,7 @@
 - [docs/enemy-types.md](docs/enemy-types.md) — девять типов врагов: дальник, летун, щитоносец, подрывник, охотник, турель, рой, соглядатай
 - [docs/bpm.md](docs/bpm.md) — BPM-система, тиры, моментум, OVERDRIVE; очки и лидерборд
 - [docs/redline.md](docs/redline.md) — REDLINE, выход за 200 BPM (запланировано)
+- [docs/levels.md](docs/levels.md) — формат игры: линейные уровни из секторов, кровавые перегородки, чекпоинты, рейтинг (запланировано)
 
 **Код**
 - [docs/architecture.md](docs/architecture.md) — автозагрузки, class_name и типизация, debug_log, звук
