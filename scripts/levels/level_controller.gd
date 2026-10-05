@@ -21,6 +21,11 @@ extends Node3D
 
 const RANK_LETTERS: Array[String] = ["D", "C", "B", "A", "S"]
 
+## Запечь навмеш всех NavigationRegion3D уровня при старте (для черновой геометрии без заранее
+## запечённого навмеша). Геометрия должна лежать внутри NavigationRegion3D, перегородки — вне его:
+## иначе после обрушения в навмеше останется дыра на месте стены.
+@export var bake_navigation_on_ready: bool = true
+
 var sectors: Array[Sector] = []
 var barriers: Array[BloodBarrier] = []
 var checkpoint: Transform3D
@@ -36,6 +41,25 @@ func _ready() -> void:
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.register_level(self)
+	if bake_navigation_on_ready:
+		_bake_navigation()
+
+func _bake_navigation() -> void:
+	# Коллизии CSG появляются не сразу — ждём пару физических кадров перед запеканием
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	for region in _find_nav_regions(self):
+		if region.navigation_mesh:
+			region.bake_navigation_mesh(false)
+			GameTypes.debug_log(&"enemy", "[LEVEL] Navmesh baked: %d polygons" % region.navigation_mesh.get_polygon_count())
+
+func _find_nav_regions(node: Node) -> Array[NavigationRegion3D]:
+	var found: Array[NavigationRegion3D] = []
+	for child in node.get_children():
+		if child is NavigationRegion3D:
+			found.append(child)
+		found.append_array(_find_nav_regions(child))
+	return found
 
 func _collect(node: Node) -> void:
 	for child in node.get_children():
