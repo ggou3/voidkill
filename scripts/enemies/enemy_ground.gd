@@ -33,6 +33,8 @@ var unreachable_timer: float = 0.0
 const UNREACHABLE_TIMEOUT: float = 3.5
 var repath_cooldown_timer: float = 0.0
 const REPATH_COOLDOWN: float = 2.0
+# Сколько врагов подряд луч проверки пола под выпадом может пропустить (стопка врагов по вертикали)
+const FLOOR_PROBE_MAX_ENEMY_HITS: int = 8
 
 var is_jumping_link: bool = false
 var jump_grace_timer: float = 0.0
@@ -265,18 +267,27 @@ func _has_floor_at_destination(target_pos: Vector3) -> bool:
 	var ray_start = Vector3(target_pos.x, ray_start_y, target_pos.z)
 	var ray_end = Vector3(target_pos.x, ray_end_y, target_pos.z)
 	var query = PhysicsRayQueryParameters3D.create(ray_start, ray_end)
-	
+
 	var exclude_list: Array[RID] = [get_rid()]
 	if is_instance_valid(target_player) and target_player is CollisionObject3D:
 		exclude_list.append(target_player.get_rid())
-	for e in get_tree().get_nodes_in_group("enemy"):
-		if e is CollisionObject3D:
-			exclude_list.append(e.get_rid())
-	query.exclude = exclude_list
 	query.collide_with_areas = false
 	query.collide_with_bodies = true
-	
-	var result = space_state.intersect_ray(query)
+
+	# Враги лучу не мешают: попали во врага — исключаем именно его и пускаем луч заново. Раньше в
+	# исключения заранее шла вся группа "enemy" (цена росла с числом врагов); результат тот же —
+	# первое тело на луче, не являющееся врагом или игроком
+	var result: Dictionary = {}
+	for i in range(FLOOR_PROBE_MAX_ENEMY_HITS + 1):
+		query.exclude = exclude_list
+		result = space_state.intersect_ray(query)
+		if result.is_empty():
+			return false
+		var collider = result.get("collider")
+		if not (is_instance_valid(collider) and collider.is_in_group("enemy") and collider is CollisionObject3D):
+			break
+		exclude_list.append(result.get("rid"))
+		result = {}
 	if result.is_empty():
 		return false
 		
