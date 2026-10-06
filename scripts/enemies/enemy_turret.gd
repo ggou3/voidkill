@@ -134,6 +134,10 @@ func _process_attack(delta: float) -> void:
 	if has_los:
 		last_known_player_pos = target_player.global_position
 		lost_los_timer = los_memory_duration
+	elif persistent_aggro:
+		# Постоянный агр: цель не теряется — прицел ведёт игрока и без линии огня, стрельба только по LOS
+		_reset_telegraph()
+		last_known_player_pos = target_player.global_position
 	else:
 		# Потеря LOS: удержание прицела на последней известной позиции 2.0 секунды
 		_reset_telegraph()

@@ -30,8 +30,6 @@ enum SectorState { DORMANT, ACTIVE, CLEARED }
 ## Враг ниже дна зоны на столько метров считается выпавшим с уровня: убирается и засчитывается убийством
 @export var fall_limit: float = 20.0
 
-# Как часто сектор напоминает простаивающим врагам, где игрок (с)
-const REAGGRO_INTERVAL: float = 1.0
 # После сброса перекрытие зоны устарело: игрока уже перенесли на чекпоинт, а физика ещё помнит его
 # в зоне до следующего шага — без паузы сектор тут же активировался бы снова
 const RESET_ACTIVATION_BLOCK_FRAMES: int = 3
@@ -51,7 +49,6 @@ var _effects: Array = []
 var _spawn_generation: int = 0
 var _captured: bool = false
 var _kill_y: float = -INF
-var _reaggro_timer: float = 0.0
 var _activation_block_frames: int = 0
 
 func _enter_tree() -> void:
@@ -102,7 +99,7 @@ func _notification(what: int) -> void:
 				if is_instance_valid(t):
 					t.free()
 
-func _physics_process(delta: float) -> void:
+func _physics_process(_delta: float) -> void:
 	match state:
 		SectorState.DORMANT:
 			if _activation_block_frames > 0:
@@ -113,7 +110,6 @@ func _physics_process(delta: float) -> void:
 				_activate()
 		SectorState.ACTIVE:
 			_update_alive()
-			_reaggro(delta)
 			_update_wave_progress()
 		SectorState.CLEARED:
 			# Охотник, переживший зачистку, — его смерть всё равно идёт в статистику
@@ -164,6 +160,8 @@ func _finish_spawn(template: Node, parent: Node3D, generation: int) -> void:
 		return
 	_pending.erase(template)
 	var e = template.duplicate()
+	# Враг появляется в секторе, где уже стоит игрок: погоня с момента появления и до смерти
+	e.persistent_aggro = _is_required(e)
 	parent.add_child(e)
 	_alive.append(e)
 	if _is_required(e):
@@ -187,20 +185,6 @@ func _update_alive() -> void:
 			_alive.remove_at(i)
 			e.queue_free()
 			enemy_killed.emit()
-
-func _reaggro(delta: float) -> void:
-	# Враг, потерявший игрока (недостижимая цель → IDLE), сам возвращается в погоню только в радиусе
-	# обнаружения; в активном секторе он всегда знает, где игрок
-	_reaggro_timer -= delta
-	if _reaggro_timer > 0.0:
-		return
-	_reaggro_timer = REAGGRO_INTERVAL
-	var player = _get_player()
-	if not is_instance_valid(player) or player.is_dead:
-		return
-	for e in _alive:
-		if is_instance_valid(e) and _is_required(e) and e.current_state == e.State.IDLE:
-			e.start_chase(player)
 
 func _update_wave_progress() -> void:
 	if not _pending.is_empty() or get_remaining_count() > 0:

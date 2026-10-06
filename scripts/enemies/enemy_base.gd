@@ -21,6 +21,11 @@ enum State {
 @export var detection_range: float = 25.0
 
 var current_state: State = State.IDLE
+## Постоянный агр — выставляет сектор при спавне (до add_child). Пока игрок жив, враг с момента
+## появления в погоне и не уходит в IDLE: ни по расстоянию, ни по видимости, ни по недостижимости
+## (недостижимого игрока наземный враг преследует до ближайшей достижимой точки). Тактика типа
+## сохраняется. Вне секторов (тестовая арена) — false: обнаружение и потеря цели как раньше.
+var persistent_aggro: bool = false
 var health: int:
 	get:
 		if is_instance_valid(health_component):
@@ -243,9 +248,16 @@ func _physics_process(delta: float) -> void:
 			_process_firing(delta)
 
 func set_state(new_state: State) -> void:
+	# Постоянный агр: любой уход в IDLE при живом игроке превращается в погоню за ним.
+	# Мёртвый игрок — IDLE разрешён (после возрождения сектор всё равно пересоздаёт врагов)
+	if new_state == State.IDLE and persistent_aggro:
+		var player = _get_living_player()
+		if player:
+			target_player = player
+			new_state = State.CHASE
 	if current_state == new_state or current_state == State.DEAD:
 		return
-		
+
 	GameTypes.debug_log(&"enemy", "[%s] State: %s -> %s" % [name, State.keys()[current_state], State.keys()[new_state]])
 	current_state = new_state
 	
@@ -264,8 +276,14 @@ func _process_idle(_delta: float) -> void:
 		if "is_dead" in player and player.is_dead:
 			return
 		var dist = global_position.distance_to(player.global_position)
-		if dist <= detection_range:
+		if dist <= detection_range or persistent_aggro:
 			start_chase(player)
+
+func _get_living_player() -> Node3D:
+	var player = get_tree().get_first_node_in_group("player") as Node3D
+	if not is_instance_valid(player) or ("is_dead" in player and player.is_dead):
+		return null
+	return player
 
 func _process_chase(_delta: float) -> void:
 	pass

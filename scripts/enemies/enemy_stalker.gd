@@ -144,7 +144,7 @@ func _process_stealth_idle(player: Node3D, delta: float) -> void:
 	velocity.z = lerp(velocity.z, knockback_velocity.z, 6.0 * delta)
 	
 	var dist = global_position.distance_to(player.global_position)
-	if dist <= stalker_detect_range:
+	if dist <= stalker_detect_range or persistent_aggro:
 		stalker_state = StalkerState.STEALTH_STALK
 		stalk_update_timer = 0.0
 
@@ -153,7 +153,7 @@ func _process_stealth_stalk(player: Node3D, delta: float) -> void:
 	var dist = global_position.distance_to(player.global_position)
 	
 	# Если игрок вышел за пределы дальности детекции
-	if dist > stalker_detect_range * 1.25:
+	if dist > stalker_detect_range * 1.25 and not persistent_aggro:
 		stalker_state = StalkerState.STEALTH_IDLE
 		return
 		

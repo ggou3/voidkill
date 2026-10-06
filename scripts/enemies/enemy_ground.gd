@@ -172,7 +172,9 @@ func _process_chase(delta: float) -> void:
 		
 	# Проверка достижимости цели (защита от бесконечного застревания в недостижимой точке)
 	var is_reachable = nav_agent.is_target_reachable() if nav_agent else true
-	if not is_reachable:
+	# С постоянным агром недостижимость не прерывает погоню: путь NavigationAgent3D к недостижимой
+	# цели ведёт к ближайшей достижимой точке, враг идёт туда и ждёт там
+	if not is_reachable and not persistent_aggro:
 		unreachable_timer += delta
 		if unreachable_timer >= UNREACHABLE_TIMEOUT:
 			GameTypes.debug_log(&"enemy", "[%s] Target unreachable for %.1fs, returning to IDLE with repath cooldown" % [name, unreachable_timer])
