@@ -51,6 +51,16 @@ func _bake_navigation() -> void:
 	for region in _find_nav_regions(self):
 		if region.navigation_mesh:
 			region.bake_navigation_mesh(false)
+			if region.is_baking():
+				await region.bake_finished
+			# Обновление региона, отправленное до первой синхронизации карты навигации, теряется
+			# (асинхронные итерации): регион на сервере остаётся с пустым навмешем, наземные враги не
+			# находят пути. Ждём первую итерацию карты и отдаём навмеш новым ресурсом (так проверено;
+			# сам запечённый ресурс до сервера не доходит)
+			var map: RID = region.get_navigation_map()
+			while NavigationServer3D.map_get_iteration_id(map) == 0:
+				await get_tree().physics_frame
+			region.navigation_mesh = region.navigation_mesh.duplicate()
 			GameTypes.debug_log(&"enemy", "[LEVEL] Navmesh baked: %d polygons" % region.navigation_mesh.get_polygon_count())
 
 func _find_nav_regions(node: Node) -> Array[NavigationRegion3D]:
