@@ -36,6 +36,10 @@ func _ready() -> void:
 	_build()
 	if sector:
 		sector.cleared.connect(collapse)
+	else:
+		# В .tscn экспорт узла требует node_paths=PackedStringArray("sector") в заголовке узла,
+		# иначе NodePath молча не превращается в ссылку и стена никогда не обрушится
+		push_warning("BloodBarrier %s: sector не задан — стена не обрушится" % name)
 
 func _build() -> void:
 	_wall = Node3D.new()
@@ -85,7 +89,9 @@ func collapse() -> void:
 	_spawn_pools()
 
 	var tween = create_tween().set_parallel(true)
-	tween.tween_property(_material, "shader_parameter/collapse", 1.0, collapse_duration)
+	# Через set_shader_parameter, а не свойство "shader_parameter/collapse": свойства униформ
+	# существуют только при скомпилированном шейдере (в headless их нет — твин падал с ошибкой)
+	tween.tween_method(func(v: float): _material.set_shader_parameter("collapse", v), 0.0, 1.0, collapse_duration)
 	tween.tween_property(_wall, "scale:y", 0.05, collapse_duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(_wall.hide)
 	GameTypes.debug_log(&"enemy", "[BARRIER %s] Collapsed" % name)

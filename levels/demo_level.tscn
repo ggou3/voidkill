@@ -361,17 +361,17 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 1, -210)
 
 [node name="Barriers" type="Node3D" parent="."]
 
-[node name="Barrier1" type="Node3D" parent="Barriers"]
+[node name="Barrier1" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -60)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector1")
 
-[node name="Barrier2" type="Node3D" parent="Barriers"]
+[node name="Barrier2" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -150)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector2")
 
-[node name="Barrier3" type="Node3D" parent="Barriers"]
+[node name="Barrier3" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -220)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector3")
