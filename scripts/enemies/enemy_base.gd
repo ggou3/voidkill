@@ -18,7 +18,11 @@ enum State {
 			health_component.max_health = value
 
 @export var reaction_delay: float = 0.4
+## Радиус обнаружения игрока в IDLE (бывшая сфера DetectionArea)
 @export var detection_range: float = 25.0
+# Интервал проверки обнаружения (с); фаза у каждого врага случайная
+const DETECTION_INTERVAL: float = 0.2
+var _detection_timer: float = 0.0
 
 var current_state: State = State.IDLE
 ## Постоянный агр — выставляет сектор при спавне (до add_child). Пока игрок жив, враг с момента
@@ -54,7 +58,6 @@ var blood_splatter_scene = preload("res://blood_splatter.tscn")
 var health_bar: EnemyHealthBar = null
 
 @onready var collision_shape: CollisionShape3D = get_node_or_null("CollisionShape3D")
-@onready var detection_area: Area3D = get_node_or_null("DetectionArea")
 @onready var head_hitbox: Area3D = get_node_or_null("HeadHitbox")
 @onready var head_mesh: Node3D = get_node_or_null("HeadMesh")
 @onready var body_mesh: MeshInstance3D = get_node_or_null("MeshInstance3D")
@@ -179,9 +182,9 @@ func _ready() -> void:
 			eyes_material = mat.duplicate()
 			eyes.set_surface_override_material(0, eyes_material)
 		
-	if detection_area:
-		detection_area.body_entered.connect(_on_detection_area_body_entered)
-		
+	# Случайная фаза: враги не проверяют обнаружение все в одном кадре
+	_detection_timer = randf() * DETECTION_INTERVAL
+
 	GameManager.enemy_health_bars_toggled.connect(_on_enemy_health_bars_toggled)
 	if GameManager.show_enemy_health_bars:
 		_setup_health_bar()
@@ -251,17 +254,30 @@ func set_state(new_state: State) -> void:
 		State.DEAD:
 			die()
 
-func _process_idle(_delta: float) -> void:
+func _process_idle(delta: float) -> void:
 	velocity.x = knockback_velocity.x
 	velocity.z = knockback_velocity.z
-	
-	var player = get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player):
-		if "is_dead" in player and player.is_dead:
-			return
-		var dist = global_position.distance_to(player.global_position)
-		if dist <= detection_range or persistent_aggro:
-			start_chase(player)
+	_try_detect_player(delta)
+
+## Обнаружение игрока в IDLE — проверка расстояния (и, у кого была, линии видимости) раз в
+## DETECTION_INTERVAL вместо сферы DetectionArea: игрок один, расстояние дешевле перекрытий физики.
+## Враг с постоянным агром проверку пропускает — сразу в погоню за живым игроком.
+func _try_detect_player(delta: float) -> void:
+	var player = _get_living_player()
+	if player and persistent_aggro:
+		start_chase(player)
+		return
+	_detection_timer -= delta
+	if _detection_timer > 0.0:
+		return
+	_detection_timer += DETECTION_INTERVAL
+	if player and _can_detect_player(player):
+		start_chase(player)
+
+## Условие обнаружения: игрок в радиусе detection_range. Турель и летун добавляют линию видимости,
+## Охотник — свой радиус тревоги на 140+ BPM.
+func _can_detect_player(player: Node3D) -> bool:
+	return global_position.distance_to(player.global_position) <= detection_range
 
 func _get_living_player() -> Node3D:
 	var player = get_tree().get_first_node_in_group("player") as Node3D
@@ -287,12 +303,6 @@ func _process_firing(_delta: float) -> void:
 func start_chase(player: Node3D) -> void:
 	target_player = player
 	set_state(State.CHASE)
-
-func _on_detection_area_body_entered(body: Node3D) -> void:
-	if body.is_in_group("player") and current_state == State.IDLE:
-		if "is_dead" in body and body.is_dead:
-			return
-		start_chase(body)
 
 func _has_line_of_sight_to(target: Node3D) -> bool:
 	if not is_instance_valid(target):
@@ -501,11 +511,6 @@ func die(death_info: Dictionary = {}) -> void:
 		var head_col = head_hitbox.get_node_or_null("CollisionShape3D")
 		if head_col:
 			head_col.set_deferred("disabled", true)
-			
-	if detection_area:
-		var det_col = detection_area.get_node_or_null("CollisionShape3D")
-		if det_col:
-			det_col.set_deferred("disabled", true)
 			
 	var was_inflated = is_inflated
 	var chain_depth = health_component.explosion_chain_depth if is_instance_valid(health_component) else 0

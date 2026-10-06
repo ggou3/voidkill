@@ -28,9 +28,6 @@ emission_enabled = true
 emission = Color(0.85, 0.2, 1, 1)
 emission_energy_multiplier = 3.0
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
-radius = 30.0
-
 [sub_resource type="BoxMesh" id="BoxMesh_shoulders"]
 size = Vector3(1.08, 0.16, 0.44)
 
@@ -119,10 +116,3 @@ radius = 0.3
 neighbor_distance = 3.0
 max_neighbors = 3
 time_horizon_agents = 1.5
-
-[node name="DetectionArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 1
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
-shape = SubResource("SphereShape3D_detection")

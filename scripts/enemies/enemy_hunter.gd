@@ -15,6 +15,8 @@ extends EnemyGround
 @export var max_hunter_damage: int = 35
 @export var surging_threshold: float = 140.0
 @export var deactivation_timeout: float = 5.0
+## Радиус тревоги на SURGING+ (бывшая сфера DetectionArea)
+@export var alert_range: float = 35.0
 
 @export var attack_damage: int = 20
 @export var attack_range: float = 2.2
@@ -84,13 +86,14 @@ func set_state(new_state: State) -> void:
 		State.DEAD:
 			attack_timer = 999999.0
 
-func _on_detection_area_body_entered(body: Node3D) -> void:
-	if body.is_in_group("player"):
-		var bpm = _get_player_bpm()
-		# Входит в погоню от DetectionArea только если BPM уже разогнан до SURGING+ или если уже охотится
-		if bpm >= surging_threshold or is_hunting:
-			if current_state == State.IDLE:
-				start_chase(body)
+func _can_detect_player(player: Node3D) -> bool:
+	# Базовое обнаружение в радиусе detection_range — как у всех наземных
+	if super._can_detect_player(player):
+		return true
+	# Бывшая сфера DetectionArea 35 м: только если BPM уже разогнан до SURGING+ или Охотник уже охотится
+	if _get_player_bpm() >= surging_threshold or is_hunting:
+		return global_position.distance_to(player.global_position) <= alert_range
+	return false
 
 func _get_player_bpm() -> float:
 	var player = target_player if is_instance_valid(target_player) else get_tree().get_first_node_in_group("player")

@@ -48,9 +48,6 @@ emission_enabled = true
 emission = Color(1, 0.15, 0.05, 1)
 emission_energy_multiplier = 0.8
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
-radius = 28.0
-
 [node name="EnemyBomber" type="CharacterBody3D" groups=["enemy", "enemy_bomber"]]
 collision_layer = 1
 collision_mask = 1
@@ -109,10 +106,3 @@ radius = 0.3
 neighbor_distance = 3.0
 max_neighbors = 3
 time_horizon_agents = 1.5
-
-[node name="DetectionArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 1
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
-shape = SubResource("SphereShape3D_detection")

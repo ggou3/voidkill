@@ -579,6 +579,270 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1, -190)
 [node name="Ranged3" parent="Sectors/Sector3" instance=ExtResource("7_ranged")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -160)
 
+[node name="SwarmX1" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -36)
+
+[node name="SwarmX2" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1, -36)
+
+[node name="SwarmX3" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1, -36)
+
+[node name="SwarmX4" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -34)
+
+[node name="SwarmX5" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 1, -38)
+
+[node name="SwarmX6" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -46)
+
+[node name="SwarmX7" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -46)
+
+[node name="SwarmX8" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -46)
+
+[node name="SwarmX9" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -44)
+
+[node name="SwarmX10" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -47)
+
+[node name="SwarmX11" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -47)
+
+[node name="SwarmX12" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 1, -47)
+
+[node name="SwarmX13" parent="Sectors/Sector1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -45)
+
+[node name="MeleeX1" parent="Sectors/Sector1" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -56)
+
+[node name="MeleeX2" parent="Sectors/Sector1" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -23)
+
+[node name="RangedX1" parent="Sectors/Sector1" instance=ExtResource("7_ranged")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -34)
+
+[node name="SwarmX1" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 1, -75)
+
+[node name="SwarmX2" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 1, -75)
+
+[node name="SwarmX3" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 1, -75)
+
+[node name="SwarmX4" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 1, -73)
+
+[node name="SwarmX5" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1, -142)
+
+[node name="SwarmX6" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 1, -142)
+
+[node name="SwarmX7" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -142)
+
+[node name="SwarmX8" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1, -140)
+
+[node name="SwarmX9" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -116)
+
+[node name="SwarmX10" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1, -116)
+
+[node name="SwarmX11" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, -116)
+
+[node name="SwarmX12" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -114)
+
+[node name="SwarmX13" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -85)
+
+[node name="SwarmX14" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1, -85)
+
+[node name="SwarmX15" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, -85)
+
+[node name="SwarmX16" parent="Sectors/Sector2/Wave1" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -83)
+
+[node name="MeleeX1" parent="Sectors/Sector2/Wave1" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 1, -122)
+
+[node name="MeleeX2" parent="Sectors/Sector2/Wave1" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1, -102)
+
+[node name="ShieldX1" parent="Sectors/Sector2/Wave1" instance=ExtResource("9_shield")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 1, -125)
+
+[node name="BomberX1" parent="Sectors/Sector2/Wave1" instance=ExtResource("11_bomber")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1, -104)
+
+[node name="SwarmX1" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -71)
+
+[node name="SwarmX2" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -71)
+
+[node name="SwarmX3" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, -71)
+
+[node name="SwarmX4" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -69)
+
+[node name="SwarmX5" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -73)
+
+[node name="SwarmX6" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -98)
+
+[node name="SwarmX7" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11, 1, -98)
+
+[node name="SwarmX8" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, -98)
+
+[node name="SwarmX9" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -96)
+
+[node name="SwarmX10" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -123)
+
+[node name="SwarmX11" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, -123)
+
+[node name="SwarmX12" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, -123)
+
+[node name="SwarmX13" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 1, -121)
+
+[node name="SwarmX14" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 1, -109)
+
+[node name="SwarmX15" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 1, -109)
+
+[node name="SwarmX16" parent="Sectors/Sector2/Wave2" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, 1, -109)
+
+[node name="MeleeX1" parent="Sectors/Sector2/Wave2" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, -87)
+
+[node name="MeleeX2" parent="Sectors/Sector2/Wave2" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13, 1, -70)
+
+[node name="FlyerX1" parent="Sectors/Sector2/Wave2" instance=ExtResource("13_flyer")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 7, -130)
+
+[node name="StalkerX1" parent="Sectors/Sector2/Wave2" instance=ExtResource("14_stalker")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, -66)
+
+[node name="SwarmX1" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, -209)
+
+[node name="SwarmX2" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1, -209)
+
+[node name="SwarmX3" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1, -209)
+
+[node name="SwarmX4" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, -207)
+
+[node name="SwarmX5" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, -211)
+
+[node name="SwarmX6" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -194)
+
+[node name="SwarmX7" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1, -194)
+
+[node name="SwarmX8" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -194)
+
+[node name="SwarmX9" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -192)
+
+[node name="SwarmX10" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, -196)
+
+[node name="SwarmX11" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1, -186)
+
+[node name="SwarmX12" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1, -186)
+
+[node name="SwarmX13" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1, -186)
+
+[node name="SwarmX14" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1, -184)
+
+[node name="SwarmX15" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -164)
+
+[node name="SwarmX16" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1, -164)
+
+[node name="SwarmX17" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 1, -164)
+
+[node name="SwarmX18" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -162)
+
+[node name="SwarmX19" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1, -201)
+
+[node name="SwarmX20" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15, 1, -201)
+
+[node name="SwarmX21" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11, 1, -201)
+
+[node name="SwarmX22" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 1, -199)
+
+[node name="SwarmX23" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 1, -185)
+
+[node name="SwarmX24" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 1, -185)
+
+[node name="SwarmX25" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 1, -185)
+
+[node name="SwarmX26" parent="Sectors/Sector3" instance=ExtResource("8_swarm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 1, -183)
+
+[node name="MeleeX1" parent="Sectors/Sector3" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 1, -173)
+
+[node name="MeleeX2" parent="Sectors/Sector3" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 1, -175)
+
+[node name="MeleeX3" parent="Sectors/Sector3" instance=ExtResource("6_enemy")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 1, -212)
+
+[node name="RangedX1" parent="Sectors/Sector3" instance=ExtResource("7_ranged")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1, -167)
+
+[node name="ShieldX1" parent="Sectors/Sector3" instance=ExtResource("9_shield")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, -189)
+
+[node name="BomberX1" parent="Sectors/Sector3" instance=ExtResource("11_bomber")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 1, -184)
+
 [node name="Barriers" type="Node3D" parent="."]
 
 [node name="Barrier1" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]

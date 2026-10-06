@@ -169,10 +169,11 @@ func set_state(new_state: State) -> void:
 
 func _process_idle(delta: float) -> void:
 	_maintain_hover_height(delta, Vector3.ZERO)
-	var player = get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-		if global_position.distance_to(player.global_position) <= detection_range and _has_line_of_sight_to(player):
-			start_chase(player)
+	_try_detect_player(delta)
+
+func _can_detect_player(player: Node3D) -> bool:
+	# Летун замечает игрока только при прямой видимости
+	return super._can_detect_player(player) and _has_line_of_sight_to(player)
 
 func _process_flight_movement(delta: float) -> void:
 	if not is_instance_valid(target_player) or ("is_dead" in target_player and target_player.is_dead):

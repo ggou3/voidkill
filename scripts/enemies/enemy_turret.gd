@@ -82,11 +82,6 @@ func start_chase(player: Node3D) -> void:
 		lost_los_timer = los_memory_duration
 		set_state(State.ATTACK)
 
-func _on_detection_area_body_entered(body: Node3D) -> void:
-	if body.is_in_group("player") and current_state == State.IDLE:
-		if _has_line_of_sight_to(body):
-			start_chase(body)
-
 func _apply_movement(_target_vel: Vector3, _delta: float) -> void:
 	# Статичная турель никогда не перемещается
 	velocity = Vector3.ZERO
@@ -103,15 +98,14 @@ func die(death_info: Dictionary = {}) -> void:
 		attack_flash_tween.kill()
 	super.die(death_info)
 
-func _process_idle(_delta: float) -> void:
+func _process_idle(delta: float) -> void:
 	velocity = Vector3.ZERO
 	knockback_velocity = Vector3.ZERO
-	
-	var player = get_tree().get_first_node_in_group("player")
-	if is_instance_valid(player) and not ("is_dead" in player and player.is_dead):
-		var dist = global_position.distance_to(player.global_position)
-		if dist <= detection_range and _has_line_of_sight_to(player):
-			start_chase(player)
+	_try_detect_player(delta)
+
+func _can_detect_player(player: Node3D) -> bool:
+	# Турель замечает игрока только на линии огня
+	return super._can_detect_player(player) and _has_line_of_sight_to(player)
 
 func _process_chase(_delta: float) -> void:
 	# Турель никогда не выполняет физическое преследование

@@ -7,6 +7,8 @@ extends EnemyGround
 @export var projectile_speed: float = 18.0
 @export var ranged_damage: int = 12
 @export var ranged_attack_cooldown: float = 2.8
+## Радиус обнаружения (бывшая сфера DetectionArea 30 м; турель переопределяет своим)
+@export var ranged_detection_range: float = 30.0
 
 @export var attack_damage: int = 12
 @export var attack_range: float = 0.0
@@ -28,6 +30,7 @@ var attack_flash_tween_antenna: Tween = null
 
 func _ready() -> void:
 	super._ready()
+	detection_range = ranged_detection_range
 	attack_damage = ranged_damage
 	attack_cooldown = ranged_attack_cooldown
 	attack_range = 0.0

@@ -38,9 +38,6 @@ size = Vector3(0.32, 0.45, 0.12)
 [sub_resource type="BoxMesh" id="BoxMesh_eye_dot"]
 size = Vector3(0.03, 0.03, 0.03)
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
-radius = 25.0
-
 [node name="EnemySwarm" type="CharacterBody3D" groups=["enemy", "enemy_swarm"]]
 collision_layer = 1
 collision_mask = 1
@@ -118,10 +115,3 @@ radius = 0.2
 neighbor_distance = 2.0
 max_neighbors = 4
 time_horizon_agents = 1.0
-
-[node name="DetectionArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 1
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
-shape = SubResource("SphereShape3D_detection")

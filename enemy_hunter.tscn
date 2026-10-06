@@ -49,9 +49,6 @@ size = Vector3(0.06, 0.95, 0.04)
 [sub_resource type="BoxMesh" id="BoxMesh_vein_shoulder"]
 size = Vector3(0.42, 0.05, 0.05)
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
-radius = 35.0
-
 [node name="EnemyHunter" type="CharacterBody3D" groups=["enemy", "enemy_hunter"]]
 collision_layer = 1
 collision_mask = 1
@@ -130,10 +127,3 @@ radius = 0.3
 neighbor_distance = 3.0
 max_neighbors = 3
 time_horizon_agents = 1.5
-
-[node name="DetectionArea" type="Area3D" parent="."]
-collision_layer = 0
-collision_mask = 1
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="DetectionArea"]
-shape = SubResource("SphereShape3D_detection")

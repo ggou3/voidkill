@@ -114,6 +114,10 @@ func _physics_process(delta: float) -> void:
 		_process_no_player(delta)
 	else:
 		target_player = player
+		# Бывшая сфера DetectionArea (15 м = stalker_detect_range): базовый автомат уходит в CHASE.
+		# Собственный автомат маскировки ниже от этого не зависит
+		if current_state == State.IDLE:
+			_try_detect_player(delta)
 		match stalker_state:
 			StalkerState.STEALTH_IDLE:
 				_process_stealth_idle(player, delta)

@@ -72,7 +72,7 @@
 ### Иерархия классов врагов (EnemyBase и EnemyGround) — ✅ Реализован (Шаг 3.4)
 - **EnemyBase** (`res://scripts/enemies/enemy_base.gd`, `class_name EnemyBase extends CharacterBody3D`, 789 строк) — базовый абстрактный класс для всех типов врагов (наземных и летающих):
   - FSM-машина: `enum State { IDLE, CHASE, ATTACK, LUNGE, TELEGRAPH, FIRING, DEAD }` (`FLEE` удалён вместе с Fear Chain), диспетчер состояний в `_physics_process(delta)`, централизованный `set_state(new_state)`.
-  - Перцепция и целеуказание: `target_player`, `start_chase(player)`, `detection_range`, `reaction_delay`, `_has_line_of_sight_to(target)`, реакция `_on_detection_area_body_entered`.
+  - Перцепция и целеуказание: `target_player`, `start_chase(player)`, `detection_range`, `reaction_delay`, `_has_line_of_sight_to(target)`, обнаружение в IDLE проверкой расстояния раз в 0.2 с со случайной фазой (`_try_detect_player`, переопределяемое условие `_can_detect_player`; сфер `DetectionArea` нет).
   - Владение компонентами: жизненный цикл и ленивое создание `HealthComponent`, `StatusEffectComponent`; `EnemyHealthBar` — только при включённых отладочных полосках (H).
   - Полный фасад свойств и методов: `slow_factor`, `poison_stacks`, `needle_count`, `is_inflated`, `add_slow`, `apply_poison_dot`, `add_needle`, `inflate`, триггеры детонаций (`trigger_inflation_explosion`, `trigger_poison_contagion`, `trigger_needle_burst`), спавн эффектов ударных волн и ядовитых облаков.
   - Урон, смерть и VFX: `take_damage(...)`, `die(death_info)`, всплывающие цифры урона `_spawn_damage_number`, генерация брызг крови `_spawn_hit_blood_splatter`, спавн лужи крови `BloodPool`, физика гравипула `apply_vacuum_pull`.

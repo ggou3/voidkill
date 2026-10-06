@@ -13,6 +13,8 @@ extends EnemyGround
 @export var explosion_damage: int = 40
 @export var explosion_radius: float = 5.0
 @export var warning_distance: float = 6.0
+## Радиус обнаружения (бывшая сфера DetectionArea 28 м)
+@export var bomber_detection_range: float = 28.0
 
 var is_detonating: bool = false
 var detonation_timer: float = 0.0
@@ -32,6 +34,7 @@ const OVERHEAT_COLOR = Color(1.0, 0.35, 0.1)
 
 func _ready() -> void:
 	super._ready()
+	detection_range = bomber_detection_range
 	max_health = bomber_health
 	health = bomber_health
 	move_speed = bomber_speed
