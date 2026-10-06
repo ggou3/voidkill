@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://n81thag53g2p" path="res://scripts/enemies/enemy.gd" id="1_7k104"]
 [ext_resource type="Script" uid="uid://cgc03silunrrk" path="res://scripts/components/health_component.gd" id="2_health"]
 [ext_resource type="Script" uid="uid://crtyldtnikxf4" path="res://scripts/components/status_effect_component.gd" id="3_status"]
-[ext_resource type="Script" uid="uid://dnied5svgoyn0" path="res://scripts/components/enemy_health_bar.gd" id="4_health_bar"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
 radius = 0.36
@@ -42,9 +41,6 @@ script = ExtResource("2_health")
 
 [node name="StatusEffectComponent" type="Node" parent="." unique_id=987654322]
 script = ExtResource("3_status")
-
-[node name="EnemyHealthBar" type="Node3D" parent="." unique_id=987654323]
-script = ExtResource("4_health_bar")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=804700386]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)

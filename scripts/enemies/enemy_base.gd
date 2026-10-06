@@ -50,7 +50,8 @@ var blood_splatter_scene = preload("res://blood_splatter.tscn")
 
 @onready var health_component: HealthComponent = _get_or_create_health_component()
 @onready var status_effect_component: StatusEffectComponent = _get_or_create_status_effect_component()
-@onready var health_bar: EnemyHealthBar = _get_or_create_health_bar()
+# Отладочная полоска HP — существует, только пока полоски включены (GameManager.show_enemy_health_bars)
+var health_bar: EnemyHealthBar = null
 
 @onready var collision_shape: CollisionShape3D = get_node_or_null("CollisionShape3D")
 @onready var detection_area: Area3D = get_node_or_null("DetectionArea")
@@ -88,18 +89,13 @@ func _get_or_create_status_effect_component() -> StatusEffectComponent:
 		add_child(comp)
 	return comp
 
+## Создаёт полоску HP, если её нет. Зовётся только из _setup_health_bar — при включённых полосках.
 func _ensure_health_bar() -> EnemyHealthBar:
 	if not is_instance_valid(health_bar):
-		health_bar = _get_or_create_health_bar()
+		health_bar = EnemyHealthBar.new()
+		health_bar.name = "EnemyHealthBar"
+		add_child(health_bar)
 	return health_bar
-
-func _get_or_create_health_bar() -> EnemyHealthBar:
-	var bar = get_node_or_null("EnemyHealthBar") as EnemyHealthBar
-	if not bar:
-		bar = EnemyHealthBar.new()
-		bar.name = "EnemyHealthBar"
-		add_child(bar)
-	return bar
 
 var slow_factor: float:
 	get:
@@ -151,30 +147,6 @@ var inflation_pulse_tween: Tween:
 	set(val):
 		_ensure_status_effect_component().inflation_pulse_tween = val
 
-var hp_viewport: SubViewport:
-	get:
-		return _ensure_health_bar().hp_viewport
-	set(val):
-		_ensure_health_bar().hp_viewport = val
-
-var hp_bar: ProgressBar:
-	get:
-		return _ensure_health_bar().hp_bar
-	set(val):
-		_ensure_health_bar().hp_bar = val
-
-var hp_sprite: Sprite3D:
-	get:
-		return _ensure_health_bar().hp_sprite
-	set(val):
-		_ensure_health_bar().hp_sprite = val
-
-var hp_label: Label3D:
-	get:
-		return _ensure_health_bar().hp_label
-	set(val):
-		_ensure_health_bar().hp_label = val
-
 func _ready() -> void:
 	_ensure_health_component()
 	health_component.max_health = max_health
@@ -210,8 +182,20 @@ func _ready() -> void:
 	if detection_area:
 		detection_area.body_entered.connect(_on_detection_area_body_entered)
 		
-	_setup_health_bar()
+	GameManager.enemy_health_bars_toggled.connect(_on_enemy_health_bars_toggled)
+	if GameManager.show_enemy_health_bars:
+		_setup_health_bar()
 
+func _on_enemy_health_bars_toggled(bars_visible: bool) -> void:
+	if current_state == State.DEAD:
+		return
+	if bars_visible:
+		_setup_health_bar()
+	elif is_instance_valid(health_bar):
+		health_bar.queue_free()
+		health_bar = null
+
+## Создаёт и настраивает полоску HP. Наследники с особой полоской (летун, рой, соглядатай) переопределяют.
 func _setup_health_bar() -> void:
 	_ensure_health_bar().setup(
 		health,
@@ -507,10 +491,8 @@ func die(death_info: Dictionary = {}) -> void:
 			# Бонус ударной волны (+8.0 вместо +5.5) — только у мили-ударной волны (конусная волна мили)
 			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave and weapon_used == "melee")
 	
-	if hp_sprite:
-		hp_sprite.visible = false
-	if hp_label:
-		hp_label.visible = false
+	if is_instance_valid(health_bar):
+		health_bar.set_bar_visible(false)
 		
 	if collision_shape:
 		collision_shape.set_deferred("disabled", true)

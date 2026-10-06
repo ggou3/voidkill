@@ -33,22 +33,17 @@ func _ready() -> void:
 	reaction_delay = 0.25
 	lunge_cooldown_timer = 999999.0
 	
-	# Корректировка высоты HP-бара под уменьшенный силуэт роя (0.6x)
-	if hp_sprite:
-		hp_sprite.position = Vector3(0, 0.65, 0)
-	if hp_label:
-		hp_label.position = Vector3(0, 0.80, 0)
-		hp_label.font_size = 14
-		hp_label.text = "%d / %d" % [health, max_health]
-	if hp_bar:
-		hp_bar.max_value = max_health
-		hp_bar.value = health
-		
 	# Назначение общего материала глаз всем дополнительным точкам-глазам в кластере
 	if eyes_material and eyes:
 		for child in eyes.get_children():
 			if child is MeshInstance3D:
 				child.set_surface_override_material(0, eyes_material)
+
+func _setup_health_bar() -> void:
+	super._setup_health_bar()
+	# Корректировка высоты HP-бара под уменьшенный силуэт роя (0.6x)
+	health_bar.set_bar_offset_y(0.65, 0.80)
+	health_bar.set_label_font_size(14)
 
 func _can_lunge_to_player() -> bool:
 	# Рой не совершает прыжков-выпадов LUNGE — опасность в постоянном прессинге и окружении

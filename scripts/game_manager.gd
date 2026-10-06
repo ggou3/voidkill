@@ -10,6 +10,8 @@ extends Node
 signal game_over_triggered
 signal player_respawned
 signal level_completed(stats: Dictionary)
+## Отладочные полоски HP над врагами переключены (клавиша H, действие debug_toggle_hp_bars)
+signal enemy_health_bars_toggled(bars_visible: bool)
 
 enum State {
 	PLAYING,
@@ -29,6 +31,9 @@ var overdrive_time: float = 0.0   # время в тире OVERDRIVE
 var deaths: int = 0
 var _last_health: int = -1
 
+## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
+## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
+var show_enemy_health_bars: bool = false
 func _ready():
 	# GameManager должен обрабатывать сигналы и ввод даже при возможной паузе дерева сцен
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -42,6 +47,12 @@ func _process(delta: float) -> void:
 			overdrive_time += delta
 
 func _input(event: InputEvent):
+	if event.is_action_pressed("debug_toggle_hp_bars") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		show_enemy_health_bars = not show_enemy_health_bars
+		GameTypes.debug_log(&"enemy", "[DEBUG] Enemy HP bars: %s (H)" % ("ON" if show_enemy_health_bars else "OFF"))
+		enemy_health_bars_toggled.emit(show_enemy_health_bars)
+		return
 	if not (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R):
 		return
 	# R на экране смерти — возрождение на чекпоинте (или перезапуск сцены вне уровня);

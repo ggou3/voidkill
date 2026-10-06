@@ -71,10 +71,6 @@ func _ready() -> void:
 	set_visibility(0.0)
 	if eyes:
 		eyes.visible = false
-	if hp_sprite:
-		hp_sprite.visible = false
-	if hp_label:
-		hp_label.visible = false
 
 func _can_lunge_to_player() -> bool:
 	return false
@@ -89,10 +85,13 @@ func set_visibility(val: float) -> void:
 	if eyes_material and eyes:
 		eyes_material.emission_energy_multiplier = lerp(0.0, 4.5, current_visibility)
 		eyes.visible = current_visibility > 0.2
-	if hp_sprite and hp_label:
-		var show_bars = current_visibility > 0.65
-		hp_sprite.visible = show_bars
-		hp_label.visible = show_bars
+	if is_instance_valid(health_bar):
+		health_bar.set_bar_visible(current_visibility > 0.65)
+
+func _setup_health_bar() -> void:
+	super._setup_health_bar()
+	# В стелсе полоска скрыта: видна вместе с телом, когда маскировка спадает
+	health_bar.set_bar_visible(current_visibility > 0.65)
 
 func _physics_process(delta: float) -> void:
 	if current_state == State.DEAD:
