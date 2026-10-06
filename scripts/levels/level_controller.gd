@@ -84,6 +84,13 @@ func respawn_player(player: Node) -> void:
 	if player is Player:
 		player.respawn(checkpoint)
 
+## Сектор, в котором сейчас идёт бой (для счётчика врагов в HUD); null — боя нет
+func get_active_sector() -> Sector:
+	for s in sectors:
+		if s.is_active():
+			return s
+	return null
+
 func all_sectors_cleared() -> bool:
 	for s in sectors:
 		if not s.is_cleared():

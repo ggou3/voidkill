@@ -3,7 +3,7 @@ extends CanvasLayer
 
 ## Единый менеджер пользовательского интерфейса (HUD).
 ## Инкапсулирует отображение полосы здоровья, слотов оружия, счётчика дэшей,
-## BPM, боевого моментума, всплывающих комбо-сообщений и экрана Game Over.
+## BPM, боевого моментума, всплывающих комбо-сообщений, счётчика врагов сектора и экрана Game Over.
 ## Подписывается на сигналы игровых систем (Player, WeaponManager, SkillManager, BPMSystem, GameManager).
 
 # Ссылки на дочерние UI-узлы сцены HUD
@@ -20,6 +20,7 @@ extends CanvasLayer
 @onready var game_over_screen: Control = get_node_or_null("GameOverScreen")
 @onready var restart_button: Button = get_node_or_null("GameOverScreen/VBoxContainer/RestartButton")
 var restart_level_button: Button = null
+var enemies_label: Label = null
 
 # Ссылки на игровые системы
 var player: Player = null
@@ -106,6 +107,7 @@ func _process(delta: float) -> void:
 		_process_skill_hud(delta)
 	if weapon_manager:
 		_process_weapon_hud(delta)
+	_process_level_hud()
 
 # --- Здоровье ---
 
@@ -429,6 +431,45 @@ func _process_weapon_hud(_delta: float) -> void:
 				slot["ammo_text"].text = "%d / %d" % [weapon_manager.ammos[i], w.data.max_ammo]
 				slot["ammo_text"].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 0.7))
 				slot["pbar"].visible = false
+
+# --- Счётчик врагов сектора ---
+
+## Сколько врагов осталось в текущей волне активного сектора (Охотник не считается) и номер волны.
+## Виден только на уровне, пока идёт бой в секторе.
+func _process_level_hud() -> void:
+	var sector: Sector = null
+	var gm = get_node_or_null("/root/GameManager")
+	if gm and gm.is_level_active() and gm.level is LevelController:
+		sector = gm.level.get_active_sector()
+	if not sector:
+		if enemies_label:
+			enemies_label.visible = false
+		return
+	var label = _ensure_enemies_label()
+	label.visible = true
+	var text = "ВРАГИ: %d" % sector.get_remaining_count()
+	if sector.get_wave_count() > 1:
+		text += "   ВОЛНА %d/%d" % [sector.current_wave + 1, sector.get_wave_count()]
+	label.text = text
+
+func _ensure_enemies_label() -> Label:
+	if enemies_label:
+		return enemies_label
+	enemies_label = Label.new()
+	enemies_label.name = "EnemiesLabel"
+	enemies_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	enemies_label.offset_left = -420.0
+	enemies_label.offset_top = 14.0
+	enemies_label.offset_right = -24.0
+	enemies_label.offset_bottom = 58.0
+	enemies_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	enemies_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	enemies_label.add_theme_font_size_override("font_size", 30)
+	enemies_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.2, 1.0))
+	enemies_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	enemies_label.add_theme_constant_override("outline_size", 6)
+	add_child(enemies_label)
+	return enemies_label
 
 # --- Game Over & Рестарт ---
 
