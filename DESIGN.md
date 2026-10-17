@@ -36,3 +36,6 @@
 - [docs/test-arena.md](docs/test-arena.md) — тестовая арена: зоны, лендмарки, энкаунтеры, навигация
 - [docs/lessons.md](docs/lessons.md) — технические уроки (грабли, на которые уже наступали)
 - [docs/roadmap.md](docs/roadmap.md) — roadmap
+
+**Справочник**
+- [docs/gamedev/README.md](docs/gamedev/README.md) — общая база знаний по разработке игр (game feel, движение, бой, ИИ, уровни, звук, UI, Godot, релиз) с привязкой к VOIDKILL
