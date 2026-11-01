@@ -11,7 +11,7 @@ extends Node3D
 
 const VISUAL_CATCHUP_TIME: float = 0.08
 const MAX_AREA_SKIPS: int = 4 # сколько посторонних Area3D (зоны секторов, выход) луч обходит за тик
-const HOMING_ARRIVE_DIST: float = 1.2 # м до цели самонаведения — «долетел»
+const HOMING_ARRIVE_DIST: float = 0.35 # м до цели самонаведения — «долетел» (или ближе шага за тик)
 
 ## FLY — летит по прямой; STUCK — застрял (в стене или во враге и движется с ним, stick);
 ## HOMING — летит к цели, поворачивая каждый тик (home_to), по прибытии — WeaponBase.on_projectile_homed
@@ -38,6 +38,7 @@ var _host: Node3D = null
 var _host_local: Transform3D = Transform3D.IDENTITY
 var _homing_target: Node3D = null
 var _homing_speed: float = 0.0
+var _homing_offset: Vector3 = Vector3.ZERO
 
 func _init() -> void:
 	_mesh = MeshInstance3D.new()
@@ -111,12 +112,13 @@ func is_stuck() -> bool:
 func get_host() -> Node3D:
 	return _host if is_instance_valid(_host) else null
 
-## Лететь к target со скоростью speed, доворачивая каждый тик (возврат игл к игроку). Луч по пути
-## по-прежнему отдаёт попадания оружию (вернуть true — прошить насквозь)
-func home_to(target: Node3D, speed: float, lifetime: float) -> void:
+## Лететь к точке target + offset со скоростью speed, доворачивая каждый тик (возврат игл в дуло). Луч по
+## пути по-прежнему отдаёт попадания оружию (вернуть true — прошить насквозь)
+func home_to(target: Node3D, speed: float, lifetime: float, offset: Vector3 = Vector3.ZERO) -> void:
 	mode = Mode.HOMING
 	_host = null
 	_homing_target = target
+	_homing_offset = offset
 	_homing_speed = speed
 	_life = lifetime
 	_visual_offset = Vector3.ZERO
@@ -125,7 +127,7 @@ func home_to(target: Node3D, speed: float, lifetime: float) -> void:
 	_update_mesh()
 
 func _homing_point() -> Vector3:
-	return _homing_target.global_position + Vector3.UP * 0.9 if is_instance_valid(_homing_target) else global_position
+	return _homing_target.global_position + _homing_offset if is_instance_valid(_homing_target) else global_position
 
 ## Не задевать этот объект дальше (снаряд прошил врага насквозь)
 func add_exclude(rid: RID) -> void:
@@ -146,7 +148,7 @@ func _physics_process(delta: float) -> void:
 			deactivate()
 			return
 		var to_target: Vector3 = _homing_point() - global_position
-		if to_target.length() <= HOMING_ARRIVE_DIST:
+		if to_target.length() <= maxf(HOMING_ARRIVE_DIST, _homing_speed * delta):
 			var w: WeaponBase = weapon
 			deactivate()
 			if is_instance_valid(w):

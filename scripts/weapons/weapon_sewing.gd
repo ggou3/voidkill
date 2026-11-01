@@ -139,9 +139,15 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 	for entry in hosts.values():
 		_yank_host(entry[0], entry[1], player)
 
+	# Иглы летят в дуло Швейной (не в центр игрока — тогда они уходили над головой)
+	var return_target: Node3D = player
+	var return_offset: Vector3 = Vector3.UP * 0.6
+	if head and head.smg_model and head.smg_model.get_node_or_null("Muzzle"):
+		return_target = head.smg_model.get_node("Muzzle")
+		return_offset = Vector3.ZERO
 	var count: int = _stuck.size()
 	for p in _stuck:
-		p.home_to(player, RETURN_SPEED, RETURN_LIFETIME)
+		p.home_to(return_target, RETURN_SPEED, RETURN_LIFETIME, return_offset)
 	_stuck.clear()
 	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Stitch! Needles recalled: %d | Hosts yanked: %d" % [count, hosts.size()])
 
