@@ -43,6 +43,7 @@ var _hit_shape: SphereShape3D = null
 # Не-цели сферы (стены, зоны секторов), уже встреченные за полёт: сфера не тратит на них запросы каждый тик
 var _sphere_skip: Array[RID] = []
 var _host: Node3D = null
+var _has_host: bool = false # застрял во враге (а не в стене)
 var _host_local: Transform3D = Transform3D.IDENTITY
 var _homing_target: Node3D = null
 var _homing_speed: float = 0.0
@@ -74,6 +75,7 @@ func launch(p_weapon: WeaponBase, origin: Vector3, p_velocity: Vector3, muzzle_p
 	_sphere_skip.clear()
 	mode = Mode.FLY
 	_host = null
+	_has_host = false
 	_homing_target = null
 	velocity = p_velocity
 	gravity = p_gravity
@@ -104,6 +106,7 @@ func deactivate() -> void:
 	payload = {}
 	mode = Mode.FLY
 	_host = null
+	_has_host = false
 	_homing_target = null
 	set_physics_process(false)
 
@@ -116,7 +119,8 @@ func stick(host: Node3D, hit_pos: Vector3, lifetime: float) -> void:
 	_visual_offset = Vector3.ZERO
 	_update_mesh()
 	_host = host
-	if is_instance_valid(host):
+	_has_host = is_instance_valid(host)
+	if _has_host:
 		_host_local = host.global_transform.affine_inverse() * global_transform
 
 func is_stuck() -> bool:
@@ -131,6 +135,7 @@ func get_host() -> Node3D:
 func home_to(target: Node3D, speed: float, lifetime: float, offset: Vector3 = Vector3.ZERO) -> void:
 	mode = Mode.HOMING
 	_host = null
+	_has_host = false
 	_homing_target = target
 	_homing_offset = offset
 	_homing_speed = speed
@@ -163,10 +168,10 @@ func _physics_process(delta: float) -> void:
 			return
 		var to_target: Vector3 = _homing_point() - global_position
 		if to_target.length() <= maxf(HOMING_ARRIVE_DIST, _homing_speed * delta):
-			# Оружию — до гашения: deactivate стирает payload, по которому оружие различает снаряды
-			if is_instance_valid(weapon):
-				weapon.on_projectile_homed(self)
+			var w: WeaponBase = weapon
 			deactivate()
+			if is_instance_valid(w):
+				w.on_projectile_homed(self)
 			return
 		velocity = to_target.normalized() * _homing_speed
 		_orient()
@@ -196,13 +201,20 @@ func _physics_process(delta: float) -> void:
 	_visual_offset = _visual_offset.move_toward(Vector3.ZERO, _visual_catchup_speed * delta)
 	_update_mesh()
 
+## Застрял во враге — следует за ним. Флаг, а не `_host == null`: ссылка на удалённого врага тоже равна null,
+## и игла оставалась висеть в воздухе на месте умершего (до истечения STUCK_TIME)
 func _follow_host() -> void:
-	if _host == null:
+	if not _has_host:
 		return
 	var host_alive: bool = is_instance_valid(_host) and _host.is_inside_tree() \
 			and not ("health" in _host and _host.health <= 0)
 	if not host_alive:
-		deactivate()
+		_has_host = false
+		_host = null
+		if is_instance_valid(weapon):
+			weapon.on_projectile_host_died(self)
+		else:
+			deactivate()
 		return
 	global_transform = _host.global_transform * _host_local
 

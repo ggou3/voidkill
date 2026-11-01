@@ -3,11 +3,12 @@ extends WeaponBase
 
 ## Швейная машина (Слот 4): скорострельный игольник, механика «Нить» (ноябрь 2026).
 ## ЛКМ: физические иглы (6 HP, 10 выстр/с, NEEDLE_SPEED + скорость игрока). Игла застревает во враге
-## (add_needle — синергии и разлёт при смерти прежние) или в стене и остаётся там видимой STUCK_TIME.
+## (add_needle — синергии прежние) или в стене и остаётся там видимой STUCK_TIME. Враг с иглами умер — иглы
+## из него разлетаются во все стороны (burst_from_host). Игла, убившая врага, пролетает сквозь него.
 ## Игла, попавшая в роевика со стеной за спиной (до PIN_RANGE), пришпиливает его к стене на PIN_TIME.
-## ПКМ «Стежок» (кулдаун alt_cooldown): все застрявшие иглы выдёргиваются. Врага с иглами рвёт на игрока
-## (урон alt_damage за иглу, рывок растёт с числом игл, окно удара о стену и о других врагов), иглы летят
-## к игроку, прошивая всё на пути (урон RETURN_DAMAGE_SCALE от обычного), и возвращаются в магазин.
+## ПКМ «Стежок» (кулдаун alt_cooldown): все застрявшие и летящие иглы возвращаются. Врага с иглами рвёт на
+## игрока (урон alt_damage за иглу, рывок растёт с числом игл, окно удара о стену и о других врагов), иглы
+## летят в дуло, прошивая всё на пути (урон RETURN_DAMAGE_SCALE от обычного). Патронов возврат не даёт.
 ## Параметры ПКМ (alt_cooldown, alt_damage) — в группе «Альт-огонь» ресурса sewing_machine.tres.
 
 const NEEDLE_SPEED: float = 120.0
@@ -24,12 +25,22 @@ const YANK_UP: float = 3.0
 const YANK_SLAM_WINDOW: float = 0.6 # окно удара о стену/врагов после рывка (как у мили)
 const PIN_RANGE: float = 2.5
 const PIN_TIME: float = 2.0
-## Разлёт игл из умершего врага (StatusEffectComponent.trigger_needle_burst): физические иглы, долетают
-## примерно до радиуса разлёта ×1.25
+## Разлёт игл из умершего врага (StatusEffectComponent.trigger_needle_burst → burst_from_host): застрявшие в нём
+## иглы и недостающие до числа меток новые летят во все стороны, долетают примерно до радиуса разлёта ×1.25
 const BURST_SPEED: float = 30.0
 ## Радиус попадания иглы разлёта — допуск прежних мгновенных лучей (NEEDLE_TOLERANCE 0.40 сверх тела):
 ## с радиусом обычной иглы (0.12) разлёт попадал заметно реже
 const BURST_HIT_RADIUS: float = 0.40
+## Направление разлёта: случайное по кругу, наклон по вертикали в этих пределах (до нормализации)
+const BURST_DIR_Y_MIN: float = -0.15
+const BURST_DIR_Y_MAX: float = 0.35
+## Доводка: игла, чьё случайное направление отличается от направления на врага меньше конуса, летит в него
+const BURST_AIM_CONE: float = 0.61 # рад (~35°)
+const BURST_AIM_JITTER: float = 0.08
+const BURST_AIM_HEIGHT: float = 0.3 # м над началом координат врага — между корпусом и головой
+## Иглы, застрявшие во враге без меток (сами иглы разлёта): при его смерти летят как обычный разлёт
+const BURST_FALLBACK_RADIUS: float = 4.0 # = обычный разлёт (StatusEffectComponent.trigger_needle_burst)
+const BURST_FALLBACK_DAMAGE: int = 3
 
 var _stuck: Array[PlayerProjectile] = []
 
@@ -74,6 +85,8 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 		return _on_burst_needle_hit(projectile, hit, dir)
 	var target: Node = _deal_hit(hit.collider, hit.position, dir, false)
 	if is_instance_valid(target):
+		if _is_dead(target):
+			return true # убила — летит дальше сквозь труп (застрять в нём — повиснуть в воздухе)
 		if target is EnemySwarm and _try_pin(target, hit.position, dir, projectile):
 			return false
 		_stick(projectile, target as Node3D, hit.position)
@@ -81,25 +94,91 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 		_stick(projectile, null, hit.position)
 	return false
 
-## Игла из разлёта при смерти врага. Урон и правила прежние: обычная — урон первому врагу и застревает
-## в нём; из раздутого — прошивает всех на пути (с глубиной цепи Инъектора). В стене застревает. Застрявшие
-## иглы разлёта можно выдернуть «Стежком», как обычные
-func spawn_burst_needle(origin: Vector3, dir: Vector3, radius: float, damage: int, pierce: bool, depth: int, exclude: Array[RID]) -> void:
-	if not weapon_manager:
-		return
+## Разлёт игл из умершего врага host (зовёт StatusEffectComponent.trigger_needle_burst, пока host ещё в
+## дереве): застрявшие в нём иглы вылетают из своих точек, недостающие до count — новые из origin. Летят
+## во все стороны, доводка на врагов в радиусе — BURST_AIM_CONE. Урон и правила прежние: обычная игла —
+## урон первому врагу и застревает в нём; из раздутого (pierce) — прошивает всех с глубиной цепи Инъектора
+func burst_from_host(host: Node3D, origin: Vector3, count: int, radius: float, damage: int, pierce: bool, depth: int,
+		exclude: Array[RID]) -> void:
+	var from_host: Array[PlayerProjectile] = []
+	_prune_stuck()
+	for p in _stuck:
+		if p.get_host() == host:
+			from_host.append(p)
 	var player := _get_player()
-	if player and player.is_dead:
+	if not weapon_manager or (player and player.is_dead):
+		for p in from_host:
+			p.deactivate()
 		return
+	var targets: Array[Vector3] = _collect_burst_targets(origin, radius, host)
+	for i in range(maxi(count, from_host.size())):
+		var start: Vector3 = from_host[i].global_position if i < from_host.size() else origin
+		var dir: Vector3 = _burst_direction(start, targets)
+		_launch_burst_needle(from_host[i] if i < from_host.size() else null, start, dir, radius, damage, pierce, depth, exclude)
+
+## Хозяин застрявшей иглы умер, а разлёта не было (в нём были только иглы разлёта — меток они не ставят):
+## игла вылетает как обычный разлёт
+func on_projectile_host_died(projectile: PlayerProjectile) -> void:
+	var player := _get_player()
+	if not weapon_manager or (player and player.is_dead):
+		projectile.deactivate()
+		return
+	var start: Vector3 = projectile.global_position
+	var dir: Vector3 = _burst_direction(start, _collect_burst_targets(start, BURST_FALLBACK_RADIUS, null))
+	_launch_burst_needle(projectile, start, dir, BURST_FALLBACK_RADIUS, BURST_FALLBACK_DAMAGE, false, -1, [])
+
+## Игла разлёта: reuse — застрявшая игла, которая вылетает заново (null — новая из пула)
+func _launch_burst_needle(reuse: PlayerProjectile, origin: Vector3, dir: Vector3, radius: float, damage: int, pierce: bool,
+		depth: int, exclude: Array[RID]) -> void:
 	var style: StringName = &"needle_blood" if pierce else &"needle"
-	var p: PlayerProjectile = weapon_manager.spawn_projectile_from(self, origin, dir * BURST_SPEED, style, false,
-		radius * 1.25 / BURST_SPEED, 0.0, exclude, BURST_HIT_RADIUS)
+	var lifetime: float = radius * 1.25 / BURST_SPEED
+	var p: PlayerProjectile = reuse
+	if p:
+		weapon_manager.relaunch_projectile(p, self, origin, dir * BURST_SPEED, style, false, lifetime, 0.0, exclude, BURST_HIT_RADIUS)
+	else:
+		p = weapon_manager.spawn_projectile_from(self, origin, dir * BURST_SPEED, style, false, lifetime, 0.0, exclude, BURST_HIT_RADIUS)
 	if p:
 		p.payload = {"burst": true, "damage": damage, "pierce": pierce, "depth": depth, "seen": {}}
+
+## Точки прицела разлёта: живые враги в радиусе от center (кроме умершего хозяина)
+func _collect_burst_targets(center: Vector3, radius: float, host: Node) -> Array[Vector3]:
+	var targets: Array[Vector3] = []
+	if not is_inside_tree():
+		return targets
+	var radius_sq: float = radius * radius
+	for e in get_tree().get_nodes_in_group("enemy"):
+		if e == host or not (e is Node3D) or _is_dead(e):
+			continue
+		if "current_state" in e and e.current_state == e.State.DEAD:
+			continue
+		var aim: Vector3 = e.global_position + Vector3.UP * BURST_AIM_HEIGHT
+		if center.distance_squared_to(aim) <= radius_sq:
+			targets.append(aim)
+	return targets
+
+## Случайное направление по кругу (чуть вверх/вниз); попало в конус к врагу — доводится на него
+func _burst_direction(start: Vector3, targets: Array[Vector3]) -> Vector3:
+	var angle: float = randf() * TAU
+	var dir := Vector3(cos(angle), randf_range(BURST_DIR_Y_MIN, BURST_DIR_Y_MAX), sin(angle)).normalized()
+	var best_angle: float = BURST_AIM_CONE
+	var best_dir := Vector3.ZERO
+	for aim in targets:
+		var to_aim: Vector3 = aim - start
+		if to_aim.length_squared() < 0.01:
+			continue
+		var a: float = dir.angle_to(to_aim)
+		if a < best_angle:
+			best_angle = a
+			best_dir = to_aim.normalized()
+	if best_dir != Vector3.ZERO:
+		var jitter := Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * BURST_AIM_JITTER
+		dir = (best_dir + jitter).normalized()
+	return dir
 
 func _on_burst_needle_hit(projectile: PlayerProjectile, hit: Dictionary, dir: Vector3) -> bool:
 	var target: Node = _resolve_hit_target(hit.collider)[0]
 	if is_instance_valid(target) and target.has_method("take_damage"):
-		if "health" in target and target.health <= 0:
+		if _is_dead(target):
 			return true
 		var seen: Dictionary = projectile.payload["seen"]
 		var key: int = target.get_instance_id()
@@ -110,16 +189,19 @@ func _on_burst_needle_hit(projectile: PlayerProjectile, hit: Dictionary, dir: Ve
 		var knock: Vector3 = dir * (2.5 if pierce else 1.5) + Vector3.UP * (0.8 if pierce else 0.5)
 		var depth: int = projectile.payload["depth"] if pierce else -1
 		target.take_damage(projectile.payload["damage"], knock, hit.position, false, false, false, false, depth, "sewing")
-		if pierce:
+		if pierce or _is_dead(target):
 			return true
 		_stick(projectile, target as Node3D, hit.position)
 		return false
 	_stick(projectile, null, hit.position)
 	return false
 
+func _is_dead(target: Node) -> bool:
+	return "health" in target and target.health <= 0
+
 ## Роевик со стеной за спиной: игла прибивает его к стене и застревает в стене
 func _try_pin(swarm: Node, hit_pos: Vector3, dir: Vector3, projectile: PlayerProjectile) -> bool:
-	if not swarm.has_method("pin_to") or ("health" in swarm and swarm.health <= 0):
+	if not swarm.has_method("pin_to") or _is_dead(swarm):
 		return false
 	var space: PhysicsDirectSpaceState3D = swarm.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(hit_pos, hit_pos + dir * PIN_RANGE)
@@ -156,12 +238,22 @@ func _prune_stuck() -> void:
 		if not is_instance_valid(p) or not p.is_stuck() or p.weapon != self:
 			_stuck.remove_at(i)
 
-## Альтернативный огонь (ПКМ): «Стежок» — выдернуть все застрявшие иглы
+## Иглы, которые «Стежок» вернёт: застрявшие и летящие (ЛКМ и разлёт), кроме уже возвращающихся
+func _collect_recallable() -> Array[PlayerProjectile]:
+	_prune_stuck()
+	var result: Array[PlayerProjectile] = _stuck.duplicate()
+	if weapon_manager:
+		for p in weapon_manager.get_active_projectiles():
+			if p.weapon == self and p.mode == PlayerProjectile.Mode.FLY:
+				result.append(p)
+	return result
+
+## Альтернативный огонь (ПКМ): «Стежок» — вернуть все застрявшие и летящие иглы
 func alt_fire(_has_infinite_ammo: bool = false) -> void:
 	if alt_timer > 0.0:
 		return
-	_prune_stuck()
-	if _stuck.is_empty():
+	var needles: Array[PlayerProjectile] = _collect_recallable()
+	if needles.is_empty():
 		AudioManager.play_sound("dry_fire")
 		return
 	var player := _get_player()
@@ -177,7 +269,7 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 
 	# Хозяева игл: сколько игл в каждом. Иглы разлёта не считаются: меток игл (add_needle) они не ставили
 	var hosts: Dictionary = {} # instance_id -> [враг, число игл]
-	for p in _stuck:
+	for p in needles:
 		if p.payload.get("burst", false):
 			continue
 		var host: Node3D = p.get_host()
@@ -196,17 +288,17 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 	if head and head.smg_model and head.smg_model.get_node_or_null("Muzzle"):
 		return_target = head.smg_model.get_node("Muzzle")
 		return_offset = Vector3.ZERO
-	var count: int = _stuck.size()
-	for p in _stuck:
-		# Признак иглы разлёта сохраняется на возврат: она не стоила патрона и не возвращает его
-		p.payload = {"burst": true} if p.payload.get("burst", false) else {}
+	for p in needles:
+		if not p.active:
+			continue
+		p.payload = {}
 		p.home_to(return_target, RETURN_SPEED, RETURN_LIFETIME, return_offset)
 	_stuck.clear()
-	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Stitch! Needles recalled: %d | Hosts yanked: %d" % [count, hosts.size()])
+	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Stitch! Needles recalled: %d | Hosts yanked: %d" % [needles.size(), hosts.size()])
 
 ## Рывок врага с иглами к игроку: урон за каждую иглу, толчок к игроку, окно удара о стену и о врагов
 func _yank_host(host: Node3D, needles: int, player: Player) -> void:
-	if not is_instance_valid(host) or not host.has_method("take_damage") or ("health" in host and host.health <= 0):
+	if not is_instance_valid(host) or not host.has_method("take_damage") or _is_dead(host):
 		return
 	var to_player: Vector3 = player.global_position - host.global_position
 	to_player.y = 0.0
@@ -225,17 +317,10 @@ func _yank_host(host: Node3D, needles: int, player: Player) -> void:
 		host.wall_slam_source_melee = false
 		host.wall_slam_source_shockwave = false
 
-## Игла вернулась — патрон обратно в магазин (кроме игл разлёта)
-func on_projectile_homed(projectile: PlayerProjectile) -> void:
-	if not weapon_manager or not data or projectile.payload.get("burst", false):
-		return
-	weapon_manager.ammos[slot_index] = mini(weapon_manager.ammos[slot_index] + 1, data.max_ammo)
-	weapon_manager.ammo_changed.emit(slot_index, weapon_manager.ammos[slot_index], data.max_ammo)
-
 func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	if alt_timer > 0.0:
 		return " (RMB %.1fs)" % alt_timer
-	_prune_stuck()
-	if not _stuck.is_empty():
-		return " (STITCH %d)" % _stuck.size()
+	var recallable: int = _collect_recallable().size()
+	if recallable > 0:
+		return " (STITCH %d)" % recallable
 	return ""

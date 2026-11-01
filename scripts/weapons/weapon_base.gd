@@ -142,6 +142,10 @@ func _fire_projectile(dir: Vector3, speed: float, is_alt: bool = false, lifetime
 func on_projectile_homed(_projectile: PlayerProjectile) -> void:
 	pass
 
+## Враг, в котором застрял снаряд, умер или исчез. По умолчанию снаряд гаснет
+func on_projectile_host_died(projectile: PlayerProjectile) -> void:
+	projectile.deactivate()
+
 ## Попадание физического снаряда. true — снаряд летит дальше (прошил насквозь), false — гаснет.
 ## По умолчанию: урон по общим правилам, по стене — короткая вспышка-след в точке удара.
 func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:

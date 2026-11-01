@@ -73,6 +73,13 @@ func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector
 	var p: PlayerProjectile = _get_free_projectile()
 	if not p:
 		return null
+	relaunch_projectile(p, weapon, origin, velocity, style, is_alt, lifetime, gravity, exclude, hit_radius)
+	return p
+
+## Запустить уже существующий снаряд заново из точки мира (застрявшая игла вылетает из умершего врага):
+## состояние снаряда сбрасывается, визуал — по стилю. Параметры — как у spawn_projectile_from
+func relaunch_projectile(p: PlayerProjectile, weapon: WeaponBase, origin: Vector3, velocity: Vector3, style: StringName,
+		is_alt: bool = false, lifetime: float = 2.0, gravity: float = 0.0, exclude: Array[RID] = [], hit_radius: float = -1.0) -> void:
 	var visual: Array = _get_projectile_visual(style)
 	var all_exclude: Array[RID] = exclude.duplicate()
 	var player = get_parent()
@@ -81,7 +88,6 @@ func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector
 	var mask: int = head.raycast.collision_mask if is_instance_valid(head) and head.raycast else 1
 	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity,
 		hit_radius if hit_radius >= 0.0 else visual[3])
-	return p
 
 ## Оружие слота по классу-проверке (например, Швейная для разлёта игл)
 func get_sewing() -> WeaponSewing:

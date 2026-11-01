@@ -271,35 +271,19 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 	
 	var actor_pos = actor.global_position if is_instance_valid(actor) else Vector3.ZERO
 	var burst_pos = actor_pos + Vector3(0.0, 0.85, 0.0)
-	var space_state: PhysicsDirectSpaceState3D = null
-	if is_instance_valid(actor) and actor is Node3D:
-		space_state = (actor as Node3D).get_world_3d().direct_space_state
-	if not space_state:
+	if not is_instance_valid(actor) or not (actor is Node3D):
 		return
-		
-	var all_enemies = get_tree().get_nodes_in_group("enemy")
-	var nearby_enemies: Array = []
-	for e in all_enemies:
-		if not is_instance_valid(e) or e == actor:
-			continue
-		if ("current_state" in e and e.current_state == e.State.DEAD) or ("health" in e and e.health <= 0):
-			continue
-		var e_pos = e.global_position + Vector3(0.0, 0.85, 0.0)
-		var dist = burst_pos.distance_to(e_pos)
-		if dist <= burst_radius:
-			nearby_enemies.append({"enemy": e, "pos": e_pos, "dist": dist})
-			
-	nearby_enemies.sort_custom(func(a, b): return a["dist"] < b["dist"])
-	
-	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
-	GameTypes.debug_log(&"enemy", "[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d | EnemiesNearby: %d" % [
-		actor_name, count, str(was_inflated), burst_radius, damage_per_needle, depth, nearby_enemies.size()
+
+	var actor_name = String(actor.name)
+	GameTypes.debug_log(&"enemy", "[%s] NEEDLE BURST! Count: %d | Inflated: %s | Radius: %.1f | DmgPerNeedle: %d | Depth: %d" % [
+		actor_name, count, str(was_inflated), burst_radius, damage_per_needle, depth
 	])
 	
 	AudioManager.play_sound("needle_shot")
 	
-	# Иглы — физические снаряды Швейной (ноябрь 2026, раньше — мгновенные лучи): летят к ближайшим врагам
-	# с разбросом (или веером, если врагов рядом нет); урон и пробивание — WeaponSewing._on_burst_needle_hit
+	# Иглы — физические снаряды Швейной (ноябрь 2026, раньше — мгновенные лучи): застрявшие в умершем иглы
+	# и недостающие до числа меток новые разлетаются во все стороны с доводкой на врагов рядом
+	# (WeaponSewing.burst_from_host); урон и пробивание — WeaponSewing._on_burst_needle_hit
 	var player = get_tree().get_first_node_in_group("player")
 	# Без типа WeaponSewing: компонент врага не тянет за собой скрипты оружия игрока
 	var sewing = null
@@ -308,25 +292,13 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 	if not is_instance_valid(sewing):
 		return
 	var exclude: Array[RID] = []
-	if is_instance_valid(actor) and actor is CollisionObject3D:
+	if actor is CollisionObject3D:
 		exclude.append((actor as CollisionObject3D).get_rid())
 		# Иглы стартуют внутри головы умершего: без исключения сфера попадания цепляла её первым тиком
 		var head_hitbox = actor.get_node_or_null("HeadHitbox")
 		if head_hitbox is CollisionObject3D:
 			exclude.append((head_hitbox as CollisionObject3D).get_rid())
-
-	for i in range(count):
-		var needle_dir: Vector3 = Vector3.FORWARD
-		if nearby_enemies.size() > 0:
-			var target_entry = nearby_enemies[i % nearby_enemies.size()]
-			var to_target = target_entry["pos"] - burst_pos
-			var base_dir = to_target.normalized() if to_target.length_squared() > 0.01 else Vector3.FORWARD
-			var jitter = Vector3(randf_range(-0.12, 0.12), randf_range(-0.12, 0.12), randf_range(-0.12, 0.12))
-			needle_dir = (base_dir + jitter).normalized()
-		else:
-			var angle = (float(i) / float(count)) * TAU + randf_range(-0.1, 0.1)
-			needle_dir = Vector3(cos(angle), randf_range(-0.2, 0.3), sin(angle)).normalized()
-		sewing.spawn_burst_needle(burst_pos, needle_dir, burst_radius, damage_per_needle, was_inflated, depth, exclude)
+	sewing.burst_from_host(actor, burst_pos, count, burst_radius, damage_per_needle, was_inflated, depth, exclude)
 
 # ==============================================================================
 # ИНФЛЯЦИЯ (РАЗДУТИЕ И ДЕТОНАЦИЯ)

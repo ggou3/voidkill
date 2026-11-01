@@ -25,6 +25,9 @@ const RANK_LETTERS: Array[String] = ["D", "C", "B", "A", "S"]
 ## запечённого навмеша). Геометрия должна лежать внутри NavigationRegion3D, перегородки — вне его:
 ## иначе после обрушения в навмеше останется дыра на месте стены.
 @export var bake_navigation_on_ready: bool = true
+# Передача запечённого навмеша серверу: попыток и физических кадров ожидания применения на попытку
+const NAVMESH_SUBMIT_ATTEMPTS: int = 10
+const NAVMESH_SUBMIT_WAIT_FRAMES: int = 3
 
 var sectors: Array[Sector] = []
 var barriers: Array[BloodBarrier] = []
@@ -53,14 +56,22 @@ func _bake_navigation() -> void:
 			region.bake_navigation_mesh(false)
 			if region.is_baking():
 				await region.bake_finished
-			# Обновление региона, отправленное до первой синхронизации карты навигации, теряется
-			# (асинхронные итерации): регион на сервере остаётся с пустым навмешем, наземные враги не
-			# находят пути. Ждём первую итерацию карты и отдаём навмеш новым ресурсом (так проверено;
-			# сам запечённый ресурс до сервера не доходит)
+			# Обновление региона, отправленное до его первой синхронизации на сервере, теряется (асинхронные
+			# итерации): регион остаётся с пустым навмешем, наземные враги не находят пути. Ждём первую итерацию
+			# карты И самого региона — после перезагрузки сцены (рестарт уровня) карта уже синхронизирована,
+			# а новый регион ещё нет; ожидание только карты пропускало этот случай. Навмеш отдаётся новым
+			# ресурсом (сам запечённый до сервера не доходит), пока итерация региона не вырастет — применён
 			var map: RID = region.get_navigation_map()
-			while NavigationServer3D.map_get_iteration_id(map) == 0:
+			var region_rid: RID = region.get_rid()
+			while NavigationServer3D.map_get_iteration_id(map) == 0 or NavigationServer3D.region_get_iteration_id(region_rid) == 0:
 				await get_tree().physics_frame
-			region.navigation_mesh = region.navigation_mesh.duplicate()
+			for attempt in range(NAVMESH_SUBMIT_ATTEMPTS):
+				var iteration_before: int = NavigationServer3D.region_get_iteration_id(region_rid)
+				region.navigation_mesh = region.navigation_mesh.duplicate()
+				for i in range(NAVMESH_SUBMIT_WAIT_FRAMES):
+					await get_tree().physics_frame
+				if NavigationServer3D.region_get_iteration_id(region_rid) != iteration_before:
+					break
 			GameTypes.debug_log(&"enemy", "[LEVEL] Navmesh baked: %d polygons" % region.navigation_mesh.get_polygon_count())
 
 func _find_nav_regions(node: Node) -> Array[NavigationRegion3D]:
