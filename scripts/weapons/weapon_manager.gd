@@ -26,13 +26,13 @@ var _autofire_blocked: bool = false
 const PROJECTILE_POOL_MAX: int = 160
 var _projectiles: Array[PlayerProjectile] = []
 var _projectile_cursor: int = 0
-# Визуал по стилю: [Mesh, Material, вытяжка вдоль полёта]. Создаётся один раз на стиль
+# Визуал по стилю: [Mesh, Material, вытяжка вдоль полёта, радиус попадания]. Создаётся один раз на стиль
 var _projectile_visuals: Dictionary = {}
 const PROJECTILE_STYLES: Dictionary = {
-	&"needle": {"radius": 0.012, "length": 0.3, "color": Color(0.85, 0.92, 1.0), "energy": 3.0, "stretch": 1.6},
-	&"pellet": {"radius": 0.03, "length": 0.07, "color": Color(1.0, 0.55, 0.15), "energy": 4.0, "stretch": 4.0},
-	&"syringe": {"radius": 0.028, "length": 0.28, "color": Color(0.35, 1.0, 0.35), "energy": 3.0, "stretch": 1.2},
-	&"needle_blood": {"radius": 0.016, "length": 0.32, "color": Color(1.0, 0.12, 0.08), "energy": 3.5, "stretch": 1.6},
+	&"needle": {"radius": 0.012, "length": 0.3, "color": Color(0.85, 0.92, 1.0), "energy": 3.0, "stretch": 1.6, "hit_radius": 0.12},
+	&"pellet": {"radius": 0.03, "length": 0.07, "color": Color(1.0, 0.55, 0.15), "energy": 4.0, "stretch": 4.0, "hit_radius": 0.1},
+	&"syringe": {"radius": 0.028, "length": 0.28, "color": Color(0.35, 1.0, 0.35), "energy": 3.0, "stretch": 1.2, "hit_radius": 0.14},
+	&"needle_blood": {"radius": 0.016, "length": 0.32, "color": Color(1.0, 0.12, 0.08), "energy": 3.5, "stretch": 1.6, "hit_radius": 0.1},
 }
 
 var is_bursting: bool:
@@ -63,7 +63,7 @@ func spawn_projectile(weapon: WeaponBase, direction: Vector3, speed: float, styl
 		exclude.append(player.get_rid())
 	var mask: int = head.raycast.collision_mask if head.raycast else 1
 	p.launch(weapon, head.camera.global_position, direction.normalized() * speed + inherit, head.get_muzzle_position(),
-		style, visual[0], visual[1], visual[2], lifetime, is_alt, exclude, mask, gravity)
+		style, visual[0], visual[1], visual[2], lifetime, is_alt, exclude, mask, gravity, visual[3])
 	return p
 
 ## Выпустить снаряд из произвольной точки мира (не из камеры): разлёт игл из умершего врага и т.п.
@@ -79,7 +79,7 @@ func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector
 	if player is CollisionObject3D:
 		all_exclude.append(player.get_rid())
 	var mask: int = head.raycast.collision_mask if is_instance_valid(head) and head.raycast else 1
-	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity)
+	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity, visual[3])
 	return p
 
 ## Оружие слота по классу-проверке (например, Швейная для разлёта игл)
@@ -135,7 +135,7 @@ func _get_projectile_visual(style: StringName) -> Array:
 	mat.emission_enabled = true
 	mat.emission = cfg["color"]
 	mat.emission_energy_multiplier = cfg["energy"]
-	var visual: Array = [mesh, mat, cfg["stretch"]]
+	var visual: Array = [mesh, mat, cfg["stretch"], cfg.get("hit_radius", 0.0)]
 	_projectile_visuals[style] = visual
 	return visual
 

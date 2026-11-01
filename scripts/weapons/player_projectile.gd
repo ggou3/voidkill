@@ -34,6 +34,10 @@ var _visual_offset: Vector3 = Vector3.ZERO
 var _visual_catchup_speed: float = 0.0
 var _mesh_basis: Basis = Basis.IDENTITY
 var _mesh: MeshInstance3D = null
+## Радиус попадания по врагам (0 — только луч): кроме луча по пути, сфера этого радиуса ищет врага/голову —
+## попасть немного легче. Стены сфера не задевает, поэтому снаряд не цепляется за углы
+var _hit_radius: float = 0.0
+var _hit_shape: SphereShape3D = null
 var _host: Node3D = null
 var _host_local: Transform3D = Transform3D.IDENTITY
 var _homing_target: Node3D = null
@@ -56,8 +60,13 @@ func _ready() -> void:
 ## модели вдоль полёта (след скорости), exclude — что луч не задевает (игрок)
 func launch(p_weapon: WeaponBase, origin: Vector3, p_velocity: Vector3, muzzle_pos: Vector3, p_style: StringName,
 		mesh: Mesh, material: Material, mesh_stretch: float, lifetime: float, p_is_alt: bool,
-		exclude: Array[RID], collision_mask: int, p_gravity: float = 0.0) -> void:
+		exclude: Array[RID], collision_mask: int, p_gravity: float = 0.0, hit_radius: float = 0.0) -> void:
 	weapon = p_weapon
+	_hit_radius = hit_radius
+	if hit_radius > 0.0:
+		if not _hit_shape:
+			_hit_shape = SphereShape3D.new()
+		_hit_shape.radius = hit_radius
 	mode = Mode.FLY
 	_host = null
 	_homing_target = null
@@ -204,12 +213,51 @@ func _sweep(from: Vector3, to: Vector3) -> Dictionary:
 		if hit.is_empty():
 			return {}
 		var collider: Object = hit.collider
-		if collider is Area3D and not (collider.is_in_group("enemy_head") or collider.name == "HeadHitbox"):
+		if collider is Area3D and not _is_enemy_collider(collider):
 			exclude.append(hit.rid)
 			query.exclude = exclude
 			continue
-		return hit
-	return {}
+		return _with_radius(space, from, to, hit)
+	return _with_radius(space, from, to, {})
+
+func _is_enemy_collider(collider: Object) -> bool:
+	if collider is Area3D:
+		return collider.is_in_group("enemy_head") or collider.name == "HeadHitbox"
+	return collider is Node and GameTypes.resolve_enemy(collider) != null
+
+## Луч не попал во врага (мимо или в стену) — сфера _hit_radius ищет врага на пути до точки луча
+func _with_radius(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, ray_hit: Dictionary) -> Dictionary:
+	if _hit_radius <= 0.0 or (not ray_hit.is_empty() and _is_enemy_collider(ray_hit.collider)):
+		return ray_hit
+	var max_dist: float = from.distance_to(ray_hit.position) if not ray_hit.is_empty() else from.distance_to(to)
+	var motion: Vector3 = to - from
+	var params := PhysicsShapeQueryParameters3D.new()
+	params.shape = _hit_shape
+	params.collision_mask = _collision_mask
+	params.collide_with_areas = true
+	params.collide_with_bodies = true
+	var exclude: Array[RID] = _exclude.duplicate()
+	for i in range(MAX_AREA_SKIPS + 1):
+		params.exclude = exclude
+		params.transform = Transform3D(Basis.IDENTITY, from)
+		params.motion = motion
+		var fractions: PackedFloat32Array = space.cast_motion(params)
+		if fractions.size() < 2 or fractions[1] >= 1.0:
+			return ray_hit
+		var contact_pos: Vector3 = from + motion * fractions[1]
+		if from.distance_to(contact_pos) > max_dist:
+			return ray_hit
+		params.transform = Transform3D(Basis.IDENTITY, contact_pos)
+		params.motion = Vector3.ZERO
+		var info: Dictionary = space.get_rest_info(params)
+		if info.is_empty():
+			return ray_hit
+		var collider: Object = instance_from_id(info.collider_id)
+		if collider and _is_enemy_collider(collider):
+			return {"collider": collider, "position": info.point, "rid": info.rid, "normal": info.normal}
+		# Стена или посторонняя область — не цель сферы, ищем дальше без неё
+		exclude.append(info.rid)
+	return ray_hit
 
 func _orient() -> void:
 	if velocity.length_squared() < 0.0001:

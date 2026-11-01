@@ -7,7 +7,7 @@ radius = 0.38
 height = 1.35
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_head"]
-radius = 0.35
+radius = 0.4375
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 radius = 0.38
