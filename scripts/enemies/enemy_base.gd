@@ -473,8 +473,7 @@ func die(death_info: Dictionary = {}) -> void:
 	current_state = State.DEAD
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
-	GameManager.register_enemy_kill()
-	
+
 	if not death_info.is_empty():
 		if death_info.get("source_chain_depth", -1) >= 3:
 			is_inflated = false
@@ -483,6 +482,42 @@ func die(death_info: Dictionary = {}) -> void:
 				eyes.visible = false
 			if head_mesh:
 				head_mesh.visible = false
+
+	_credit_kill()
+
+	if is_instance_valid(health_bar):
+		health_bar.set_bar_visible(false)
+
+	if collision_shape:
+		collision_shape.set_deferred("disabled", true)
+
+	if head_hitbox:
+		var head_col = head_hitbox.get_node_or_null("CollisionShape3D")
+		if head_col:
+			head_col.set_deferred("disabled", true)
+
+	_trigger_death_effects()
+
+	if blood_pool_scene:
+		var space_state = get_world_3d().direct_space_state
+		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 50.0)
+		var result = space_state.intersect_ray(query)
+
+		var pool = blood_pool_scene.instantiate()
+		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+		if scene_root:
+			scene_root.add_child(pool)
+			if result:
+				pool.global_position = result.position + Vector3(0, 0.01, 0)
+			else:
+				pool.global_position = global_position
+
+	queue_free()
+
+## Зачёт убийства: мультикилл и BPM за убийство (с бонусом разнообразия). Зовут die() и подрывник,
+## убитый до взрыва (он взрывается вместо обычной смерти).
+func _credit_kill() -> void:
+	GameManager.register_enemy_kill()
 
 	# Источник правды о способе убийства и глубинах цепей — HealthComponent
 	var has_health = is_instance_valid(health_component)
@@ -512,18 +547,10 @@ func die(death_info: Dictionary = {}) -> void:
 		if player.bpm_system.has_method("record_kill_bpm"):
 			# Бонус ударной волны (+8.0 вместо +5.5) — только у мили-ударной волны (конусная волна мили)
 			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave and weapon_used == "melee")
-	
-	if is_instance_valid(health_bar):
-		health_bar.set_bar_visible(false)
-		
-	if collision_shape:
-		collision_shape.set_deferred("disabled", true)
-		
-	if head_hitbox:
-		var head_col = head_hitbox.get_node_or_null("CollisionShape3D")
-		if head_col:
-			head_col.set_deferred("disabled", true)
-			
+
+## Эффекты смерти от статусов: разлёт игл, облако яда, взрыв раздутого. Зовут die() и подрывник,
+## убитый до взрыва.
+func _trigger_death_effects() -> void:
 	var was_inflated = is_inflated
 	var chain_depth = health_component.explosion_chain_depth if is_instance_valid(health_component) else 0
 	if needle_count > 0:
@@ -545,22 +572,6 @@ func die(death_info: Dictionary = {}) -> void:
 				inflation_pulse_tween.kill()
 		else:
 			_trigger_inflation_explosion(chain_depth)
-		
-	if blood_pool_scene:
-		var space_state = get_world_3d().direct_space_state
-		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 50.0)
-		var result = space_state.intersect_ray(query)
-		
-		var pool = blood_pool_scene.instantiate()
-		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-		if scene_root:
-			scene_root.add_child(pool)
-			if result:
-				pool.global_position = result.position + Vector3(0, 0.01, 0)
-			else:
-				pool.global_position = global_position
-			
-	queue_free()
 
 func add_slow(factor: float = 0.5) -> void:
 	_ensure_status_effect_component().add_slow(factor)

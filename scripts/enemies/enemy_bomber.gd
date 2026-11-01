@@ -135,9 +135,13 @@ func _start_detonation() -> void:
 	GameTypes.debug_log(&"enemy", "[%s] BOMBER DETONATION STARTED! (Window: %.2fs)" % [name, detonation_duration])
 
 func die(death_info: Dictionary = {}) -> void:
-	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв
+	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв.
+	# Это убийство игроком: зачёт (BPM, разнообразие, мультикилл) и эффекты статусов — как у всех врагов
 	if not has_exploded:
-		GameManager.register_enemy_kill()
+		if not death_info.is_empty() and death_info.get("source_chain_depth", -1) >= 3:
+			is_inflated = false
+		_credit_kill()
+		_trigger_death_effects()
 		_explode()
 	else:
 		super.die(death_info)
