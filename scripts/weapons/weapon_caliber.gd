@@ -93,6 +93,10 @@ func _fire_caliber_piercing_shot() -> void:
 		if hit_res.is_empty():
 			break
 		var col = hit_res.collider
+		# Зоны секторов и выход уровня (Area3D) — не стена: луч идёт дальше
+		if col is Area3D and not (col.is_in_group("enemy_head") or col.name == "HeadHitbox"):
+			exclude_list.append(hit_res.rid)
+			continue
 		var is_enemy_or_part = false
 		if col:
 			if col.is_in_group("enemy") or col.is_in_group("enemy_head") or col.name == "HeadHitbox":

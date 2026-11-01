@@ -293,6 +293,18 @@ func get_aim_raycast(spread: float = 0.0) -> RayCast3D:
 		
 	raycast.target_position = target
 	raycast.force_raycast_update()
+	# Луч ловит Area3D ради хитбоксов голов, но зоны секторов и выход уровня — тоже Area3D: выстрел снаружи
+	# в зону останавливался на её границе («луч пропадает»). Посторонние области пропускаем
+	var skipped: Array[Area3D] = []
+	while raycast.is_colliding() and skipped.size() < 4:
+		var col = raycast.get_collider()
+		if not (col is Area3D) or col.is_in_group("enemy_head") or col.name == "HeadHitbox":
+			break
+		skipped.append(col)
+		raycast.add_exception(col)
+		raycast.force_raycast_update()
+	for area in skipped:
+		raycast.remove_exception(area)
 	return raycast
 
 func get_aim_direction() -> Vector3:
