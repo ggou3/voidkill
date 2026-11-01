@@ -25,7 +25,7 @@
 - **Файлы ресурсов (`res://scripts/weapons/data/`)**:
   - `caliber_0.tres`, `anvil.tres`, `injector.tres`, `sewing_machine.tres` с побуквенно перенесёнными параметрами и исчерпывающими комментариями.
 - **Интеграция с WeaponManager**:
-  - Массив `weapons: Array[WeaponData]` инициализируется предзагруженными ресурсами.
+  - Массив `weapons: Array[WeaponBase]` — экземпляры `WeaponCaliber` / `WeaponAnvil` / `WeaponInjector` / `WeaponSewing` (дети `WeaponManager`); каждый сам загружает свой `.tres` в `_init()`.
   - Массив текущих патронов `ammos: Array[int]` инициализируется динамически из `w.max_ammo`, устранён дубликат `var ammos = [4, 2, 6, 40]`.
   - Все обращения через `w["key"]` и `w.get("key", default)` переведены на прямое обращение к полям `w.property`.
 
@@ -44,7 +44,7 @@
   - Применение множителей `headshot_multiplier` и `air_multiplier` с сохранением режимов стакинга: `MULTIPLICATIVE` в тире `OVERDRIVE`, `ADDITIVE` в остальных тирах.
   - Нанесение урона `target.take_damage()` с правильными флагами и строковым ключом оружия.
   - Вакуумный след `_apply_vacuum_wake()` для гравитационного оружия (Калибр-0 в OVERDRIVE).
-  - Виртуальный хук `_on_hit_target()` для специфичных эффектов специализированных классов (яд, иглы, синергия дроби).
+  - Виртуальный хук `_on_hit_target()` для специфичных эффектов специализированных классов (яд, иглы); синергия дроби с иглами — через виртуальный `_get_damage_multiplier()`.
 
 ### Специализированные классы оружия и тонкий менеджер — ✅ Реализован (Шаг 4.3)
 - **Выделенные классы в `res://scripts/weapons/`**:
@@ -53,8 +53,8 @@
   - `weapon_injector.gd` (`class_name WeaponInjector extends WeaponBase`): ЛКМ — очередь из 3 дротиков с паузой 0.07с, наложение стакающегося яда `apply_poison_dot` через `_on_hit_target`; ПКМ — статусное раздутие врага `inflate` (кулдаун 4.5с).
   - `weapon_sewing.gd` (`class_name WeaponSewing extends WeaponBase`): ЛКМ — автоматическая стрельба иглами (10 выстр/с), застревание игл `add_needle` через `_on_hit_target`; ПКМ — заградительный веерный залп 12 игл `_fire_sewing_barrage` (конус 35-40°, расход 10 игл, кулдаун 1.5с).
 - **Декомпозиция `weapon_manager.gd`**:
-  - Размер сокращён с 1114 до 306 строк (из которых ~140 строк — логика менеджера, остальное — временный HUD до Шага 5).
+  - Размер сокращён с 1114 до 306 строк на Шаге 4.3; после выноса HUD в `hud.gd` (Шаг 5.1) — 158 строк, только логика менеджера.
   - Полностью устранены цепочки проверок `if weapon_idx == N` и специфичные таймеры/переменные.
   - Делегирование стрельбы: `shoot()` вызывает `w.fire()`, `alt_shoot()` вызывает `w.alt_fire(has_infinite_ammo)`.
-  - Динамические HUD-суффиксы реализованы полиморфно через `w.get_alt_hud_suffix(has_infinite_ammo)`.
+  - Динамические HUD-суффиксы реализованы полиморфно через `w.get_alt_hud_suffix(has_infinite_ammo)`; вызывает их HUD (`scripts/ui/hud.gd`).
 

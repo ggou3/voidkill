@@ -187,30 +187,10 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 - Демо-уровень запекает навмеш в рантайме (`bake_navigation_on_ready`); перегородки вне `NavigationRegion3D`.
 
 **Отложено — очередь работ после рефакторинга:**
-- **Расхождения документации с кодом** (выявлены при разбиении DESIGN.md, при переносе НЕ правились):
-  - `docs/movement.md`, кровавая система: моментум кровавого сёрфа +0.05/сек, в коде +0.04 —
-    решить, что правда; пути `enemy.gd` (создание лужи, теперь `enemy_base`) и `skill_manager.gd`
-    без `scripts/`.
-  - `docs/enemies.md`, `docs/enemy-types.md`: автомат состояний и описания типов ссылаются на
-    `enemy.gd`; враги наследуются от `EnemyGround` / `EnemyBase` / `EnemyRanged`.
-  - `docs/bpm.md`: `get_bpm_tier() -> String` — возвращает enum; «Тиры баффов» — по коду не реализовано ничего, кроме
-    снижения урона и bhop-множителя: ни восполнение дэша, ни длительность wallrun
-    (`wallrun_max_duration` — константа 1.2), ни ёмкость барабана, ни пассивная перезарядка,
-    ни бонус урона от BPM не зависят. Решить: реализовать или убрать из описания.
-  - `docs/bpm.md`, очки и лидерборд: счёт не реализован.
-  - `docs/architecture*.md`: путь `res://enemy.gd` (3 места); в «Игрок» —
-    «порядок прежний: HUD → сброс → trigger_game_over», после шага 5.4 порядок другой.
-  - `docs/test-arena.md`: «22 врага: 17 melee, 3 ranged, 2 flyer»; фактически в
-    `test_arena.tscn` 64 врага (17 обычных, 3 дальника, 2 летуна, 4 щитоносца, 5 бомберов,
-    5 охотников, 4 турели, 21 рой, 3 соглядатая).
-  - `docs/lessons.md`: в уроке про NavigationRegion `unreachable_timer >= 2.0с`, в коде
-    `UNREACHABLE_TIMEOUT = 3.5`; уроки про Gemini CLI и `k` в `/tasks agy` — инструменты
-    прошлого агента.
-  - `docs/roadmap.md`: п.22 «Слэм + кровь — если ещё актуально» (кровавый слэм реализован);
-    п.23 «выбор оружия 1/2 хардкодом» — сейчас хардкод клавиш 1–4; п.31 (REDLINE) «спецификация ниже» —
-    теперь в `docs/redline.md`.
-  - Внутренние ссылки вида «см. раздел 2/3» в тексте `docs/` указывают на нумерацию старого
-    DESIGN.md.
+- ~~Расхождения документации с кодом~~ — сверены и исправлены (ноябрь 2026, код — источник
+  истины): все `docs/` кроме `docs/gamedev/`, `DESIGN.md`; нумерация старого DESIGN.md убрана.
+  Открытым остаётся дизайн-решение: «Тиры баффов» в `docs/bpm.md` — реализовать недостающие или
+  убрать из плана (сейчас там таблица статусов).
 - ~~`enemy_base.gd` (определение оружия-убийцы в `die`) ищет узел `"Weapons"` вместо
   `WeaponManager`~~ — исправлено в `7a85047`. Затрагивало только убийства, где ни один источник
   урона не пометил оружие (фоллбек давал `"unknown"`); обычные убийства и VARIETY работали.
@@ -267,7 +247,10 @@ SkillManager — `bpm_changed`, `tier_changed`, `momentum_changed`, `dash_charge
 ```
 cmd.exe /c "godot.windows.opt.tools.64.exe --headless -e --quit --path E:\Project\voidkill 2>&1"
 ```
-(бинарник в PATH: `E:\SteamLibrary\steamapps\common\Godot Engine\`)
+Пути зависят от машины:
+- прежняя: проект `E:\Project\voidkill`, бинарник в PATH (`E:\SteamLibrary\steamapps\common\Godot Engine\`);
+- текущая (с октября 2026): проект `C:\Projects\voidkill`, бинарник НЕ в PATH —
+  `"C:\Program Files (x86)\Steam\steamapps\common\Godot Engine\godot.windows.opt.tools.64.exe"`.
 - `-e` запускает редактор → полное сканирование и компиляция ВСЕХ скриптов. Без него
   парсятся только скрипты из загруженной сцены и её зависимостей (враги вне world.tscn
   не проверятся).
