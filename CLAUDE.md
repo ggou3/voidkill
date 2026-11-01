@@ -18,7 +18,7 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
   swarm/stalker/turret/flyer
 - `player/` — player, head, skill_manager (дэш, слэм), bpm_system, player_health,
   player_combat, player_wallrun
-- `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing,
+- `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing, player_projectile,
   projectile_enemy (вражеский снаряд), `data/*.tres`
 - `effects/` — blood_pool, blood_splatter
 - `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD)

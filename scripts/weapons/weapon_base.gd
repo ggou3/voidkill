@@ -35,18 +35,20 @@ func can_fire() -> bool:
 func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	return ""
 
-## Централизованная общая логика обработки попадания hitscan-выстрела.
-## Выполняет детекцию хедшота, проверку нахождения цели в воздухе,
-## расчёт урона с режимами стакинга (MULTIPLICATIVE / ADDITIVE), отброс цели,
-## нанесение урона через target.take_damage и спавн трейсера через TracerPool.
+## Попадание hitscan-выстрела: трейсер от дула, вакуумный след (Калибр-0 в OVERDRIVE) и урон (_deal_hit).
 func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = false) -> void:
 	var start_pos = _get_muzzle_position()
 	var tracer_style = _get_tracer_style(is_alt)
 	TracerPool.spawn_tracer(start_pos, hit_pos, tracer_style)
-	
+	# Вакуумный след для оружия с поддержкой гравипула (Калибр-0 в OVERDRIVE)
+	if data and data.has_vacuum and not is_alt and _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
+		_apply_vacuum_wake(start_pos, hit_pos, data.vacuum_radius, data.vacuum_force, _resolve_hit_target(collider)[0])
+	_deal_hit(collider, hit_pos, dir, is_alt)
+
+## Цель попадания и хедшот: [target: Node или null, is_headshot: bool]
+func _resolve_hit_target(collider: Node) -> Array:
 	var target: Node = null
 	var is_headshot: bool = false
-	
 	if is_instance_valid(collider):
 		# Детекция хедшота и разрешения целевого узла
 		if collider.is_in_group("enemy_head") or collider.name == "HeadHitbox":
@@ -57,13 +59,18 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 				target = collider.get_parent()
 		else:
 			target = GameTypes.resolve_damageable(collider)
-			
-	# Вакуумный след для оружия с поддержкой гравипула (Калибр-0 в OVERDRIVE)
-	if data and data.has_vacuum and not is_alt and _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE:
-		_apply_vacuum_wake(start_pos, hit_pos, data.vacuum_radius, data.vacuum_force, target)
-		
+	return [target, is_headshot]
+
+## Урон по попаданию (общий для hitscan и физических снарядов): хедшот, цель в воздухе, множители со
+## стакингом (MULTIPLICATIVE в OVERDRIVE / ADDITIVE), отброс, синергии (_get_damage_multiplier), take_damage
+## и хук _on_hit_target. damage_scale — множитель снаряда (например, от скорости удара).
+## Возвращает цель, получившую урон, или null (стена, пустота).
+func _deal_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = false, damage_scale: float = 1.0) -> Node:
+	var resolved: Array = _resolve_hit_target(collider)
+	var target: Node = resolved[0]
+	var is_headshot: bool = resolved[1]
 	if not is_instance_valid(target) or not target.has_method("take_damage"):
-		return
+		return null
 		
 	# Расчёт вектора отброса с горизонтальным направлением и вертикальным подбросом
 	var flat_dir = Vector3(dir.x, 0.0, dir.z)
@@ -99,7 +106,7 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 		total_mult = air_mult
 		
 	var synergy_mult = _get_damage_multiplier(target, is_headshot, is_airborne, is_alt)
-	var final_dmg = int(round(base_dmg * total_mult * synergy_mult))
+	var final_dmg = int(round(base_dmg * total_mult * synergy_mult * damage_scale))
 	
 	# Логирование критических попаданий
 	if is_headshot and is_airborne:
@@ -114,6 +121,31 @@ func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = f
 	
 	# Хук для специализированных эффектов наследников
 	_on_hit_target(target, hit_pos, is_headshot, is_alt)
+	return target
+
+## Направление выстрела с разбросом — тем же прицельным лучом, что у hitscan (разброс прежний)
+func _get_shot_direction(spread: float) -> Vector3:
+	var head = _get_head()
+	if not head or not head.raycast:
+		return Vector3.FORWARD
+	var ray: RayCast3D = head.get_aim_raycast(spread)
+	return (ray.to_global(ray.target_position) - head.camera.global_position).normalized()
+
+## Выпустить физический снаряд (PlayerProjectile) из пула WeaponManager; стиль — как у трейсера оружия
+func _fire_projectile(dir: Vector3, speed: float, is_alt: bool = false, lifetime: float = 2.0, gravity: float = 0.0,
+		inherit: Vector3 = Vector3.ZERO) -> PlayerProjectile:
+	if not weapon_manager:
+		return null
+	return weapon_manager.spawn_projectile(self, dir, speed, _get_tracer_style(is_alt), is_alt, lifetime, gravity, inherit)
+
+## Попадание физического снаряда. true — снаряд летит дальше (прошил насквозь), false — гаснет.
+## По умолчанию: урон по общим правилам, по стене — короткая вспышка-след в точке удара.
+func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
+	var dir: Vector3 = projectile.velocity.normalized()
+	var target: Node = _deal_hit(hit.collider, hit.position, dir, projectile.is_alt)
+	if not is_instance_valid(target):
+		TracerPool.spawn_tracer(hit.position - dir * 0.3, hit.position, projectile.style)
+	return false
 
 ## Виртуальный метод для расчёта дополнительного множителя урона (синергии)
 func _get_damage_multiplier(_target: Node, _is_headshot: bool, _is_airborne: bool, _is_alt: bool) -> float:

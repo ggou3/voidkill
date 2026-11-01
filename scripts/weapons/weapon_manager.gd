@@ -20,6 +20,20 @@ var ammos: Array[int] = []
 # Клик, вернувший захват курсора, не должен запускать автоогонь, пока ЛКМ не отпущена
 var _autofire_blocked: bool = false
 
+## Пул физических снарядов игрока (PlayerProjectile). Снаряды — дети текущей сцены (летят в мире, а не за
+## игроком), не удаляются: погасший снаряд ждёт следующего выстрела. Больше PROJECTILE_POOL_MAX —
+## переиспользуется следующий по кругу, даже если ещё летит.
+const PROJECTILE_POOL_MAX: int = 160
+var _projectiles: Array[PlayerProjectile] = []
+var _projectile_cursor: int = 0
+# Визуал по стилю: [Mesh, Material, вытяжка вдоль полёта]. Создаётся один раз на стиль
+var _projectile_visuals: Dictionary = {}
+const PROJECTILE_STYLES: Dictionary = {
+	&"needle": {"radius": 0.012, "length": 0.3, "color": Color(0.85, 0.92, 1.0), "energy": 3.0, "stretch": 1.6},
+	&"pellet": {"radius": 0.03, "length": 0.07, "color": Color(1.0, 0.55, 0.15), "energy": 4.0, "stretch": 4.0},
+	&"syringe": {"radius": 0.028, "length": 0.28, "color": Color(0.35, 1.0, 0.35), "energy": 3.0, "stretch": 1.2},
+}
+
 var is_bursting: bool:
 	get:
 		if current_weapon_index >= 0 and current_weapon_index < weapons.size():
@@ -31,6 +45,75 @@ var is_bursting: bool:
 func _ready() -> void:
 	_init_weapons()
 	_init_ammos()
+
+## Выпустить физический снаряд игрока: траектория от камеры по direction со скоростью speed (+ inherit —
+## добавочная скорость, например скорость игрока), визуал из дула. null — снаряд не создан (нет сцены)
+func spawn_projectile(weapon: WeaponBase, direction: Vector3, speed: float, style: StringName, is_alt: bool = false,
+		lifetime: float = 2.0, gravity: float = 0.0, inherit: Vector3 = Vector3.ZERO) -> PlayerProjectile:
+	if not is_instance_valid(head) or not head.camera:
+		return null
+	var p: PlayerProjectile = _get_free_projectile()
+	if not p:
+		return null
+	var visual: Array = _get_projectile_visual(style)
+	var exclude: Array[RID] = []
+	var player = get_parent()
+	if player is CollisionObject3D:
+		exclude.append(player.get_rid())
+	var mask: int = head.raycast.collision_mask if head.raycast else 1
+	p.launch(weapon, head.camera.global_position, direction.normalized() * speed + inherit, head.get_muzzle_position(),
+		style, visual[0], visual[1], visual[2], lifetime, is_alt, exclude, mask, gravity)
+	return p
+
+## Все летящие снаряды (для механик, которым нужен обход, например возврат игл)
+func get_active_projectiles() -> Array[PlayerProjectile]:
+	var result: Array[PlayerProjectile] = []
+	for p in _projectiles:
+		if is_instance_valid(p) and p.active:
+			result.append(p)
+	return result
+
+func _get_free_projectile() -> PlayerProjectile:
+	# Снаряды — дети сцены: перезапуск сцены их освобождает (filter вернул бы нетипизированный Array)
+	for i in range(_projectiles.size() - 1, -1, -1):
+		if not is_instance_valid(_projectiles[i]):
+			_projectiles.remove_at(i)
+	for p in _projectiles:
+		if not p.active:
+			return p
+	if _projectiles.size() < PROJECTILE_POOL_MAX:
+		var scene_root: Node = get_tree().current_scene if get_tree().current_scene else get_parent().get_parent()
+		if not scene_root:
+			return null
+		var p := PlayerProjectile.new()
+		p.name = "PlayerProjectile"
+		scene_root.add_child(p)
+		_projectiles.append(p)
+		return p
+	_projectile_cursor = (_projectile_cursor + 1) % _projectiles.size()
+	var reused: PlayerProjectile = _projectiles[_projectile_cursor]
+	reused.deactivate()
+	return reused
+
+func _get_projectile_visual(style: StringName) -> Array:
+	if _projectile_visuals.has(style):
+		return _projectile_visuals[style]
+	var cfg: Dictionary = PROJECTILE_STYLES.get(style, PROJECTILE_STYLES[&"pellet"])
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = cfg["radius"]
+	mesh.bottom_radius = cfg["radius"]
+	mesh.height = cfg["length"]
+	mesh.radial_segments = 6
+	mesh.rings = 1
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = cfg["color"]
+	mat.emission_enabled = true
+	mat.emission = cfg["color"]
+	mat.emission_energy_multiplier = cfg["energy"]
+	var visual: Array = [mesh, mat, cfg["stretch"]]
+	_projectile_visuals[style] = visual
+	return visual
 
 ## Не стрелять автоогнём до отпускания ЛКМ (клик вернул захват курсора)
 func block_autofire_until_release() -> void:
