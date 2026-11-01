@@ -51,6 +51,10 @@ func setup(
 		set_health_component(p_health_component)
 
 	update_health(current_health, max_health)
+	# Враг интерполируется (физика), а полоска создаётся посреди кадра (клавиша H) и двигает квад и
+	# надпись уже после add_child — без сброса они рисовались бы в прошлой точке. Сама полоска вне
+	# интерполяции: просто висит над врагом
+	reset_physics_interpolation()
 
 static func _get_shared_material() -> ShaderMaterial:
 	if not _shared_material:
@@ -68,6 +72,7 @@ func _build_ui() -> void:
 	if is_initialized:
 		return
 	is_initialized = true
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 	# 1. Квад-биллборд полоски здоровья над головой врага
 	hp_quad = MeshInstance3D.new()

@@ -19,7 +19,9 @@ var _times: Array[float] = []
 var _strengths: Array[float] = []
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	# Именно «и отступы»: set_anchors_preset сохраняет текущий прямоугольник узла (у нового — 0×0 в углу),
+	# и центр дуг оказывался в левом верхнем углу экрана
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 ## Урон amount с горизонтального направления from_dir (мировые координаты, на источник)

@@ -119,6 +119,8 @@ func _connect_systems() -> void:
 			gm.player_respawned.connect(_on_player_respawned)
 		if not gm.level_completed.is_connected(_on_level_completed):
 			gm.level_completed.connect(_on_level_completed)
+		if not gm.enemy_health_bars_toggled.is_connected(_on_enemy_health_bars_toggled):
+			gm.enemy_health_bars_toggled.connect(_on_enemy_health_bars_toggled)
 
 func _process(delta: float) -> void:
 	if skill_manager:
@@ -192,6 +194,10 @@ func _on_player_died() -> void:
 	update_health(0, player.max_health if player else 100, false)
 	damage_indicator.clear()
 	bpm_hint.clear()
+
+## Отладка (H): подтверждение переключения полосок HP врагов
+func _on_enemy_health_bars_toggled(bars_visible: bool) -> void:
+	show_popup("HP BARS: ON" if bars_visible else "HP BARS: OFF")
 
 func _on_player_damaged(amount: int, from_dir: Vector3) -> void:
 	damage_indicator.add_hit(from_dir, amount)
