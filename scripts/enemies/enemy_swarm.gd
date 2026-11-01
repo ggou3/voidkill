@@ -23,6 +23,7 @@ const SWARM_EYES_COLOR = Color(1.0, 0.85, 0.15)
 
 func _ready() -> void:
 	super._ready()
+	approach_style = Approach.WEAVE # рой петляет и обтекает с флангов
 	max_health = swarm_health
 	health = swarm_health
 	move_speed = swarm_speed

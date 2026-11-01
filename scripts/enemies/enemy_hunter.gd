@@ -37,6 +37,7 @@ const SILVER_WHITE_COLOR = Color(0.88, 0.95, 1.0)
 
 func _ready() -> void:
 	super._ready()
+	approach_style = Approach.DIRECT # охотник идёт напролом
 	max_health = hunter_max_health
 	health = hunter_max_health
 	attack_damage = base_hunter_damage

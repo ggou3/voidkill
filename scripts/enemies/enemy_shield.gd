@@ -33,6 +33,7 @@ const INDICATOR_FLASH_COLOR = Color(1.0, 0.1, 0.1)
 
 func _ready() -> void:
 	super._ready()
+	approach_style = Approach.DIRECT # щит наступает в лоб
 	# Щитоносец использует стандартную ближнюю атаку, но НЕ использует LUNGE-выпад
 	lunge_cooldown_timer = 999999.0
 	

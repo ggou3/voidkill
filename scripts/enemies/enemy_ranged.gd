@@ -20,6 +20,10 @@ const EYES_BASE_COLOR = Color(0.85, 0.2, 1.0)
 const EYES_TELEGRAPH_COLOR = Color(1.0, 0.85, 0.2)
 
 var is_telegraphing_shot: bool = false
+# Стрейф на позиции стрельбы: сторона (±1) и время до возможной смены
+const STRAFE_SPEED_FACTOR: float = 0.45
+var _strafe_side: float = 1.0
+var _strafe_timer: float = 0.0
 var antenna_material: StandardMaterial3D = null
 @onready var antenna_tip: MeshInstance3D = get_node_or_null("AntennaTip")
 
@@ -129,10 +133,17 @@ func _process_attack(delta: float) -> void:
 		if away_dir.length_squared() > 0.01:
 			var retreat_vel = away_dir.normalized() * (move_speed * 0.6 * slow_factor)
 			_apply_movement(retreat_vel, delta)
-	else:
-		# На дистанции 10-15м останавливаемся на месте
+	elif is_telegraphing_shot or wall_slam_timer > 0.0:
+		# Заряд выстрела — стоит на месте, чтобы выстрел читался
 		velocity.x = lerp(velocity.x, knockback_velocity.x, 10.0 * delta)
 		velocity.z = lerp(velocity.z, knockback_velocity.z, 10.0 * delta)
+	else:
+		# На дистанции 10-15м — стрейф вбок (раньше стоял столбом): сторона меняется раз в 1.5–3 с
+		# и на краю навмеша, скорость — STRAFE_SPEED_FACTOR от скорости бега. Скорость задаётся напрямую, без
+		# _apply_movement: тот разворачивает врага по движению, а дальник должен смотреть на игрока
+		var strafe_vel: Vector3 = _get_strafe_velocity(delta)
+		velocity.x = lerp(velocity.x, strafe_vel.x + knockback_velocity.x, min(1.0, acceleration * delta))
+		velocity.z = lerp(velocity.z, strafe_vel.z + knockback_velocity.z, min(1.0, acceleration * delta))
 		
 	# Визуальный телеграф перед выстрелом (за 0.35с до конца кулдауна глаза загораются золотым цветом)
 	if attack_timer <= 0.35 and hit_reaction_timer <= 0.0 and not is_telegraphing_shot:
@@ -154,6 +165,26 @@ func _process_attack(delta: float) -> void:
 				return
 			perform_attack()
 		attack_timer = attack_cooldown
+
+func _get_strafe_velocity(delta: float) -> Vector3:
+	_strafe_timer -= delta
+	if _strafe_timer <= 0.0:
+		_strafe_timer = randf_range(1.5, 3.0)
+		_strafe_side = -_strafe_side if randf() < 0.7 else _strafe_side
+	var to_player: Vector3 = target_player.global_position - global_position
+	to_player.y = 0.0
+	if to_player.length_squared() < 0.01:
+		return Vector3.ZERO
+	var strafe_dir: Vector3 = to_player.normalized().cross(Vector3.UP) * _strafe_side
+	# Край навмеша (уступ, стена) впереди по стрейфу — разворот
+	if nav_agent:
+		var map: RID = nav_agent.get_navigation_map()
+		if NavigationServer3D.map_get_iteration_id(map) > 0:
+			var ahead: Vector3 = global_position + strafe_dir * 1.5
+			if NavigationServer3D.map_get_closest_point(map, ahead).distance_to(ahead) > 0.6:
+				_strafe_side = -_strafe_side
+				strafe_dir = -strafe_dir
+	return strafe_dir * (move_speed * STRAFE_SPEED_FACTOR * slow_factor)
 
 func _get_projectile_spawn_position() -> Vector3:
 	return global_position + Vector3(0.0, 0.55, 0.0) - transform.basis.z * 0.4

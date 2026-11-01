@@ -17,6 +17,26 @@ extends EnemyBase
 @export var lunge_telegraph_time: float = 0.38
 @export var lunge_cooldown: float = 4.5
 
+## Манера подхода в погоне (ноябрь 2026, против «паровозика»: все шли по одному пути в одну точку — к игроку).
+## FLANK — каждый идёт в свою точку сбоку от игрока (угол 30–77° от своего направления, радиус сжимается с
+## дистанцией), поэтому толпа расходится веером и окружает; ближе FLANK_CLOSE_DIST — прямо на игрока.
+## WEAVE — то же плюс петляние из стороны в сторону (рой). DIRECT — напролом (Охотник, щитоносец, подрывник).
+enum Approach { DIRECT, FLANK, WEAVE }
+@export var approach_style: Approach = Approach.FLANK
+const FLANK_ANGLE_MIN: float = 0.5 # рад (~29°)
+const FLANK_ANGLE_MAX: float = 1.35 # рад (~77°)
+const FLANK_MAX_RADIUS: float = 9.0
+const FLANK_CLOSE_DIST: float = 4.5
+const FLANK_REROLL_MIN: float = 3.0 # с — угол подхода иногда меняется, чтобы рисунок не застывал
+const FLANK_REROLL_MAX: float = 6.0
+const WEAVE_FREQ: float = 5.0 # рад/с
+const WEAVE_AMP: float = 0.6
+var _approach_angle: float = 0.0
+var _approach_reroll_timer: float = 0.0
+var _weave_time: float = 0.0
+## Личный множитель скорости 0.9–1.1: одинаковые враги не идут строем
+var _speed_mult: float = 1.0
+
 ## Замах ближнего удара (телеграф): глаза загораются оранжевым, как перед выпадом, и звучит замах в
 ## точке врага; удар — в конце замаха и только по игроку в радиусе выхода из ATTACK (attack_range × 1.3),
 ## поэтому от удара можно уйти дэшем. Попадание по врагу во время замаха (реакция на урон) сбивает удар.
@@ -79,6 +99,9 @@ func _ready() -> void:
 		nav_agent.link_reached.connect(_on_link_reached)
 		
 	lunge_cooldown_timer = randf_range(0.5, 2.5)
+	_speed_mult = randf_range(0.9, 1.1)
+	_weave_time = randf() * TAU
+	_reroll_approach_angle()
 
 	# NavigationServer3D sync delay before using navigation agent
 	set_physics_process(false)
@@ -188,7 +211,10 @@ func _process_chase(delta: float) -> void:
 	if path_update_timer <= 0.0:
 		path_update_timer = PATH_UPDATE_INTERVAL
 		if nav_agent:
-			nav_agent.target_position = target_player.global_position
+			nav_agent.target_position = _get_approach_point(dist_to_player)
+	_approach_reroll_timer -= delta
+	if _approach_reroll_timer <= 0.0:
+		_reroll_approach_angle()
 		
 	# Проверка достижимости цели (защита от бесконечного застревания в недостижимой точке)
 	var is_reachable = nav_agent.is_target_reachable() if nav_agent else true
@@ -236,7 +262,10 @@ func _process_chase(delta: float) -> void:
 	
 	if move_dir.length_squared() > 0.05:
 		move_dir = move_dir.normalized()
-		current_target_vel = move_dir * (move_speed * slow_factor)
+		if approach_style == Approach.WEAVE and dist_to_player > 3.0:
+			_weave_time += delta * WEAVE_FREQ
+			move_dir = (move_dir + move_dir.cross(Vector3.UP) * sin(_weave_time) * WEAVE_AMP).normalized()
+		current_target_vel = move_dir * (move_speed * slow_factor * _speed_mult)
 		if nav_agent and nav_agent.avoidance_enabled:
 			nav_agent.set_velocity(current_target_vel)
 		else:
@@ -247,6 +276,33 @@ func _process_chase(delta: float) -> void:
 			nav_agent.set_velocity(Vector3.ZERO)
 		else:
 			_apply_movement(Vector3.ZERO, delta)
+
+## Точка, к которой враг прокладывает путь в погоне (см. approach_style). Точка сбоку от игрока
+## притягивается к навмешу, чтобы путь не упирался в стену
+func _get_approach_point(dist_to_player: float) -> Vector3:
+	var player_pos: Vector3 = target_player.global_position
+	if approach_style == Approach.DIRECT or dist_to_player < FLANK_CLOSE_DIST or not nav_agent:
+		return player_pos
+	var from_player: Vector3 = global_position - player_pos
+	from_player.y = 0.0
+	if from_player.length_squared() < 0.01:
+		return player_pos
+	var side: Vector3 = from_player.normalized().rotated(Vector3.UP, _approach_angle)
+	var radius: float = minf(dist_to_player * 0.6, FLANK_MAX_RADIUS)
+	var point: Vector3 = player_pos + side * radius
+	# Пустая/несинхронизированная карта отвечает (0,0,0) (урок «Рантайм-запекание навмеша…»); точка над
+	# пропастью притягивается далеко — в обоих случаях идём прямо к игроку
+	var map: RID = nav_agent.get_navigation_map()
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return player_pos
+	var on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, point)
+	if on_mesh.distance_to(point) > 3.0:
+		return player_pos
+	return on_mesh
+
+func _reroll_approach_angle() -> void:
+	_approach_angle = randf_range(FLANK_ANGLE_MIN, FLANK_ANGLE_MAX) * (1.0 if randf() < 0.5 else -1.0)
+	_approach_reroll_timer = randf_range(FLANK_REROLL_MIN, FLANK_REROLL_MAX)
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if is_jumping_link or current_state == State.LUNGE:

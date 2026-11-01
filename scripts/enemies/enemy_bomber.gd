@@ -34,6 +34,7 @@ const OVERHEAT_COLOR = Color(1.0, 0.35, 0.1)
 
 func _ready() -> void:
 	super._ready()
+	approach_style = Approach.DIRECT # подрывник бежит прямо на игрока
 	detection_range = bomber_detection_range
 	max_health = bomber_health
 	health = bomber_health
