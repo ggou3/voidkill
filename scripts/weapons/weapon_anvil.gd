@@ -2,12 +2,24 @@ class_name WeaponAnvil
 extends WeaponBase
 
 ## Кровавая наковальня (Слот 2): Мощный двуствольный дробовик.
-## ЛКМ: Выстрел дробью (8 дробин по 12 урона) с синергией застрявших игл (+4% за иглу до +60%).
+## ЛКМ: Выстрел физической дробью (8 дробин по 12 урона) с синергией застрявших игл (+4% за иглу до +60%).
+## «Инерция» (ноябрь 2026, отсылка — диски Tribes): дробь летит PELLET_SPEED плюс скорость игрока, урон зависит
+## от скорости столкновения вдоль выстрела — сверх PELLET_SPEED (бег вперёд, набегающий враг) больше, на отходе меньше.
 ## ПКМ: Пневмопоршень (sphere-cast AoE, 0 прямого урона): подброс в ноги (21 м/с) или 3D-толчок (42 м/с)
 ## для вызова wall_slam / collateral_slam; направленный self-launch игрока от поверхностей.
 
 var self_launch_chain: int = 0
 const ALT_COOLDOWN: float = 1.2
+
+const PELLET_SPEED: float = 200.0
+const PELLET_LIFETIME: float = 0.5 # ~100 м, как у прежнего прицельного луча
+## +50% урона на каждые INERTIA_REF_SPEED м/с скорости столкновения сверх PELLET_SPEED, в пределах [MIN, MAX]
+const INERTIA_REF_SPEED: float = 25.0
+const INERTIA_BONUS_AT_REF: float = 0.5
+const INERTIA_SCALE_MIN: float = 0.75
+const INERTIA_SCALE_MAX: float = 1.6
+const INERTIA_FEEDBACK_SCALE: float = 1.3 # от такого множителя — отдельный удар-отклик (раз на выстрел)
+var _inertia_fx_frame: int = -1
 
 func _init() -> void:
 	if not data:
@@ -19,7 +31,7 @@ func _process(delta: float) -> void:
 	if is_instance_valid(player) and player.is_on_floor() and player.velocity.y <= 0.0:
 		self_launch_chain = 0
 
-## Основной огонь (ЛКМ): 8 дробин через базовый _apply_hit
+## Основной огонь (ЛКМ): 8 физических дробин (разброс прежний), каждая со скоростью игрока
 func fire() -> void:
 	if not data:
 		return
@@ -31,15 +43,34 @@ func fire() -> void:
 		head.trigger_muzzle_flash(true)
 	AudioManager.play_sound("shotgun_shot")
 	
-	var aim_dir = head.get_aim_direction() if head else Vector3.FORWARD
+	var player := _get_player()
+	var inherit: Vector3 = player.velocity if player else Vector3.ZERO
 	for i in range(data.pellets):
-		var ray = head.get_aim_raycast(data.spread) if head else null
-		var hit_pos = ray.to_global(ray.target_position) if ray else Vector3.ZERO
-		var collider: Node = null
-		if ray and ray.is_colliding():
-			hit_pos = ray.get_collision_point()
-			collider = ray.get_collider()
-		_apply_hit(collider, hit_pos, aim_dir, false)
+		_fire_projectile(_get_shot_direction(data.spread), PELLET_SPEED, false, PELLET_LIFETIME, 0.0, inherit)
+
+## Попадание дроби: урон × множитель «Инерции»
+func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
+	var dir: Vector3 = projectile.velocity.normalized()
+	var target_node: Node = _resolve_hit_target(hit.collider)[0]
+	var inertia: float = _inertia_scale(projectile.velocity, target_node, dir)
+	var target: Node = _deal_hit(hit.collider, hit.position, dir, projectile.is_alt, inertia)
+	if not is_instance_valid(target):
+		TracerPool.spawn_tracer(hit.position - dir * 0.3, hit.position, projectile.style)
+	elif inertia >= INERTIA_FEEDBACK_SCALE and Engine.get_physics_frames() != _inertia_fx_frame:
+		_inertia_fx_frame = Engine.get_physics_frames()
+		AudioManager.play_sound("melee_hit")
+		var head = _get_head()
+		if head:
+			head.add_trauma(0.12)
+	return false
+
+## Скорость столкновения вдоль выстрела (дробь минус цель) сверх PELLET_SPEED → множитель урона
+func _inertia_scale(pellet_velocity: Vector3, target: Node, dir: Vector3) -> float:
+	var target_velocity: Vector3 = Vector3.ZERO
+	if is_instance_valid(target) and "velocity" in target:
+		target_velocity = target.velocity
+	var excess: float = (pellet_velocity - target_velocity).dot(dir) - PELLET_SPEED
+	return clampf(1.0 + INERTIA_BONUS_AT_REF * excess / INERTIA_REF_SPEED, INERTIA_SCALE_MIN, INERTIA_SCALE_MAX)
 
 ## Синергия со Швейной машиной: +4% к урону за каждую застрявшую иглу (до 15 игл / +60%)
 func _get_damage_multiplier(target: Node, _is_headshot: bool, _is_airborne: bool, _is_alt: bool) -> float:
