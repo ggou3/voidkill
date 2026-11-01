@@ -26,6 +26,8 @@ signal health_changed(current: int, maximum: int)
 signal died
 signal speed_updated(speed: float, bhop_chain: int)
 signal blood_surf_status_changed(active: bool)
+## Получен урон: итоговый урон и направление на источник (ретранслируется из PlayerHealth)
+signal damaged(amount: int, from_dir: Vector3)
 
 # Настройки Wall-jump (параметры wallrun — на узле PlayerWallrun)
 @export var wall_jump_cooldown: float = 0.35
@@ -39,6 +41,11 @@ signal blood_surf_status_changed(active: bool)
 
 # Настройки фидбека приземления
 @export var hard_landing_velocity_threshold: float = 12.0
+
+## Сигнал низкого HP (виньетка пост-шейдера `low_health` + петля звона и дыхания AudioManager):
+## включается при HP не выше этой доли и усиливается к нулю
+@export var low_health_threshold: float = 0.3
+var _low_health_visual: float = 0.0 # сглаженная сила виньетки
 
 # Настройки распрыжки (Bunny Hop), воздушного контроля (Air-strafing) и лимитов скорости
 @export var normal_max_speed: float = 14.5
@@ -120,6 +127,7 @@ func _ready():
 	prev_air_time = 0.0
 	bhop_chain = 0
 	health_component.health_changed.connect(health_changed.emit)
+	health_component.damaged.connect(damaged.emit)
 	health_component.died.connect(_on_health_died)
 	health_component.setup(self)
 	combat.setup(self)
@@ -138,6 +146,11 @@ func _ready():
 	var gm = get_node_or_null("/root/GameManager")
 	if gm:
 		gm.register_player(self)
+		if not gm.level_completed.is_connected(_on_level_completed):
+			gm.level_completed.connect(_on_level_completed)
+
+func _on_level_completed(_stats: Dictionary) -> void:
+	_stop_low_health_feedback()
 
 func _input(event):
 	if is_dead:
@@ -214,7 +227,7 @@ func _process_action_buffers(delta: float) -> void:
 		if combat.perform_melee():
 			melee_buffer_timer = 0.0
 
-func _process(_delta):
+func _process(delta):
 	if is_dead:
 		return
 		
@@ -229,6 +242,25 @@ func _process(_delta):
 		# Интерполяция внутри тира OVERDRIVE: нелинейный рост (pow 0.6) для усиления контраста на подходе к пику
 		var overdrive_factor: float = pow(clampf((current_bpm - 180.0) / 20.0, 0.0, 1.0), 0.6)
 		post_process_rect.material.set_shader_parameter("overdrive_factor", overdrive_factor)
+	_update_low_health_feedback(delta)
+
+## Низкое HP: сила 0.4..1.0 при HP от порога до нуля, выше порога — 0. Звук включается вместе с виньеткой
+func _update_low_health_feedback(delta: float) -> void:
+	var ratio: float = float(health) / float(max(max_health, 1))
+	var target: float = 0.0
+	if ratio <= low_health_threshold:
+		target = lerpf(1.0, 0.4, ratio / maxf(low_health_threshold, 0.001))
+	_low_health_visual = lerpf(_low_health_visual, target, 1.0 - exp(-8.0 * delta))
+	if post_process_rect and post_process_rect.material:
+		post_process_rect.material.set_shader_parameter("low_health", _low_health_visual)
+	AudioManager.set_low_health_active(target > 0.0)
+
+## Погасить сигнал низкого HP сразу (смерть, конец уровня)
+func _stop_low_health_feedback() -> void:
+	_low_health_visual = 0.0
+	if post_process_rect and post_process_rect.material:
+		post_process_rect.material.set_shader_parameter("low_health", 0.0)
+	AudioManager.set_low_health_active(false)
 
 func _physics_process(delta):
 	if is_dead:
@@ -584,6 +616,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 func _on_health_died():
 	died.emit()
 	_reset_movement_state()
+	_stop_low_health_feedback()
 
 ## Возрождение на чекпоинте: позиция и направление взгляда, полное HP, BPM 50, полный боезапас
 func respawn(at: Transform3D) -> void:

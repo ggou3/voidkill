@@ -21,7 +21,7 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
 - `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing,
   projectile_enemy (вражеский снаряд), `data/*.tres`
 - `effects/` — blood_pool, blood_splatter
-- `ui/` — hud
+- `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD)
 - `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 

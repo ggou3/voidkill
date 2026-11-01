@@ -19,6 +19,10 @@ signal bpm_changed(value: float)
 signal tier_changed(tier: GameTypes.BPMTier)
 signal momentum_changed(value: float)
 signal hud_popup_requested(text: String)
+## Изменение BPM с причиной — для подсказок у прицела (HUD): за что растёт и за что падает BPM.
+## reason: &"kill", &"shockwave", &"variety", &"headshot", &"hit"; momentum — множитель моментума,
+## применённый к этому начислению (1.0 — без множителя). amount < 0 — потеря.
+signal bpm_event(amount: float, reason: StringName, momentum: float)
 
 var player: Player
 
@@ -93,9 +97,12 @@ func force_max_bpm():
 		tier_changed.emit(new_tier)
 	GameTypes.debug_log(&"bpm", "[DEBUG] Max BPM (%.1f) forced via 'T' key! Peak delay set to 5.0s." % MAX_BPM)
 
-func add_bpm(amount: float):
+## reason — причина для подсказки у прицела (пустая — без подсказки)
+func add_bpm(amount: float, reason: StringName = &""):
 	if amount <= 0.0:
 		return
+	if reason != &"":
+		bpm_event.emit(amount, reason, 1.0)
 	var old_tier = get_bpm_tier()
 	bpm = clamp(bpm + amount, MIN_BPM, MAX_BPM)
 	time_since_bpm_gain = 0.0
@@ -124,6 +131,9 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 		last_kill_weapon = weapon_type
 
 	var total_bpm = (base_bpm + bonus_bpm) * combat_momentum
+	bpm_event.emit(base_bpm * combat_momentum, &"shockwave" if is_shockwave else &"kill", combat_momentum)
+	if bonus_bpm > 0.0:
+		bpm_event.emit(bonus_bpm * combat_momentum, &"variety", combat_momentum)
 	if combat_momentum > 1.0:
 		GameTypes.debug_log(&"bpm", "[COMBAT MOMENTUM] x%.2f applied: +%.1f -> +%.1f BPM" % [
 			combat_momentum, base_bpm + bonus_bpm, total_bpm
@@ -138,8 +148,11 @@ func drop_bpm_on_damage():
 	# Резкое падение при получении урона игроком: -25% от текущего значения (не фиксированное число)
 	var old_tier = get_bpm_tier()
 	var drop = bpm * 0.25
+	var old_bpm: float = bpm
 	bpm = max(MIN_BPM, bpm - drop)
 	bpm_changed.emit(bpm)
+	if bpm < old_bpm:
+		bpm_event.emit(bpm - old_bpm, &"hit", 1.0)
 	var new_tier = get_bpm_tier()
 	if new_tier != old_tier:
 		tier_changed.emit(new_tier)

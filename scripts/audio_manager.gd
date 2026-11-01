@@ -108,6 +108,15 @@ const SLIDE_TARGET_VOLUME_DB: float = -15.0
 const SLIDE_FADE_IN_TIME: float = 0.12
 const SLIDE_FADE_OUT_TIME: float = 0.22
 
+# Петля низкого HP: тихий звон в ушах + тяжёлое дыхание (не сердце — сердцебиение в игре означает BPM)
+var low_health_player: AudioStreamPlayer = null
+var low_health_tween: Tween = null
+var is_low_health_playing: bool = false
+const LOW_HEALTH_TARGET_VOLUME_DB: float = -12.0
+const LOW_HEALTH_FADE_IN_TIME: float = 0.4
+const LOW_HEALTH_FADE_OUT_TIME: float = 0.6
+const LOW_HEALTH_LOOP_TIME: float = 4.0 # два вдоха-выдоха по 2 с
+
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -145,6 +154,14 @@ func _ready():
 	slide_player.volume_db = -80.0
 	add_child(slide_player)
 	_setup_slide_stream()
+
+	# Отдельный плеер для петли низкого HP
+	low_health_player = AudioStreamPlayer.new()
+	low_health_player.name = "AudioPlayer_LowHealthLoop"
+	low_health_player.bus = "Master"
+	low_health_player.volume_db = -80.0
+	low_health_player.stream = _gen_low_health_wav()
+	add_child(low_health_player)
 
 	GameTypes.debug_log(&"audio", "[AudioManager] Ready! Procedural sounds generated: %d, External files: %d" % [sound_buffers.size(), external_sounds.size()])
 
@@ -219,6 +236,26 @@ func stop_slide():
 		if not is_slide_playing and is_instance_valid(slide_player):
 			slide_player.stop()
 	)
+
+## Петля низкого HP: плавное включение/выключение (игрок зовёт каждый кадр — повтор ничего не делает)
+func set_low_health_active(active: bool) -> void:
+	if not is_instance_valid(low_health_player) or active == is_low_health_playing:
+		return
+	is_low_health_playing = active
+	if low_health_tween and low_health_tween.is_valid():
+		low_health_tween.kill()
+	low_health_tween = create_tween()
+	if active:
+		if not low_health_player.playing:
+			low_health_player.volume_db = -40.0
+			low_health_player.play()
+		low_health_tween.tween_property(low_health_player, "volume_db", LOW_HEALTH_TARGET_VOLUME_DB, LOW_HEALTH_FADE_IN_TIME)
+	else:
+		low_health_tween.tween_property(low_health_player, "volume_db", -40.0, LOW_HEALTH_FADE_OUT_TIME)
+		low_health_tween.tween_callback(func():
+			if not is_low_health_playing and is_instance_valid(low_health_player):
+				low_health_player.stop()
+		)
 
 func _setup_slide_stream():
 	if not is_instance_valid(slide_player):
@@ -1145,3 +1182,44 @@ func _gen_flyer_laser() -> PackedVector2Array:
 		var s: float = clampf((buzz + burst) * env * 0.8, -0.9, 0.9)
 		arr[i] = Vector2(s, s)
 	return arr
+
+# Петля низкого HP (AudioStreamWAV, LOOP_FORWARD): звон 3 кГц с медленным колебанием громкости и
+# дыхание — полосовой шум с огибающей вдоха и выдоха. Все периоды укладываются в петлю целое число раз,
+# огибающая дыхания на краях петли нулевая — шов без щелчка.
+func _gen_low_health_wav() -> AudioStreamWAV:
+	var samples: int = int(LOW_HEALTH_LOOP_TIME * MIX_RATE)
+	var dt: float = 1.0 / MIX_RATE
+	var byte_data := PackedByteArray()
+	byte_data.resize(samples * 4)
+	var low: float = 0.0
+	var band: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		# Звон в ушах: 3000 Гц × 4 с = целое число периодов; громкость плывёт с периодом 4 с
+		var ring: float = sin(TAU * 3000.0 * t) * (0.05 + 0.025 * sin(TAU * 0.25 * t))
+		# Дыхание: цикл 2 с — вдох 0.0–0.8 с (ярче), выдох 0.9–1.8 с (ниже и мягче)
+		var cycle: float = fmod(t, 2.0)
+		var breath_env: float = 0.0
+		var cutoff: float = 0.12
+		if cycle < 0.8:
+			breath_env = sin(cycle / 0.8 * PI) * 0.55
+			cutoff = 0.2
+		elif cycle >= 0.9 and cycle < 1.8:
+			breath_env = sin((cycle - 0.9) / 0.9 * PI) * 0.4
+			cutoff = 0.1
+		low = lerpf(low, randf_range(-1.0, 1.0), cutoff)
+		band = lerpf(band, low, 0.08)
+		var breath: float = (low - band) * breath_env
+		var s: float = clampf(ring + breath, -0.95, 0.95)
+		var val_16: int = clampi(int(s * 32767.0), -32768, 32767)
+		byte_data.encode_s16(i * 4, val_16)
+		byte_data.encode_s16(i * 4 + 2, val_16)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = int(MIX_RATE)
+	wav.stereo = true
+	wav.data = byte_data
+	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_begin = 0
+	wav.loop_end = samples
+	return wav

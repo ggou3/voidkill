@@ -7,6 +7,7 @@ uniform float player_speed = 0.0; // Текущая горизонтальная
 uniform float speed_threshold = 14.5; // Порог скорости для начала эффекта (только на действительно высокой скорости)
 uniform float max_speed_threshold = 19.5; // Скорость максимального эффекта
 uniform float overdrive_factor = 0.0; // 0.0 при bpm <= 180, плавно растет до 1.0 при bpm = 200 (тир OVERDRIVE)
+uniform float low_health = 0.0; // 0.0 — HP выше порога; 0.4..1.0 — низкое HP (чем меньше HP, тем сильнее)
 
 // Функция генерации псевдослучайного шума на основе времени и координат
 float random(vec2 uv, float time) {
@@ -86,6 +87,15 @@ void fragment() {
         }
         
         tex_color.rgb *= base_vignette;
+
+        // Низкое HP: пульсирующая красная виньетка по краям поверх всего (после обесцвечивания OVERDRIVE,
+        // поэтому остаётся красной), края дополнительно темнеют
+        if (low_health > 0.0) {
+            float pulse = 0.7 + 0.3 * sin(TIME * 5.5);
+            float edge = smoothstep(0.32, 0.8, dist);
+            tex_color.rgb = mix(tex_color.rgb, vec3(0.5, 0.0, 0.0), edge * low_health * pulse * 0.65);
+            tex_color.rgb *= mix(1.0, smoothstep(1.0, 0.35, dist), low_health * 0.3);
+        }
         COLOR = tex_color;
     }
 }

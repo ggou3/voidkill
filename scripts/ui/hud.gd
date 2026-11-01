@@ -21,6 +21,8 @@ extends CanvasLayer
 @onready var restart_button: Button = get_node_or_null("GameOverScreen/VBoxContainer/RestartButton")
 var restart_level_button: Button = null
 var enemies_label: Label = null
+var damage_indicator: DamageIndicator = null
+var bpm_hint: BPMHint = null
 
 # Ссылки на игровые системы
 var player: Player = null
@@ -62,6 +64,19 @@ func _init_static_elements() -> void:
 		
 	_setup_health_bar()
 	_setup_weapon_hud_container()
+	_setup_feedback_elements()
+
+## Индикатор направления урона и подсказка BPM у прицела — под экранами смерти и конца уровня
+func _setup_feedback_elements() -> void:
+	damage_indicator = DamageIndicator.new()
+	damage_indicator.name = "DamageIndicator"
+	add_child(damage_indicator)
+	bpm_hint = BPMHint.new()
+	bpm_hint.name = "BPMHint"
+	add_child(bpm_hint)
+	if game_over_screen:
+		move_child(damage_indicator, game_over_screen.get_index())
+		move_child(bpm_hint, game_over_screen.get_index())
 
 func _connect_systems() -> void:
 	# Подключение к Player
@@ -72,6 +87,8 @@ func _connect_systems() -> void:
 		player.speed_updated.connect(_on_player_speed_updated)
 		player.blood_surf_status_changed.connect(_on_blood_surf_changed)
 		player.died.connect(_on_player_died)
+		player.damaged.connect(_on_player_damaged)
+		damage_indicator.player = player
 		update_health(player.health, player.max_health, false)
 
 	# Подключение к SkillManager
@@ -85,6 +102,7 @@ func _connect_systems() -> void:
 	if bs is BPMSystem:
 		bpm_system = bs
 		bpm_system.hud_popup_requested.connect(show_popup)
+		bpm_system.bpm_event.connect(bpm_hint.on_bpm_event)
 
 	# Подключение к WeaponManager
 	var wm = get_node_or_null("../WeaponManager")
@@ -172,6 +190,11 @@ func _on_player_health_changed(current: int, maximum: int) -> void:
 
 func _on_player_died() -> void:
 	update_health(0, player.max_health if player else 100, false)
+	damage_indicator.clear()
+	bpm_hint.clear()
+
+func _on_player_damaged(amount: int, from_dir: Vector3) -> void:
+	damage_indicator.add_hit(from_dir, amount)
 
 # --- Скорость и Блад-сёрф ---
 
@@ -492,6 +515,8 @@ func _on_game_over() -> void:
 		restart_level_button.visible = false
 
 func _on_player_respawned() -> void:
+	damage_indicator.clear()
+	bpm_hint.clear()
 	if game_over_screen:
 		game_over_screen.visible = false
 	if crosshair:
@@ -527,6 +552,8 @@ func _on_restart_pressed() -> void:
 func _on_level_completed(stats: Dictionary) -> void:
 	if crosshair:
 		crosshair.visible = false
+	damage_indicator.clear()
+	bpm_hint.clear()
 	var screen = Control.new()
 	screen.name = "LevelCompleteScreen"
 	screen.process_mode = Node.PROCESS_MODE_ALWAYS

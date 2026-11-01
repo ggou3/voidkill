@@ -7,6 +7,9 @@ extends Node
 
 signal health_changed(current: int, maximum: int)
 signal died
+## Получен урон: итоговый урон и горизонтальное направление на источник в мировых координатах
+## (Vector3.ZERO, если направление неизвестно). Для индикатора направления урона в HUD.
+signal damaged(amount: int, from_dir: Vector3)
 
 var max_health: int = 100
 var health: int = 100
@@ -20,13 +23,14 @@ func setup(p: Player) -> void:
 	health = max_health
 	health_changed.emit(health, max_health)
 
-func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos: Vector3 = Vector3.ZERO):
+func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO):
 	if is_dead or amount <= 0:
 		return
 	var reduction = player.bpm_system.get_bpm_damage_reduction()
 	var final_damage = max(1, int(round(float(amount) * (1.0 - reduction))))
 	health = max(0, health - final_damage)
 	health_changed.emit(health, max_health)
+	damaged.emit(final_damage, _source_direction(knockback_vector, hit_pos))
 	if player.bpm_system is BPMSystem:
 		player.bpm_system.drop_bpm_on_damage()
 	if player.head:
@@ -37,6 +41,18 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 		player.velocity += knockback_vector
 	if health <= 0:
 		die()
+
+## Направление на источник урона. Все атаки врагов толкают игрока от источника (удары, выпад, снаряд,
+## лазер, взрыв), поэтому источник — против горизонтального толчка. Точка hit_pos у разных атак значит
+## разное (точка попадания, позиция врага или самого игрока) — она лишь запасной вариант без толчка.
+func _source_direction(knockback_vector: Vector3, hit_pos: Vector3) -> Vector3:
+	var dir := Vector3(-knockback_vector.x, 0.0, -knockback_vector.z)
+	if dir.length_squared() < 0.0001 and hit_pos != Vector3.ZERO:
+		dir = hit_pos - player.global_position
+		dir.y = 0.0
+	if dir.length_squared() < 0.0001:
+		return Vector3.ZERO
+	return dir.normalized()
 
 func heal(amount: int, is_melee_bonus: bool = false):
 	if is_dead or amount <= 0:

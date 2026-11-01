@@ -731,7 +731,7 @@ func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:
 			last_headshot_bonus_frame = cur_frame
 			var player_node = get_tree().get_first_node_in_group("player")
 			if is_instance_valid(player_node) and "bpm_system" in player_node and is_instance_valid(player_node.bpm_system):
-				player_node.bpm_system.add_bpm(1.5)
+				player_node.bpm_system.add_bpm(1.5, &"headshot")
 				GameTypes.debug_log(&"enemy", "[HEADSHOT BPM BONUS] +1.5 BPM granted for precision headshot! (Current BPM: %.1f)" % player_node.bpm_system.bpm)
 				
 	_spawn_hit_blood_splatter(amount, hit_pos, is_crit, last_hit_knockback)
