@@ -129,6 +129,14 @@ func _ready():
 	health_component.health_changed.connect(health_changed.emit)
 	health_component.damaged.connect(damaged.emit)
 	health_component.died.connect(_on_health_died)
+	# Интерполяция физики: тело игрока интерполируется (весь мир — нет, см. GameManager._ready);
+	# голова — top_level вне интерполяции (head.gd), интерфейс и пост-эффект — вне интерполяции
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+	for ui_name in ["HUD", "CanvasLayer"]:
+		var ui = get_node_or_null(ui_name)
+		if ui:
+			ui.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	reset_physics_interpolation()
 	health_component.setup(self)
 	combat.setup(self)
 	wallrun.setup(self)
@@ -313,7 +321,7 @@ func _physics_process(delta):
 	# Вход в wallrun / выход при дэше или слэме
 	wallrun.update_entry_and_exit()
 
-	head.update_visuals(delta, current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun.wallrun_side if wallrun.is_wallrunning else 0.0)
+	head.set_visual_inputs(current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun.wallrun_side if wallrun.is_wallrunning else 0.0)
 
 	var wants_crouch = Input.is_action_pressed("slide")
 
@@ -627,7 +635,9 @@ func respawn(at: Transform3D) -> void:
 	last_wall_jump_normal = Vector3.ZERO
 	global_position = at.origin
 	rotation.y = at.basis.get_euler().y
-	head.rotation.x = 0.0
+	# Телепорт: без сброса интерполяция провела бы тело (и камеру) через уровень за один тик
+	reset_physics_interpolation()
+	head.reset_view()
 	skills.reset_skills()
 	combat.reset_combat()
 	bpm_system.reset_bpm()

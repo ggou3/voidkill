@@ -6,6 +6,22 @@ const BASE_FOV = 90.0
 const MAX_CAM_ROLL = 0.06
 const WALK_SPEED = 10.0
 
+# Голова — top_level и вне интерполяции физики (Player._ready включает интерполяцию телу): позиция каждый
+# кадр берётся из интерполированного трансформа тела (плавно на 120/144 Гц при тике 60), поворот — сразу от
+# мыши (рысканье — тело игрока, тангаж — _pitch), без отставания на тик. В физическом тике голова ставится в
+# текущую физическую позицию тела, чтобы лучи прицела шли из актуальной точки.
+## Высота глаз над началом тела (присед при слайде твинит её к 0)
+var eye_height: float = 0.6
+var _pitch: float = 0.0
+# Входные данные визуала камеры и вьюмодели — записывает Player в физическом тике, применяет _process
+var _vis_speed: float = 0.0
+var _vis_on_floor: bool = true
+var _vis_sliding: bool = false
+var _vis_dashing: bool = false
+var _vis_input_dir: Vector2 = Vector2.ZERO
+var _vis_reloading: bool = false
+var _vis_wallrun_side: float = 0.0
+
 var camera_recoil = 0.0
 var bob_time = 0.0
 var wallrun_bob_time = 0.0
@@ -52,6 +68,10 @@ var melee_arm_tween: Tween
 var muzzle_flash_tween: Tween
 
 func _ready():
+	eye_height = position.y
+	top_level = true
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_sync_to_player(false)
 	camera.fov = BASE_FOV
 	_shake_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 	_shake_noise.frequency = 1.0
@@ -110,8 +130,23 @@ func _disable_viewmodel_shadows(node: Node):
 func _input(event):
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
 		player.rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
-		rotation.x = clamp(rotation.x, deg_to_rad(-89), deg_to_rad(89))
+		_pitch = clampf(_pitch - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-89), deg_to_rad(89))
+		# Поворот сразу, позиция — та же, что в последнем кадре
+		global_transform = Transform3D(player.global_transform.basis * Basis(Vector3.RIGHT, _pitch), global_position)
+
+## Поставить голову на тело: interpolated — по интерполированному трансформу (кадр отрисовки),
+## иначе — по текущему физическому
+func _sync_to_player(interpolated: bool) -> void:
+	var origin: Vector3 = player.get_global_transform_interpolated().origin if interpolated else player.global_position
+	global_transform = Transform3D(player.global_transform.basis * Basis(Vector3.RIGHT, _pitch), origin + Vector3.UP * eye_height)
+
+## Сброс взгляда по вертикали (возрождение) и немедленная постановка на тело
+func reset_view() -> void:
+	_pitch = 0.0
+	_sync_to_player(false)
+
+func _physics_process(_delta: float) -> void:
+	_sync_to_player(false)
 
 func switch_weapon_visual(index: int):
 	if revolver_model:
@@ -168,8 +203,27 @@ func zoom_punch(duration: float) -> void:
 	_zoom_tween.tween_interval(maxf(duration - 0.03, 0.0))
 	_zoom_tween.tween_property(self, "_zoom_offset", 0.0, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_sync_to_player(true)
+	# Камера и вьюмодель обновляются в кадре отрисовки, а не в физическом тике — плавно на любой частоте
+	if not player.is_dead:
+		update_visuals(delta, _vis_speed, _vis_on_floor, _vis_sliding, _vis_dashing, _vis_input_dir, _vis_reloading, _vis_wallrun_side)
 	camera.fov = _fov_base - _zoom_offset
+
+## Входные данные визуала из физического тика Player (применяются в _process)
+func set_visual_inputs(current_speed: float, is_on_floor: bool, is_sliding: bool, is_dashing: bool, input_dir: Vector2, is_reloading: bool, wallrun_side: float = 0.0) -> void:
+	_vis_speed = current_speed
+	_vis_on_floor = is_on_floor
+	_vis_sliding = is_sliding
+	_vis_dashing = is_dashing
+	_vis_input_dir = input_dir
+	_vis_reloading = is_reloading
+	_vis_wallrun_side = wallrun_side
+
+## Доля сглаживания за кадр, равная lerp(..., k * delta) при 60 кадрах в секунду, на любой частоте
+## кадров: коэффициенты подбирались, когда визуал жил в физическом тике (60 Гц), ощущение сохраняется
+func _damp60(k: float, delta: float) -> float:
+	return 1.0 - pow(maxf(0.0, 1.0 - k / 60.0), delta * 60.0)
 
 func trigger_hard_landing(impact_speed: float, threshold: float = 12.0):
 	var excess = max(0.0, impact_speed - threshold)
@@ -224,9 +278,9 @@ func trigger_slide_animation(is_sliding: bool):
 	if slide_tween: slide_tween.kill()
 	slide_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	if is_sliding:
-		slide_tween.tween_property(self, "position:y", 0.0, 0.08)
+		slide_tween.tween_property(self, "eye_height", 0.0, 0.08)
 	else:
-		slide_tween.tween_property(self, "position:y", 0.6, 0.2)
+		slide_tween.tween_property(self, "eye_height", 0.6, 0.2)
 
 func get_aim_raycast(spread: float = 0.0) -> RayCast3D:
 	# Базовая дистанция стрельбы - 100 метров вперед по оси Z
@@ -318,21 +372,21 @@ func _create_star_flash_mesh() -> ArrayMesh:
 func update_visuals(delta: float, current_speed: float, is_on_floor: bool, is_sliding: bool, is_dashing: bool, input_dir: Vector2, is_reloading: bool, wallrun_side: float = 0.0):
 	if active_weapon:
 		if not is_reloading:
-			active_weapon.position = active_weapon.position.lerp(weapon_default_pos, 15.0 * delta)
+			active_weapon.position = active_weapon.position.lerp(weapon_default_pos, _damp60(15.0, delta))
 		else:
 			var reload_pos = weapon_default_pos + Vector3(0.0, -0.35, 0.0)
-			active_weapon.position = active_weapon.position.lerp(reload_pos, 10.0 * delta)
+			active_weapon.position = active_weapon.position.lerp(reload_pos, _damp60(10.0, delta))
 			
-		active_weapon.rotation.x = lerp(active_weapon.rotation.x, 0.0, 15.0 * delta)
-		active_weapon.rotation.y = lerp(active_weapon.rotation.y, 0.0, 15.0 * delta)
-		active_weapon.rotation.z = lerp(active_weapon.rotation.z, 0.0, 15.0 * delta)
+		active_weapon.rotation.x = lerp(active_weapon.rotation.x, 0.0, _damp60(15.0, delta))
+		active_weapon.rotation.y = lerp(active_weapon.rotation.y, 0.0, _damp60(15.0, delta))
+		active_weapon.rotation.z = lerp(active_weapon.rotation.z, 0.0, _damp60(15.0, delta))
 	
-	camera_recoil = lerp(camera_recoil, 0.0, 10.0 * delta)
+	camera_recoil = lerp(camera_recoil, 0.0, _damp60(10.0, delta))
 
 	# Усиленный динамический FOV от скорости (откалиброван под 10-20 м/с)
 	var speed_over = max(0.0, current_speed - 8.0)
 	var fov_offset = clamp(speed_over * 3.5, 0.0, 42.0)
-	_fov_base = lerp(_fov_base, BASE_FOV + fov_offset, 12.0 * delta)
+	_fov_base = lerp(_fov_base, BASE_FOV + fov_offset, _damp60(12.0, delta))
 
 	var target_bob_y = 0.0
 	var target_bob_x = 0.0
@@ -352,15 +406,15 @@ func update_visuals(delta: float, current_speed: float, is_on_floor: bool, is_sl
 	# Плавный возврат приседа камеры к норме (~0.12-0.15 сек)
 	landing_dip = move_toward(landing_dip, 0.0, 2.0 * delta)
 
-	camera.position.y = lerp(camera.position.y, target_bob_y, 16.0 * delta)
-	camera.position.x = lerp(camera.position.x, target_bob_x, 14.0 * delta)
+	camera.position.y = lerp(camera.position.y, target_bob_y, _damp60(16.0, delta))
+	camera.position.x = lerp(camera.position.x, target_bob_x, _damp60(14.0, delta))
 		
 	var roll_target = -input_dir.x * MAX_CAM_ROLL
 	if is_sliding: roll_target *= 1.5
 	if wallrun_side != 0.0:
 		# Наклон камеры (roll) К СТЕНЕ: если стена слева (-1), крен влево (-); если справа (+1), крен вправо (+)
 		roll_target = wallrun_side * (MAX_CAM_ROLL * 2.5)
-	_cam_roll = lerp(_cam_roll, roll_target, 8.0 * delta)
+	_cam_roll = lerp(_cam_roll, roll_target, _damp60(8.0, delta))
 
 	# Тряска (поверх отдачи и крена): поворот по плавному шуму, сила = травма²
 	var shake_pitch: float = 0.0

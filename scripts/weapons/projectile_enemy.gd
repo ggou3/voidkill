@@ -11,6 +11,10 @@ var is_destroyed: bool = false
 var is_deflected: bool = false
 
 func _ready():
+	# Интерполяция физики: снаряд летит в физическом тике. Позицию стрелок ставит после add_child —
+	# сброс отложен на конец кадра, чтобы снаряд не «вылетал» из начала координат
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+	reset_physics_interpolation.call_deferred()
 	add_to_group("enemy_projectile")
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
@@ -129,6 +133,7 @@ func deflect(new_dir: Vector3 = Vector3.ZERO, new_speed: float = 27.0, new_damag
 				target_launch_pos = close_hit.position - direction * 0.05
 				
 	global_position = target_launch_pos
+	reset_physics_interpolation() # перезапуск с новой точки (отбитый снаряд) — без протяжки
 	
 	# Ориентируем ноду по вектору полёта
 	var up_vec = Vector3.UP if abs(direction.y) < 0.99 else Vector3.FORWARD

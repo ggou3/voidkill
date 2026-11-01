@@ -68,6 +68,10 @@ var show_enemy_health_bars: bool = false
 func _ready():
 	# GameManager должен обрабатывать сигналы и ввод даже при возможной паузе дерева сцен
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Интерполяция физики (project.godot) — только для тех, кто движется в физическом тике и сам её включает:
+	# тело игрока, враги, вражеские снаряды. Остальное (эффекты, пулы трейсеров, лужи, интерфейс) двигается
+	# твинами и в _process и ставится после add_child — с интерполяцией оно «протягивалось» бы из прошлой точки
+	get_tree().root.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 func _process(delta: float) -> void:
 	if not get_tree().paused:

@@ -314,6 +314,9 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
 - Униформы шейдера твинить через `set_shader_parameter`, не `shader_parameter/…` («Свойства
   `shader_parameter/<имя>`…»).
 - Визуальная проверка — Movie Maker (`--write-movie`), временную сцену после удалить («Movie Maker…»).
+- Интерполяция физики выборочная: корень OFF, ON только у тела игрока, врагов, вражеских снарядов; после
+  спавна/телепорта таких узлов — `reset_physics_interpolation()`; камера — `top_level` OFF («Интерполяция
+  физики — только по выбору…»).
 
 ## 7. Git
 Работаем прямо в `main` (ветка `Refactoring` влита fast-forward, отдельные ветки для мелких

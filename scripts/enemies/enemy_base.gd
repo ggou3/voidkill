@@ -159,6 +159,10 @@ var inflation_pulse_tween: Tween:
 		_ensure_status_effect_component().inflation_pulse_tween = val
 
 func _ready() -> void:
+	# Интерполяция физики: враг движется в физическом тике. Сброс отложен — сектор и арена ставят позицию
+	# при спавне в том же кадре, без сброса враг «пролетел» бы от прошлой точки
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
+	reset_physics_interpolation.call_deferred()
 	_ensure_health_component()
 	health_component.max_health = max_health
 	health_component.health = max_health
