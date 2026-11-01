@@ -41,6 +41,33 @@ var sound_durations: Dictionary = {
 
 var external_sounds: Dictionary = {}
 
+# Против «пулемётного эффекта»: случайная высота ± доля на каждое воспроизведение частых звуков.
+# Звуки вне списка (тиканье бомбера, гул охотника, UI-подобные) играют без вариаций.
+const PITCH_VARIATION: Dictionary = {
+	"revolver_shot": 0.04,
+	"shotgun_shot": 0.04,
+	"injector_shot": 0.06,
+	"needle_shot": 0.08,
+	"rail_shot": 0.03,
+	"melee_hit": 0.06,
+	"melee_heavy_hit": 0.04,
+	"enemy_hit": 0.08,
+	"enemy_death": 0.06,
+	"explosion": 0.05,
+	"footstep": 0.08,
+	"jump": 0.05,
+	"dash": 0.05,
+	"slam_impact": 0.04,
+	"shield_block": 0.06,
+	"parry_deflect": 0.04,
+	"dry_fire": 0.05,
+}
+# Лимит одновременных копий одного звука: новый звук сверх лимита перезапускает самую старую копию,
+# а не занимает ещё один плеер (рой из 30 попаданий за кадр — шум, а не информация)
+const MAX_VOICES_PER_SOUND: int = 4
+var _voice_sound: Array[String] = []
+var _voice_start_ms: Array[int] = []
+
 var slide_player: AudioStreamPlayer = null
 var slide_tween: Tween = null
 var is_slide_playing: bool = false
@@ -58,7 +85,9 @@ func _ready():
 		p.bus = "Master"
 		add_child(p)
 		players.append(p)
-		
+		_voice_sound.append("")
+		_voice_start_ms.append(0)
+
 	# Поиск реальных аудиофайлов в res://audio/
 	_scan_external_audio()
 	
@@ -83,19 +112,19 @@ func play_sound(sound_name: String):
 
 	# 1. Приоритет: реальный аудиофайл из res://audio/
 	if external_sounds.has(sound_name):
-		_play_stream(external_sounds[sound_name])
+		_play_stream(external_sounds[sound_name], sound_name)
 		return
-		
+
 	# Динамическая проверка внешнего файла, если он был добавлен на лету
 	if _check_single_external_file(sound_name):
-		_play_stream(external_sounds[sound_name])
+		_play_stream(external_sounds[sound_name], sound_name)
 		return
-		
+
 	# 2. Процедурно сгенерированный звук через AudioStreamGenerator
 	if sound_buffers.has(sound_name):
 		var buffer: PackedVector2Array = sound_buffers[sound_name]
 		var duration: float = sound_durations.get(sound_name, 0.2)
-		_play_buffer(buffer, duration)
+		_play_buffer(buffer, duration, sound_name)
 	else:
 		push_warning("[AudioManager] Unknown sound name: '%s'" % sound_name)
 
@@ -167,31 +196,52 @@ func _setup_slide_stream():
 	# 2. Процедурный зацикленный звук скольжения
 	slide_player.stream = _gen_slide_wav()
 
-func _get_available_player() -> AudioStreamPlayer:
-	for p in players:
-		if not p.playing:
-			return p
-	# Если все заняты, используем round-robin ротацию
-	var p = players[current_player_idx]
-	current_player_idx = (current_player_idx + 1) % POOL_SIZE
+func _get_available_player(sound_name: String) -> AudioStreamPlayer:
+	# Лимит копий одного звука: сверх лимита перезапускается самая старая копия
+	var same_count: int = 0
+	var oldest_idx: int = -1
+	for i in range(players.size()):
+		if players[i].playing and _voice_sound[i] == sound_name:
+			same_count += 1
+			if oldest_idx < 0 or _voice_start_ms[i] < _voice_start_ms[oldest_idx]:
+				oldest_idx = i
+	var idx: int = -1
+	if same_count >= MAX_VOICES_PER_SOUND:
+		idx = oldest_idx
+	else:
+		for i in range(players.size()):
+			if not players[i].playing:
+				idx = i
+				break
+	if idx < 0:
+		# Если все заняты, используем round-robin ротацию
+		idx = current_player_idx
+		current_player_idx = (current_player_idx + 1) % POOL_SIZE
+	var p = players[idx]
 	p.stop()
+	_voice_sound[idx] = sound_name
+	_voice_start_ms[idx] = Time.get_ticks_msec()
+	var variation: float = PITCH_VARIATION.get(sound_name, 0.0)
+	p.pitch_scale = 1.0 + randf_range(-variation, variation)
 	return p
 
-func _play_stream(stream: AudioStream):
-	var p = _get_available_player()
+func _play_stream(stream: AudioStream, sound_name: String):
+	var p = _get_available_player(sound_name)
 	p.stream = stream
 	p.play()
 
-func _play_buffer(buffer: PackedVector2Array, duration: float):
+func _play_buffer(buffer: PackedVector2Array, duration: float, sound_name: String):
 	if buffer.is_empty():
 		return
-		
-	var player = _get_available_player()
-	
+
+	var player = _get_available_player(sound_name)
+	# При пониженной высоте звук длится дольше — остановку сдвигаем на столько же
+	duration /= player.pitch_scale
+
 	var gen = AudioStreamGenerator.new()
 	gen.mix_rate = MIX_RATE
 	gen.buffer_length = duration + 0.1
-	
+
 	player.stream = gen
 	player.play()
 	

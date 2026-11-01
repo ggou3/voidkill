@@ -29,6 +29,9 @@
   player_heal, melee_hit, melee_heavy_hit, dash, slam_impact, jump, footstep, enemy_hit, enemy_death,
   reload, slide (зацикленный, тихий), dry_fire, rail_shot, needle_shot, parry_deflect, shield_block,
   bomber_tick, hunter_awaken, stalker_reveal.
+  Пул из 16 плееров. Частые звуки (выстрелы, попадания, шаги, прыжок, дэш, смерти, взрывы) играют со
+  случайной высотой ±3–8% (`PITCH_VARIATION`) против «пулемётного эффекта». Одного звука одновременно
+  звучит не больше 4 копий (`MAX_VOICES_PER_SOUND`): сверх лимита перезапускается самая старая копия.
   Архитектура позволяет заменить процедурные звуки на настоящие файлы позже без переписывания
   вызовов `play_sound()`.
 - **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), методы `resolve_damageable(collider)` и `resolve_enemy(node)` для надёжного и унифицированного разрешения узлов целей с `take_damage` и проверкой принадлежности к врагам (включая дочерние хитбоксы `HeadHitbox` и метаданные `"enemy"`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`. Методы объявлены как обычные методы экземпляра (без `static`), чтобы исключить предупреждения GDScript при вызове через автозагрузку-синглтон `GameTypes`.
