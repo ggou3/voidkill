@@ -11,8 +11,12 @@ extends Node
 @export var melee_lunge_boost: float = 4.0
 @export var execute_health_threshold: float = 0.25
 
-# Настройки конусной ударной волны на максимальной скорости
-@export var cone_melee_speed_threshold: float = 16.5
+# Настройки конусной ударной волны на максимальной скорости.
+# Порог 20 м/с: без дэша — потолок скорости от ~136 BPM; с дэшем (+5) — от ~60 BPM на потолке.
+# Один дэш на минимальном пульсе (14.5 → 19.5) конус не открывает.
+@export var cone_melee_speed_threshold: float = 20.0
+## Скорость, на которой урон конуса достигает максимума (cone_melee_base_damage)
+@export var cone_melee_full_speed: float = 23.5
 @export var cone_melee_range: float = 7.5
 @export var cone_melee_angle: float = 100.0
 @export var cone_melee_base_damage: int = 60
@@ -243,7 +247,7 @@ func perform_melee():
 	var cap = player.get_speed_limit()
 	var aim_dir = head.get_aim_direction()
 
-	# Строгий порог: конусная ударная волна активируется ТОЛЬКО при скорости >= 16.5 м/с
+	# Строгий порог: конусная ударная волна активируется ТОЛЬКО при скорости >= cone_melee_speed_threshold
 	var is_cone_shockwave = effective_speed >= cone_melee_speed_threshold
 
 	# Инерция и импульс: выпад вперёд в направлении взгляда при ударе в движении, дэше или слайде
@@ -392,8 +396,8 @@ func perform_melee():
 				targets_to_hit[primary_e]["is_primary"] = true
 
 		# Нелинейный расчет базового урона конуса:
-		# Начинается строго с порога 16.5 м/с и резко возрастает к максимуму (60) на скорости 20.0 м/с
-		var high_t = clamp((effective_speed - cone_melee_speed_threshold) / (20.0 - cone_melee_speed_threshold), 0.0, 1.0)
+		# Начинается строго с порога и квадратично возрастает к максимуму (60) на cone_melee_full_speed
+		var high_t = clamp((effective_speed - cone_melee_speed_threshold) / (cone_melee_full_speed - cone_melee_speed_threshold), 0.0, 1.0)
 		var speed_base_dmg = lerp(32.0, float(cone_melee_base_damage), pow(high_t, 2.0))
 
 		for e in targets_to_hit.keys():
