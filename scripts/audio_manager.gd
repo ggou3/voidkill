@@ -281,8 +281,9 @@ func _play_buffer(player: Node, buffer: PackedVector2Array, duration: float):
 		if count > 0:
 			playback.push_buffer(buffer.slice(0, count))
 			
-	# Остановка плеера по окончании воспроизведения буфера
-	get_tree().create_timer(duration + 0.05).timeout.connect(func():
+	# Остановка плеера по окончании воспроизведения буфера. Таймер в реальном времени: звук стоп-кадром
+	# (Engine.time_scale) не замедляется, и голос не должен оставаться занятым дольше самого звука
+	get_tree().create_timer(duration + 0.05, true, false, true).timeout.connect(func():
 		if is_instance_valid(player) and player.stream == gen:
 			player.stop()
 	)

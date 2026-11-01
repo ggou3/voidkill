@@ -145,13 +145,20 @@ func _input(event):
 		
 	if event.is_action_pressed("ui_cancel"):
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-		
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_1: weapons.switch_weapon(0) 
-		elif event.keycode == KEY_2: weapons.switch_weapon(1) 
-		elif event.keycode == KEY_3: weapons.switch_weapon(2)
-		elif event.keycode == KEY_4: weapons.switch_weapon(3)
-			
+
+	# Курсор освобождён (Esc): клик по окну во время игры возвращает захват и не стреляет
+	if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
+		if event is InputEventMouseButton and event.pressed and GameManager.current_state == GameManager.State.PLAYING:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+			weapons.block_autofire_until_release()
+			get_viewport().set_input_as_handled()
+		return
+
+	if event.is_action_pressed("weapon_1"): weapons.switch_weapon(0)
+	elif event.is_action_pressed("weapon_2"): weapons.switch_weapon(1)
+	elif event.is_action_pressed("weapon_3"): weapons.switch_weapon(2)
+	elif event.is_action_pressed("weapon_4"): weapons.switch_weapon(3)
+
 	if event.is_action_pressed("shoot"):
 		weapons.shoot(bpm_system.has_infinite_ammo())
 	elif event.is_action_pressed("alt_fire") or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed):
@@ -179,7 +186,8 @@ func _input(event):
 			melee_buffer_timer = 0.0
 		else:
 			melee_buffer_timer = action_buffer_time
-	if event.is_action_pressed("debug_max_bpm") or (event is InputEventKey and event.pressed and not event.is_echo() and (event.keycode == KEY_T or event.physical_keycode == KEY_T)):
+	# Отладочная клавиша T — только в отладочной сборке (редактор), в релизе выключена
+	if OS.is_debug_build() and event.is_action_pressed("debug_max_bpm") and not event.is_echo():
 		if bpm_system is BPMSystem:
 			bpm_system.force_max_bpm()
 

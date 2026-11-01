@@ -51,14 +51,16 @@ var _multi_kill_burst_ms: int = -100000
 
 ## Токены атак (как в DOOM 2016): ограничивают число врагов, атакующих одновременно. Враг берёт токен
 ## на время атаки (телеграф + удар/выстрел); нет свободного — атака откладывается, враг продолжает манёвр.
-## Токен истекает сам по времени, возвращать его при смерти или прерывании не нужно.
+## Токен истекает сам по игровому времени (_game_time: замедляется стоп-кадром, как и сами атаки),
+## возвращать его при смерти или прерывании не нужно.
 ## Размер пула — главная ручка давления/сложности. Охотник, соглядатай и подрывник токенов не берут.
 const ATTACK_TOKEN_LIMITS: Dictionary = {
 	&"melee": 3,  # удары и выпады ближних врагов, удары щитоносца
 	&"swarm": 5,  # касания роя
 	&"ranged": 3, # выстрелы дальников и турелей, лазер летуна
 }
-var _attack_tokens: Dictionary = {} # вид -> Array[int] (время окончания, мс)
+var _attack_tokens: Dictionary = {} # вид -> Array[float] (время окончания, с игрового времени)
+var _game_time: float = 0.0 # игровое время: идёт с Engine.time_scale, стоит на паузе дерева
 
 ## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
 ## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
@@ -68,6 +70,8 @@ func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 func _process(delta: float) -> void:
+	if not get_tree().paused:
+		_game_time += delta
 	if not is_level_active() or current_state != State.PLAYING:
 		return
 	level_time += delta
@@ -76,13 +80,14 @@ func _process(delta: float) -> void:
 			overdrive_time += delta
 
 func _input(event: InputEvent):
-	if event.is_action_pressed("debug_toggle_hp_bars") and not event.is_echo():
+	# Отладочная клавиша H — только в отладочной сборке (редактор), в релизе выключена
+	if OS.is_debug_build() and event.is_action_pressed("debug_toggle_hp_bars") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		show_enemy_health_bars = not show_enemy_health_bars
 		GameTypes.debug_log(&"enemy", "[DEBUG] Enemy HP bars: %s (H)" % ("ON" if show_enemy_health_bars else "OFF"))
 		enemy_health_bars_toggled.emit(show_enemy_health_bars)
 		return
-	if not (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R):
+	if not event.is_action_pressed("restart") or event.is_echo():
 		return
 	# R на экране смерти — возрождение на чекпоинте (или перезапуск сцены вне уровня);
 	# R на экране конца уровня — пройти уровень заново
@@ -153,12 +158,12 @@ func request_attack_token(kind: StringName, hold_time: float) -> bool:
 	var limit: int = ATTACK_TOKEN_LIMITS.get(kind, 0)
 	if limit <= 0:
 		return true
-	var now: int = Time.get_ticks_msec()
-	var active: Array = _attack_tokens.get(kind, []).filter(func(end_ms): return end_ms > now)
+	var now: float = _game_time
+	var active: Array = _attack_tokens.get(kind, []).filter(func(end_time): return end_time > now)
 	if active.size() >= limit:
 		_attack_tokens[kind] = active
 		return false
-	active.append(now + int(hold_time * 1000.0))
+	active.append(now + hold_time)
 	_attack_tokens[kind] = active
 	return true
 

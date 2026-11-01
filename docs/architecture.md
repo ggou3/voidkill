@@ -6,7 +6,7 @@
 
 ### Autoload-синглтоны
 - **GameManager** (`res://scripts/game_manager.gd`) — состояние игры (PLAYING/GAME_OVER),
-  `trigger_game_over()`, `restart_game()`, рестарт по R в `_input`. ✅ Шаг 5.4: единственный владелец
+  `trigger_game_over()`, `restart_game()`, рестарт по действию `restart` (R) в `_input`. ✅ Шаг 5.4: единственный владелец
   жизненного цикла игры. Игрок вызывает `register_player(self)` из `Player._ready()` (в т.ч. после
   перезагрузки сцены), GameManager подписывается на `Player.died` и сам решает о Game Over:
   `trigger_game_over()` переводит в `GAME_OVER`, освобождает курсор и эмитит `game_over_triggered`
@@ -20,7 +20,11 @@
     уровня: `level_time`, `kills`, `damage_taken`, `overdrive_time`, `deaths`. Вне уровня (`level`
     не зарегистрирован) поведение прежнее — перезапуск сцены.
   - **Стоп-кадр** `hit_stop(duration)` — единственное место, где меняется `Engine.time_scale`
-    (подробности — [combat.md](combat.md)).
+    (подробности — [combat.md](combat.md)). Токены атак врагов считаются в игровом времени
+    (`_game_time`, замедляется стоп-кадром вместе с атаками), остановка звуков `AudioManager` — в
+    реальном (звук стоп-кадр не замедляет).
+  - **Отладочные клавиши** T (`debug_max_bpm`) и H (`debug_toggle_hp_bars`) работают только в
+    отладочной сборке (`OS.is_debug_build()`: запуск из редактора), в релизном экспорте выключены.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameManager` — конфликтует с именем автозагрузки.
 - **AudioManager** (`res://scripts/audio_manager.gd`) — процедурная генерация звуков через
   `AudioStreamGenerator` (без внешних аудиофайлов). `AudioManager.play_sound(sound_name: String)`,

@@ -17,6 +17,8 @@ var passive_reload_timers: Array[float] = [0.0, 0.0, 0.0, 0.0]
 
 var weapons: Array[WeaponBase] = []
 var ammos: Array[int] = []
+# Клик, вернувший захват курсора, не должен запускать автоогонь, пока ЛКМ не отпущена
+var _autofire_blocked: bool = false
 
 var is_bursting: bool:
 	get:
@@ -29,6 +31,10 @@ var is_bursting: bool:
 func _ready() -> void:
 	_init_weapons()
 	_init_ammos()
+
+## Не стрелять автоогнём до отпускания ЛКМ (клик вернул захват курсора)
+func block_autofire_until_release() -> void:
+	_autofire_blocked = true
 
 func _init_weapons() -> void:
 	if weapons.is_empty():
@@ -89,8 +95,11 @@ func _process(delta: float) -> void:
 			ammo_changed.emit(current_weapon_index, max_a, max_a)
 			reload_finished.emit(current_weapon_index)
 
-	# Автоматическая стрельба при удержании ЛКМ
-	if current_weapon_index < weapons.size() and weapons[current_weapon_index].data and weapons[current_weapon_index].data.is_automatic:
+	# Автоматическая стрельба при удержании ЛКМ (только с захваченным курсором)
+	if _autofire_blocked and not Input.is_action_pressed("shoot"):
+		_autofire_blocked = false
+	if not _autofire_blocked and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED \
+			and current_weapon_index < weapons.size() and weapons[current_weapon_index].data and weapons[current_weapon_index].data.is_automatic:
 		if Input.is_action_pressed("shoot") and not is_reloading and weapons[current_weapon_index].can_fire() and not (player_node is Player and player_node.is_dead):
 			var inf = false
 			if player_node is Player:
