@@ -409,7 +409,10 @@ func trigger_inflation_explosion(depth: int = 0) -> void:
 	])
 	
 	AudioManager.play_sound("explosion")
-	
+	var player_node = get_tree().get_first_node_in_group("player")
+	if is_instance_valid(player_node) and "head" in player_node and is_instance_valid(player_node.head):
+		player_node.head.add_trauma_at(explosion_pos, 0.6 * mult, explosion_radius, explosion_radius * 3.0)
+
 	var scene_root = get_tree().current_scene if get_tree().current_scene else (actor.get_parent() if is_instance_valid(actor) else get_parent())
 	if scene_root:
 		# Сочный разлёт крови во все стороны (360 градусов), масштабируемый от силы взрыва

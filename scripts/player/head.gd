@@ -10,8 +10,22 @@ var camera_recoil = 0.0
 var bob_time = 0.0
 var wallrun_bob_time = 0.0
 var landing_dip = 0.0
-var landing_shake_trauma = 0.0
 var slide_tween: Tween
+
+# Тряска камеры — модель «травмы»: события добавляют травму 0..1 (add_trauma), она линейно спадает,
+# сила тряски = травма². Тряска — поворот камеры по плавному шуму (не позиция и не randf каждый кадр),
+# накладывается поверх отдачи и крена, а не пишется в их состояние — поэтому камера не «уплывает».
+## Общий множитель силы тряски (0 — выкл.)
+@export var shake_strength: float = 1.0
+const SHAKE_MAX_PITCH: float = 0.045 # рад при травме 1
+const SHAKE_MAX_YAW: float = 0.045
+const SHAKE_MAX_ROLL: float = 0.05
+const SHAKE_NOISE_SPEED: float = 28.0 # скорость движения по шуму (выше — чаще дрожь)
+const TRAUMA_DECAY: float = 4.5 # травма в секунду
+var trauma: float = 0.0
+var _shake_time: float = 0.0
+var _shake_noise := FastNoiseLite.new()
+var _cam_roll: float = 0.0
 
 @onready var player = $".."
 @onready var camera = $Camera3D
@@ -31,6 +45,9 @@ var muzzle_flash_tween: Tween
 
 func _ready():
 	camera.fov = BASE_FOV
+	_shake_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	_shake_noise.frequency = 1.0
+	_shake_noise.seed = randi()
 	# Отключаем отбрасывание теней для всего view-model слоя (оружие и руки)
 	_disable_viewmodel_shadows(camera)
 	
@@ -113,20 +130,33 @@ func add_recoil(cam_amount: float, weapon_kick: float = 0.2):
 		active_weapon.position.z += weapon_kick
 		active_weapon.rotation.x += weapon_kick * 1.5
 
+## Добавить травму тряски (0..1, сумма ограничена 1)
+func add_trauma(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	trauma = minf(1.0, trauma + amount)
+
+## Травма от события в точке мира: полная в радиусе inner_radius, линейно до нуля к outer_radius
+func add_trauma_at(world_pos: Vector3, amount: float, inner_radius: float, outer_radius: float) -> void:
+	var dist = camera.global_position.distance_to(world_pos)
+	if dist >= outer_radius:
+		return
+	var falloff = 1.0 if dist <= inner_radius else 1.0 - (dist - inner_radius) / maxf(outer_radius - inner_radius, 0.001)
+	add_trauma(amount * falloff)
+
 func trigger_hard_landing(impact_speed: float, threshold: float = 12.0):
 	var excess = max(0.0, impact_speed - threshold)
 	var intensity = clamp(excess / 16.0, 0.0, 1.0)
 	# Короткий "присед" камеры вниз: 0.16..0.32 м
 	landing_dip = lerp(0.16, 0.32, intensity)
 	# Тряска экрана, пропорциональная силе удара
-	landing_shake_trauma = lerp(0.4, 0.9, intensity)
+	add_trauma(lerp(0.4, 0.9, intensity))
 	# Импульс отдачи/наклона головы вниз
 	add_recoil(lerp(0.04, 0.10, intensity), 0.0)
 
 func trigger_melee_impact(is_execute: bool = false):
 	# Экранный толчок/тряска камеры при успешном попадании ближнего боя
-	var trauma = 0.65 if is_execute else 0.38
-	landing_shake_trauma = max(landing_shake_trauma, trauma)
+	add_trauma(0.65 if is_execute else 0.38)
 	# Импульс отдачи оружия и наклон камеры вверх
 	add_recoil(0.09 if is_execute else 0.05, 0.45 if is_execute else 0.25)
 
@@ -271,7 +301,6 @@ func update_visuals(delta: float, current_speed: float, is_on_floor: bool, is_sl
 		active_weapon.rotation.z = lerp(active_weapon.rotation.z, 0.0, 15.0 * delta)
 	
 	camera_recoil = lerp(camera_recoil, 0.0, 10.0 * delta)
-	camera.rotation.x = camera_recoil
 
 	# Усиленный динамический FOV от скорости (откалиброван под 10-20 м/с)
 	var speed_over = max(0.0, current_speed - 8.0)
@@ -304,12 +333,19 @@ func update_visuals(delta: float, current_speed: float, is_on_floor: bool, is_sl
 	if wallrun_side != 0.0:
 		# Наклон камеры (roll) К СТЕНЕ: если стена слева (-1), крен влево (-); если справа (+1), крен вправо (+)
 		roll_target = wallrun_side * (MAX_CAM_ROLL * 2.5)
-	camera.rotation.z = lerp(camera.rotation.z, roll_target, 8.0 * delta)
+	_cam_roll = lerp(_cam_roll, roll_target, 8.0 * delta)
 
-	# Дополнительная тряска экрана (screen shake) при жестком приземлении
-	if landing_shake_trauma > 0.0:
-		var trauma_p = landing_shake_trauma * landing_shake_trauma
-		camera.position.x += randf_range(-1.0, 1.0) * trauma_p * 0.05
-		camera.position.y += randf_range(-1.0, 1.0) * trauma_p * 0.05
-		camera.rotation.z += randf_range(-1.0, 1.0) * trauma_p * 0.035
-		landing_shake_trauma = move_toward(landing_shake_trauma, 0.0, 4.5 * delta)
+	# Тряска (поверх отдачи и крена): поворот по плавному шуму, сила = травма²
+	var shake_pitch: float = 0.0
+	var shake_yaw: float = 0.0
+	var shake_roll: float = 0.0
+	if trauma > 0.0:
+		_shake_time += delta * SHAKE_NOISE_SPEED
+		var shake = trauma * trauma * shake_strength
+		shake_pitch = _shake_noise.get_noise_2d(0.0, _shake_time) * SHAKE_MAX_PITCH * shake
+		shake_yaw = _shake_noise.get_noise_2d(100.0, _shake_time) * SHAKE_MAX_YAW * shake
+		shake_roll = _shake_noise.get_noise_2d(200.0, _shake_time) * SHAKE_MAX_ROLL * shake
+		trauma = move_toward(trauma, 0.0, TRAUMA_DECAY * delta)
+	camera.rotation.x = camera_recoil + shake_pitch
+	camera.rotation.y = shake_yaw
+	camera.rotation.z = _cam_roll + shake_roll

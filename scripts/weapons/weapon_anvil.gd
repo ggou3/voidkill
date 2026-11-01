@@ -386,7 +386,7 @@ func _perform_self_launch(aim_dir: Vector3, surface_hit_pos: Vector3, _surface_n
 	if head:
 		head.add_recoil(0.14, 0.45)
 		head.trigger_muzzle_flash(true)
-		head.landing_shake_trauma = max(head.landing_shake_trauma, 0.5 * mult)
+		head.add_trauma(0.5 * mult)
 	AudioManager.play_sound("shotgun_shot")
 	
 	var start_pos = _get_muzzle_position()

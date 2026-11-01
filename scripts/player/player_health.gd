@@ -31,6 +31,8 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, _hit_pos
 		player.bpm_system.drop_bpm_on_damage()
 	if player.head:
 		player.head.add_recoil(0.25, 0.0)
+		# Тряска пропорциональна урону: снаряд 12 HP — лёгкая, взрыв 40 HP — сильная
+		player.head.add_trauma(clampf(float(final_damage) / 60.0, 0.15, 0.7))
 	if knockback_vector != Vector3.ZERO:
 		player.velocity += knockback_vector
 	if health <= 0:

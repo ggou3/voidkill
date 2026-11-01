@@ -151,7 +151,10 @@ func _explode() -> void:
 	GameTypes.debug_log(&"enemy", "[%s] BOMBER EXPLODED at %s! Radius: %.1fm, Dmg: %d" % [name, explosion_pos, explosion_radius, explosion_damage])
 	
 	AudioManager.play_sound("explosion")
-	
+	var player_node = get_tree().get_first_node_in_group("player") as Player
+	if player_node and player_node.head:
+		player_node.head.add_trauma_at(explosion_pos, 0.7, explosion_radius, explosion_radius * 3.0)
+
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 	if scene_root:
 		# Сочный круговой разлёт крови и осколков

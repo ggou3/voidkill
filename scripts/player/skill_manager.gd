@@ -156,6 +156,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 		if has_blood_slam:
 			effective_aoe = SLAM_AOE * 1.5 # 9.0 метров
 			head.add_recoil(0.35, 0.0)
+			head.add_trauma(0.55)
 			AudioManager.play_sound("slam_impact")
 			AudioManager.play_sound("flask_splash")
 			
@@ -174,6 +175,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 			])
 		else:
 			head.add_recoil(0.25, 0.0)
+			head.add_trauma(0.4)
 			AudioManager.play_sound("slam_impact")
 		
 		# Волна: небольшой урон + горизонтальный разброс от центра (сильнее в центре, слабее на краю)

@@ -61,6 +61,7 @@ func _fire_caliber_piercing_shot() -> void:
 	var head = _get_head()
 	if head:
 		head.add_recoil(0.20, 0.60)
+		head.add_trauma(0.35)
 		head.trigger_muzzle_flash(true)
 	AudioManager.play_sound("rail_shot")
 	
