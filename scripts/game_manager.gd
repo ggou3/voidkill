@@ -35,6 +35,8 @@ var _last_health: int = -1
 ## Перекрывающиеся стоп-кадры не суммируются — действует самый поздний срок окончания.
 const HIT_STOP_TIME_SCALE: float = 0.05
 var _hit_stop_end_ms: int = 0
+# Номер последнего продлившего стоп-кадр вызова: снимает стоп-кадр только его таймер
+var _hit_stop_token: int = 0
 
 ## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
 ## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
@@ -111,15 +113,18 @@ func hit_stop(duration: float) -> void:
 	if duration <= 0.0 or current_state != State.PLAYING:
 		return
 	var end_ms: int = Time.get_ticks_msec() + int(duration * 1000.0)
-	if end_ms <= _hit_stop_end_ms:
+	if _hit_stop_end_ms != 0 and end_ms <= _hit_stop_end_ms:
 		return
 	_hit_stop_end_ms = end_ms
+	_hit_stop_token += 1
 	Engine.time_scale = HIT_STOP_TIME_SCALE
-	# Таймер в реальном времени: идёт при паузе и не замедляется самим time_scale
-	get_tree().create_timer(duration, true, false, true).timeout.connect(_on_hit_stop_timeout)
+	# Таймер в реальном времени: идёт при паузе и не замедляется самим time_scale.
+	# Снимает стоп-кадр только таймер последнего продлившего вызова — без сверки с часами,
+	# которая при раннем срабатывании таймера оставила бы игру в замедлении навсегда
+	get_tree().create_timer(duration, true, false, true).timeout.connect(_on_hit_stop_timeout.bind(_hit_stop_token))
 
-func _on_hit_stop_timeout() -> void:
-	if _hit_stop_end_ms != 0 and Time.get_ticks_msec() >= _hit_stop_end_ms:
+func _on_hit_stop_timeout(token: int) -> void:
+	if token == _hit_stop_token and _hit_stop_end_ms != 0:
 		_end_hit_stop()
 
 ## Снять стоп-кадр немедленно (смерть, перезапуск, конец уровня — время всегда возвращается к 1.0)

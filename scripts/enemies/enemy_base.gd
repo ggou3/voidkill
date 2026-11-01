@@ -68,7 +68,7 @@ var body_override_mat: StandardMaterial3D = null
 
 # Вспышка попадания: видимые части врага на HIT_FLASH_TIME покрываются полупрозрачным белым
 # (material_overlay — поверх своих материалов, раздутие и иглы не затрагивает). Тики яда не вспыхивают.
-const HIT_FLASH_TIME: float = 0.06
+const HIT_FLASH_TIME: float = 0.1
 # Общий ресурс, а не static var: EnemyBase в цикле зависимостей скриптов, static var давал утечки при выходе
 const HIT_FLASH_MATERIAL: StandardMaterial3D = preload("res://materials/enemy_hit_flash.tres")
 var _flash_meshes: Array[GeometryInstance3D] = []

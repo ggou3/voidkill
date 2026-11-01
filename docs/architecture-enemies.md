@@ -75,8 +75,8 @@
   - Перцепция и целеуказание: `target_player`, `start_chase(player)`, `detection_range`, `reaction_delay`, `_has_line_of_sight_to(target)`, обнаружение в IDLE проверкой расстояния раз в 0.2 с со случайной фазой (`_try_detect_player`, переопределяемое условие `_can_detect_player`; сфер `DetectionArea` нет).
   - Владение компонентами: жизненный цикл и ленивое создание `HealthComponent`, `StatusEffectComponent`; `EnemyHealthBar` — только при включённых отладочных полосках (H).
   - Полный фасад свойств и методов: `slow_factor`, `poison_stacks`, `needle_count`, `is_inflated`, `add_slow`, `apply_poison_dot`, `add_needle`, `inflate`, триггеры детонаций (`trigger_inflation_explosion`, `trigger_poison_contagion`, `trigger_needle_burst`), спавн эффектов ударных волн и ядовитых облаков.
-  - **Вспышка попадания**: на каждый удар через `HealthComponent.damaged` все видимые части врага на 0.06 с
-    покрываются полупрозрачным белым (`material_overlay` = `materials/enemy_hit_flash.tres`; меши собираются в
+  - **Вспышка попадания**: на каждый удар через `HealthComponent.damaged` все видимые части врага на 0.1 с
+    покрываются белым на 85% непрозрачности (`material_overlay` = `materials/enemy_hit_flash.tres`; меши собираются в
     `_ready`, отладочная полоска HP и `Label3D` не вспыхивают). Тики яда идут мимо `damaged` и не вспыхивают.
     Щитоносец пропускает вспышку на блоке (у блока свои искры, звон и барьер) — переопределение `_play_hit_flash()`.
   - Урон, смерть и VFX: `take_damage(...)`, `die(death_info)`, всплывающие цифры урона `_spawn_damage_number`, генерация брызг крови `_spawn_hit_blood_splatter`, спавн лужи крови `BloodPool`, физика гравипула `apply_vacuum_pull`.

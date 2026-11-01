@@ -8,7 +8,7 @@ const MAX_DASH = 3
 @export var dash_boost: float = 5.0 # Добавочный импульс к скорости движения
 const DASH_DUR = 0.15
 ## Стоп-кадр при приземлении слэма, если волна задела хотя бы одного врага (с, 0 — выкл.)
-@export var hit_stop_slam: float = 0.045
+@export var hit_stop_slam: float = 0.07
 
 const SLAM_SPEED = 60.0
 const SLAM_AOE = 6.0

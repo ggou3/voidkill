@@ -21,9 +21,9 @@ extends Node
 @export var cone_min_knockback_ratio: float = 0.40
 
 # Стоп-кадр (hit-stop, секунды реального времени; 0 — выкл.)
-@export var hit_stop_parry: float = 0.07
-@export var hit_stop_execute: float = 0.06
-@export var hit_stop_cone: float = 0.05
+@export var hit_stop_parry: float = 0.12
+@export var hit_stop_execute: float = 0.10
+@export var hit_stop_cone: float = 0.08
 
 var melee_timer: float = 0.0
 var recent_peak_speed: float = 0.0
