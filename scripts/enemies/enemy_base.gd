@@ -66,6 +66,14 @@ var health_bar: EnemyHealthBar = null
 var eyes_material: StandardMaterial3D = null
 var body_override_mat: StandardMaterial3D = null
 
+# Вспышка попадания: видимые части врага на HIT_FLASH_TIME покрываются полупрозрачным белым
+# (material_overlay — поверх своих материалов, раздутие и иглы не затрагивает). Тики яда не вспыхивают.
+const HIT_FLASH_TIME: float = 0.06
+# Общий ресурс, а не static var: EnemyBase в цикле зависимостей скриптов, static var давал утечки при выходе
+const HIT_FLASH_MATERIAL: StandardMaterial3D = preload("res://materials/enemy_hit_flash.tres")
+var _flash_meshes: Array[GeometryInstance3D] = []
+var _hit_flash_tween: Tween = null
+
 func _ensure_health_component() -> HealthComponent:
 	if not is_instance_valid(health_component):
 		health_component = _get_or_create_health_component()
@@ -184,6 +192,9 @@ func _ready() -> void:
 		
 	# Случайная фаза: враги не проверяют обнаружение все в одном кадре
 	_detection_timer = randf() * DETECTION_INTERVAL
+
+	# Меши для вспышки попадания — до создания отладочной полоски HP, чтобы она в список не попала
+	_collect_flash_meshes(self)
 
 	GameManager.enemy_health_bars_toggled.connect(_on_enemy_health_bars_toggled)
 	if GameManager.show_enemy_health_bars:
@@ -670,9 +681,36 @@ func _on_status_requests_damage(amount: int, kind: StringName) -> void:
 		if health <= 0:
 			set_state(State.DEAD)
 
+func _collect_flash_meshes(node: Node) -> void:
+	for c in node.get_children():
+		if c is EnemyHealthBar or c is Label3D:
+			continue
+		if c is GeometryInstance3D:
+			_flash_meshes.append(c)
+		_collect_flash_meshes(c)
+
+## Белая вспышка попадания. Наследник может пропустить её для особого исхода (блок щитом).
+func _play_hit_flash() -> void:
+	if _flash_meshes.is_empty():
+		return
+	for m in _flash_meshes:
+		if is_instance_valid(m):
+			m.material_overlay = HIT_FLASH_MATERIAL
+	if _hit_flash_tween:
+		_hit_flash_tween.kill()
+	_hit_flash_tween = create_tween()
+	_hit_flash_tween.tween_interval(HIT_FLASH_TIME)
+	_hit_flash_tween.tween_callback(_clear_hit_flash)
+
+func _clear_hit_flash() -> void:
+	for m in _flash_meshes:
+		if is_instance_valid(m):
+			m.material_overlay = null
+
 func _on_health_damaged(amount: int, is_crit: bool, hit_pos: Vector3) -> void:
 	_spawn_damage_number(amount, hit_pos, is_crit)
 	AudioManager.play_sound("enemy_hit")
+	_play_hit_flash()
 	
 	if is_crit:
 		GameTypes.debug_log(&"enemy", "[%s] HEADSHOT! Damage: %d | Remaining HP: %d" % [name, amount, max(0, health)])

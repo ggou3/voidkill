@@ -22,6 +22,7 @@ var indicator_mat_right: StandardMaterial3D = null
 
 var barrier_tween: Tween = null
 var indicator_tween: Tween = null
+var _blocking_hit: bool = false
 
 @onready var shield_barrier: MeshInstance3D = get_node_or_null("ShieldBarrier")
 @onready var damage_indicator_left: MeshInstance3D = get_node_or_null("DamageIndicatorLeft")
@@ -203,8 +204,16 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	else:
 		# Пробитие с фланга или тыла: полный урон + вспышка индикаторов пробития
 		_trigger_flank_damage_reaction()
-		
+
+	# Блок щитом — свой исход (искры, звон, барьер): белой вспышки попадания нет
+	_blocking_hit = blocked
 	super.take_damage(final_amount, final_knockback, hit_pos, is_melee, is_execute, is_shockwave, final_headshot, source_chain_depth, weapon_source)
+	_blocking_hit = false
+
+func _play_hit_flash() -> void:
+	if _blocking_hit:
+		return
+	super._play_hit_flash()
 
 func _trigger_block_reaction(hit_pos: Vector3) -> void:
 	AudioManager.play_sound("shield_block")
