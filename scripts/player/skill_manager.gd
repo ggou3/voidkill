@@ -123,10 +123,12 @@ func process_dash(delta, vel: Vector3) -> Vector3:
 		dash_overspeed = move_toward(dash_overspeed, 0.0, dash_overspeed_decay * delta)
 	return vel
 
-func trigger_slam():
+func trigger_slam() -> bool:
 	if not player.is_on_floor() and not is_slamming and slam_timer <= 0:
 		is_slamming = true
 		_begin_slam_passthrough()
+		return true
+	return false
 
 ## Прерывание слэма (смерть игрока): сброс состояния и немедленное снятие исключений столкновений
 func cancel_slam() -> void:

@@ -234,11 +234,12 @@ func _spawn_deflect_feedback(pos: Vector3):
 	tween.tween_property(label, "modulate:a", 0.0, 0.65).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(label.queue_free)
 
-func perform_melee():
+## Удар. false — удар сейчас недоступен (кулдаун, слэм), true — выполнен (попал или нет)
+func perform_melee() -> bool:
 	var skills = player.skills
 	var head = player.head
 	if melee_timer > 0.0 or player.is_dead or skills.is_slamming:
-		return
+		return false
 
 	melee_timer = melee_cooldown
 
@@ -538,3 +539,5 @@ func perform_melee():
 		GameTypes.debug_log(&"player", "[MELEE] Speed: %.2f (Live: %.2f, Peak: %.2f) | Thresh: %.2f | SHOCKWAVE: false | Dmg: %d | Hit: %s" % [
 			effective_speed, cur_speed, recent_peak_speed, cone_melee_speed_threshold, melee_damage, str(hit_anything)
 		])
+
+	return true

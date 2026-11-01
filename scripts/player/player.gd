@@ -33,6 +33,9 @@ signal blood_surf_status_changed(active: bool)
 # Настройки отзывчивости управления (Coyote time и Jump buffer)
 @export var coyote_time: float = 0.12
 @export var jump_buffer_time: float = 0.12
+## Буфер дэша, слэма и удара: нажатие, когда действие ещё недоступно (кулдаун, интервал, слэм с земли),
+## исполняется, как только действие станет доступно в пределах этого окна
+@export var action_buffer_time: float = 0.12
 
 # Настройки фидбека приземления
 @export var hard_landing_velocity_threshold: float = 12.0
@@ -57,6 +60,9 @@ var wall_jump_timer: float = 0.0
 var last_wall_jump_normal: Vector3 = Vector3.ZERO
 var coyote_timer: float = 0.0
 var jump_buffer_timer: float = 0.0
+var dash_buffer_timer: float = 0.0
+var slam_buffer_timer: float = 0.0
+var melee_buffer_timer: float = 0.0
 var has_jumped: bool = false
 var time_on_ground: float = 0.0
 var air_time: float = 0.0
@@ -157,17 +163,48 @@ func _input(event):
 		jump_buffer_timer = jump_buffer_time
 		
 	if event.is_action_pressed("dash"):
-		if skills.trigger_dash(Input.get_vector("move_left", "move_right", "move_forward", "move_backward"), transform.basis):
-			coyote_timer = 0.0
+		if _try_dash():
+			dash_buffer_timer = 0.0
+		else:
+			dash_buffer_timer = action_buffer_time
 	if event.is_action_pressed("slam"):
 		coyote_timer = 0.0
 		jump_buffer_timer = 0.0
-		skills.trigger_slam()
+		if skills.trigger_slam():
+			slam_buffer_timer = 0.0
+		else:
+			slam_buffer_timer = action_buffer_time
 	if event.is_action_pressed("melee") and not event.is_echo():
-		combat.perform_melee()
+		if combat.perform_melee():
+			melee_buffer_timer = 0.0
+		else:
+			melee_buffer_timer = action_buffer_time
 	if event.is_action_pressed("debug_max_bpm") or (event is InputEventKey and event.pressed and not event.is_echo() and (event.keycode == KEY_T or event.physical_keycode == KEY_T)):
 		if bpm_system is BPMSystem:
 			bpm_system.force_max_bpm()
+
+func _try_dash() -> bool:
+	if skills.trigger_dash(Input.get_vector("move_left", "move_right", "move_forward", "move_backward"), transform.basis):
+		coyote_timer = 0.0
+		return true
+	return false
+
+## Повтор буферизованных дэша, слэма и удара, пока окно буфера не истекло
+func _process_action_buffers(delta: float) -> void:
+	if dash_buffer_timer > 0.0:
+		dash_buffer_timer -= delta
+		if _try_dash():
+			dash_buffer_timer = 0.0
+	if slam_buffer_timer > 0.0:
+		slam_buffer_timer -= delta
+		if skills.trigger_slam():
+			slam_buffer_timer = 0.0
+			coyote_timer = 0.0
+			jump_buffer_timer = 0.0
+	if melee_buffer_timer > 0.0:
+		melee_buffer_timer -= delta
+		if combat.perform_melee():
+			melee_buffer_timer = 0.0
 
 func _process(_delta):
 	if is_dead:
@@ -200,6 +237,7 @@ func _physics_process(delta):
 		jump_buffer_timer -= delta
 		
 	combat.tick_cooldown(delta)
+	_process_action_buffers(delta)
 
 	if wall_jump_timer > 0.0:
 		wall_jump_timer -= delta
@@ -561,6 +599,9 @@ func _reset_movement_state() -> void:
 	skills.cancel_slam()
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
+	dash_buffer_timer = 0.0
+	slam_buffer_timer = 0.0
+	melee_buffer_timer = 0.0
 	has_jumped = false
 	time_on_ground = 0.0
 	air_time = 0.0
