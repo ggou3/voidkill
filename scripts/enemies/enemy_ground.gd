@@ -35,6 +35,10 @@ var repath_cooldown_timer: float = 0.0
 const REPATH_COOLDOWN: float = 2.0
 # Сколько врагов подряд луч проверки пола под выпадом может пропустить (стопка врагов по вертикали)
 const FLOOR_PROBE_MAX_ENEMY_HITS: int = 8
+# Отброс, прерывающий выпад и прыжок по нав-линку: КВАДРАТ модуля > 10, то есть модуль > ≈3.16 м/с.
+# Так задумано: выстрел Калибр-0 (отброс 4.5) и дробина Наковальни (6 + подброс 7) сбивают выпад,
+# дротик Инъектора (1.5) и игла Швейной (1.0) — нет. Сравнение именно с квадратом — не ошибка.
+const INTERRUPT_KNOCKBACK_SQ: float = 10.0
 
 var is_jumping_link: bool = false
 var jump_grace_timer: float = 0.0
@@ -604,9 +608,9 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 	if current_state == State.DEAD:
 		return
 
-	if is_shockwave or is_execute or is_melee or knockback_vector.length_squared() > 10.0:
+	if is_shockwave or is_execute or is_melee or knockback_vector.length_squared() > INTERRUPT_KNOCKBACK_SQ:
 		is_jumping_link = false
-	if current_state == State.LUNGE and (is_shockwave or is_execute or is_melee or amount >= 20 or knockback_vector.length_squared() > 10.0):
+	if current_state == State.LUNGE and (is_shockwave or is_execute or is_melee or amount >= 20 or knockback_vector.length_squared() > INTERRUPT_KNOCKBACK_SQ):
 		GameTypes.debug_log(&"enemy", "[%s] Lunge interrupted by damage/melee!" % [name])
 		end_lunge()
 	
