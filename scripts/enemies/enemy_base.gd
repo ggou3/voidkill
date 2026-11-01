@@ -473,6 +473,7 @@ func die(death_info: Dictionary = {}) -> void:
 	current_state = State.DEAD
 	set_physics_process(false)
 	AudioManager.play_sound("enemy_death")
+	GameManager.register_enemy_kill()
 	
 	if not death_info.is_empty():
 		if death_info.get("source_chain_depth", -1) >= 3:

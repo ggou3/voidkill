@@ -27,6 +27,14 @@ var _shake_time: float = 0.0
 var _shake_noise := FastNoiseLite.new()
 var _cam_roll: float = 0.0
 
+# Зум-толчок вместе со стоп-кадром: FOV на мгновение сужается и возвращается. Идёт в реальном
+# времени (твин игнорирует time_scale), FOV пишется в _process — физика в стоп-кадре почти стоит.
+## Сужение FOV (градусы) при стоп-кадре 0.1 с; пропорционально длительности, не больше ×1.5
+@export var zoom_punch_fov: float = 5.0
+var _zoom_offset: float = 0.0
+var _zoom_tween: Tween = null
+var _fov_base: float = BASE_FOV # FOV с поправкой на скорость, без зума
+
 @onready var player = $".."
 @onready var camera = $Camera3D
 @onready var raycast = $Camera3D/RayCast3D
@@ -147,6 +155,21 @@ func add_trauma_at(world_pos: Vector3, amount: float, inner_radius: float, outer
 		return
 	var falloff = 1.0 if dist <= inner_radius else 1.0 - (dist - inner_radius) / maxf(outer_radius - inner_radius, 0.001)
 	add_trauma(amount * falloff)
+
+## Зум-толчок на стоп-кадр длительностью duration (вызывает GameManager.hit_stop)
+func zoom_punch(duration: float) -> void:
+	var amount = clampf(zoom_punch_fov * duration / 0.1, 0.0, zoom_punch_fov * 1.5)
+	if amount <= 0.0:
+		return
+	if _zoom_tween:
+		_zoom_tween.kill()
+	_zoom_tween = create_tween().set_ignore_time_scale(true)
+	_zoom_tween.tween_property(self, "_zoom_offset", amount, 0.03).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_zoom_tween.tween_interval(maxf(duration - 0.03, 0.0))
+	_zoom_tween.tween_property(self, "_zoom_offset", 0.0, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _process(_delta: float) -> void:
+	camera.fov = _fov_base - _zoom_offset
 
 func trigger_hard_landing(impact_speed: float, threshold: float = 12.0):
 	var excess = max(0.0, impact_speed - threshold)
@@ -309,7 +332,7 @@ func update_visuals(delta: float, current_speed: float, is_on_floor: bool, is_sl
 	# Усиленный динамический FOV от скорости (откалиброван под 10-20 м/с)
 	var speed_over = max(0.0, current_speed - 8.0)
 	var fov_offset = clamp(speed_over * 3.5, 0.0, 42.0)
-	camera.fov = lerp(camera.fov, BASE_FOV + fov_offset, 12.0 * delta)
+	_fov_base = lerp(_fov_base, BASE_FOV + fov_offset, 12.0 * delta)
 
 	var target_bob_y = 0.0
 	var target_bob_x = 0.0

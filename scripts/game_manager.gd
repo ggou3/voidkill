@@ -38,6 +38,17 @@ var _hit_stop_end_ms: int = 0
 # Номер последнего продлившего стоп-кадр вызова: снимает стоп-кадр только его таймер
 var _hit_stop_token: int = 0
 
+## Мультикилл: MULTI_KILL_COUNT убийств за MULTI_KILL_WINDOW_MS — стоп-кадр (дробовик в толпу,
+## рейлган насквозь, цепь взрывов). Окно короткое, чтобы автоогонь по рою не давал стоп-кадр каждые
+## полсекунды; после серии — пауза MULTI_KILL_COOLDOWN_MS. Убийства той же серии удлиняют стоп-кадр.
+const MULTI_KILL_COUNT: int = 3
+const MULTI_KILL_WINDOW_MS: int = 150
+const MULTI_KILL_COOLDOWN_MS: int = 500
+const MULTI_KILL_HIT_STOP_MIN: float = 0.08
+const MULTI_KILL_HIT_STOP_MAX: float = 0.14
+var _recent_kill_ms: Array[int] = []
+var _multi_kill_burst_ms: int = -100000
+
 ## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
 ## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
 var show_enemy_health_bars: bool = false
@@ -118,10 +129,31 @@ func hit_stop(duration: float) -> void:
 	_hit_stop_end_ms = end_ms
 	_hit_stop_token += 1
 	Engine.time_scale = HIT_STOP_TIME_SCALE
+	if is_instance_valid(player) and "head" in player and is_instance_valid(player.head):
+		player.head.zoom_punch(duration)
 	# Таймер в реальном времени: идёт при паузе и не замедляется самим time_scale.
 	# Снимает стоп-кадр только таймер последнего продлившего вызова — без сверки с часами,
 	# которая при раннем срабатывании таймера оставила бы игру в замедлении навсегда
 	get_tree().create_timer(duration, true, false, true).timeout.connect(_on_hit_stop_timeout.bind(_hit_stop_token))
+
+## Враг убит (EnemyBase.die, подрывник — до взрыва). Считает мультикилл.
+func register_enemy_kill() -> void:
+	if current_state != State.PLAYING:
+		return
+	var now: int = Time.get_ticks_msec()
+	_recent_kill_ms.append(now)
+	while not _recent_kill_ms.is_empty() and now - _recent_kill_ms[0] > MULTI_KILL_WINDOW_MS:
+		_recent_kill_ms.pop_front()
+	var count: int = _recent_kill_ms.size()
+	if count < MULTI_KILL_COUNT:
+		return
+	if now - _multi_kill_burst_ms > MULTI_KILL_WINDOW_MS:
+		# Новая серия — только после паузы с прошлой
+		if now < _multi_kill_burst_ms + MULTI_KILL_COOLDOWN_MS:
+			return
+		_multi_kill_burst_ms = now
+	# 3 убийства — 0.08 с, каждое следующее в серии +0.01 с, не больше 0.14 с
+	hit_stop(clampf(0.05 + 0.01 * count, MULTI_KILL_HIT_STOP_MIN, MULTI_KILL_HIT_STOP_MAX))
 
 func _on_hit_stop_timeout(token: int) -> void:
 	if token == _hit_stop_token and _hit_stop_end_ms != 0:

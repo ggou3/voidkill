@@ -137,6 +137,7 @@ func _start_detonation() -> void:
 func die(death_info: Dictionary = {}) -> void:
 	# Если враг умирает ДО или ВО ВРЕМЯ таймера детонации — моментальный взрыв
 	if not has_exploded:
+		GameManager.register_enemy_kill()
 		_explode()
 	else:
 		super.die(death_info)
