@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://enemy_hunter.tscn" id="12_hunter"]
 [ext_resource type="PackedScene" path="res://enemy_flyer.tscn" id="13_flyer"]
 [ext_resource type="PackedScene" path="res://enemy_stalker.tscn" id="14_stalker"]
+[ext_resource type="Shader" path="res://shaders/world_surface.gdshader" id="surface_shader"]
 
 [sub_resource type="ProceduralSkyMaterial" id="SkyMat"]
 sky_top_color = Color(0.36, 0.33, 0.36, 1)
@@ -37,17 +38,32 @@ agent_height = 1.8
 agent_radius = 0.35
 agent_max_climb = 0.4
 
-[sub_resource type="StandardMaterial3D" id="Mat_Floor"]
-albedo_color = Color(0.44, 0.42, 0.4, 1)
-roughness = 0.85
+[sub_resource type="ShaderMaterial" id="Mat_Floor"]
+render_priority = 0
+shader = ExtResource("surface_shader")
+shader_parameter/albedo = Color(0.44, 0.42, 0.4, 1)
+shader_parameter/roughness = 0.85
+shader_parameter/metallic = 0.0
+shader_parameter/pattern = 0
+shader_parameter/tile_size = 2.0
 
-[sub_resource type="StandardMaterial3D" id="Mat_Wall"]
-albedo_color = Color(0.6, 0.57, 0.54, 1)
-roughness = 0.9
+[sub_resource type="ShaderMaterial" id="Mat_Wall"]
+render_priority = 0
+shader = ExtResource("surface_shader")
+shader_parameter/albedo = Color(0.6, 0.57, 0.54, 1)
+shader_parameter/roughness = 0.9
+shader_parameter/metallic = 0.0
+shader_parameter/pattern = 1
+shader_parameter/tile_size = 1.2
 
-[sub_resource type="StandardMaterial3D" id="Mat_Accent"]
-albedo_color = Color(0.34, 0.42, 0.52, 1)
-roughness = 0.7
+[sub_resource type="ShaderMaterial" id="Mat_Accent"]
+render_priority = 0
+shader = ExtResource("surface_shader")
+shader_parameter/albedo = Color(0.34, 0.42, 0.52, 1)
+shader_parameter/roughness = 0.7
+shader_parameter/metallic = 0.0
+shader_parameter/pattern = 2
+shader_parameter/tile_size = 1.5
 
 [sub_resource type="BoxShape3D" id="Zone1"]
 size = Vector3(60, 12, 60)

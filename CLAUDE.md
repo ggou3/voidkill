@@ -25,7 +25,7 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
 - `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
-Уровни — `levels/*.tscn` (сейчас `levels/demo_level.tscn`), новые шейдеры — `shaders/`
+Уровни — `levels/*.tscn` (сейчас `levels/demo_level.tscn`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
 (`blood_barrier.gdshader`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
 (`*.gdshader`), ресурсы навмеша (`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`,
 `project.godot` и документы.
