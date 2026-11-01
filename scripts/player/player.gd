@@ -100,6 +100,11 @@ func is_blood_active() -> bool:
 func get_current_max_speed() -> float:
 	return lerp(normal_max_speed, blood_buffed_max_speed, bpm_system.get_bpm_ratio())
 
+## Действующий предел горизонтальной скорости: потолок по BPM плюс превышение, разрешённое дэшем
+## (SkillManager.dash_overspeed, спадает после рывка). Разгон (bhop, склоны) по-прежнему до потолка по BPM.
+func get_speed_limit() -> float:
+	return get_current_max_speed() + (skills.dash_overspeed if skills else 0.0)
+
 func _ready():
 	coyote_timer = 0.0
 	jump_buffer_timer = 0.0
@@ -279,8 +284,8 @@ func _physics_process(delta):
 			velocity.x = vel_2d.x
 			velocity.z = vel_2d.y
 
-	# Глобальное ограничение максимальной скорости по горизонтали с учетом баффа крови
-	var current_cap = get_current_max_speed()
+	# Глобальное ограничение горизонтальной скорости: потолок по BPM + превышение после дэша
+	var current_cap = get_speed_limit()
 	var cur_vel_2d = Vector2(velocity.x, velocity.z)
 	if cur_vel_2d.length() > current_cap:
 		cur_vel_2d = cur_vel_2d.normalized() * current_cap
@@ -459,14 +464,15 @@ func handle_slide_physics(vel_2d: Vector2, direction: Vector3, delta: float) -> 
 			if vel_2d.length() < max_slope:
 				vel_2d += Vector2(slope_down.x, slope_down.z) * 32.0 * delta 
 				
-	if vel_2d.length() > cap:
-		vel_2d = vel_2d.normalized() * cap
-		
+	var limit = get_speed_limit()
+	if vel_2d.length() > limit:
+		vel_2d = vel_2d.normalized() * limit
+
 	return vel_2d
 
 func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: float, delta: float) -> Vector2:
 	var is_airborne = not is_on_floor() or has_jumped
-	var cap = get_current_max_speed()
+	var cap = get_speed_limit()
 	
 	if is_airborne:
 		if direction:

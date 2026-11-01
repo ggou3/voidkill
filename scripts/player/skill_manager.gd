@@ -32,6 +32,12 @@ var is_dashing = false
 var dash_timer = 0.0
 var dash_dir = Vector3.ZERO
 var dash_current_speed: float = 16.0
+# Дэш пробивает потолок скорости по BPM: на время рывка разрешено превышение (до абсолютного потолка
+# 25 м/с), после рывка разрешённое превышение спадает до нуля со скоростью dash_overspeed_decay —
+# скорость плавно стекает к потолку, а не обрезается в кадр окончания дэша
+## Спад разрешённого превышения потолка после дэша (м/с за секунду)
+@export var dash_overspeed_decay: float = 18.0
+var dash_overspeed: float = 0.0
 
 var is_slamming = false
 var slam_timer = 0.0
@@ -102,6 +108,7 @@ func trigger_dash(input_dir: Vector2, p_basis: Basis) -> bool:
 		var target_vel = max(dash_target_speed, max(forward_speed + dash_boost, cur_speed + 2.0))
 		var max_cap = player.blood_buffed_max_speed if "blood_buffed_max_speed" in player else 20.0
 		dash_current_speed = min(target_vel, max_cap)
+		dash_overspeed = maxf(dash_overspeed, dash_current_speed - player.get_current_max_speed())
 		AudioManager.play_sound("dash")
 		return true
 	return false
@@ -112,6 +119,8 @@ func process_dash(delta, vel: Vector3) -> Vector3:
 		if dash_timer <= 0: is_dashing = false
 		var out_y = vel.y if vel.y > 0.0 else 0.0
 		return Vector3(dash_dir.x * dash_current_speed, out_y, dash_dir.z * dash_current_speed)
+	if dash_overspeed > 0.0:
+		dash_overspeed = move_toward(dash_overspeed, 0.0, dash_overspeed_decay * delta)
 	return vel
 
 func trigger_slam():
@@ -130,6 +139,7 @@ func reset_skills() -> void:
 	slam_timer = 0.0
 	is_dashing = false
 	dash_timer = 0.0
+	dash_overspeed = 0.0
 	dash_interval_timer = 0.0
 	dash_timer_cd = 0.0
 	dashes = MAX_DASH

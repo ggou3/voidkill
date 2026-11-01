@@ -240,7 +240,7 @@ func perform_melee():
 
 	var cur_speed = Vector2(player.velocity.x, player.velocity.z).length()
 	var effective_speed = max(cur_speed, recent_peak_speed)
-	var cap = player.get_current_max_speed()
+	var cap = player.get_speed_limit()
 	var aim_dir = head.get_aim_direction()
 
 	# Строгий порог: конусная ударная волна активируется ТОЛЬКО при скорости >= 16.5 м/с
