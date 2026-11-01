@@ -212,8 +212,17 @@ func _input(event):
 		if bpm_system is BPMSystem:
 			bpm_system.force_max_bpm()
 
+## Курсор освобождён (Esc) — ввод игрока игнорируется, и опрашиваемый в физическом тике тоже
+func _has_input_focus() -> bool:
+	return Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED
+
+func _get_move_input() -> Vector2:
+	if not _has_input_focus():
+		return Vector2.ZERO
+	return Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+
 func _try_dash() -> bool:
-	if skills.trigger_dash(Input.get_vector("move_left", "move_right", "move_forward", "move_backward"), transform.basis):
+	if skills.trigger_dash(_get_move_input(), transform.basis):
 		coyote_timer = 0.0
 		return true
 	return false
@@ -277,7 +286,7 @@ func _physics_process(delta):
 			move_and_slide()
 		return
 		
-	var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+	var input_dir = _get_move_input()
 	current_horiz_speed = Vector2(velocity.x, velocity.z).length()
 	
 	# Обновление таймеров отзывчивости управления (Coyote time и Jump buffer)
@@ -323,7 +332,8 @@ func _physics_process(delta):
 
 	head.set_visual_inputs(current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun.wallrun_side if wallrun.is_wallrunning else 0.0)
 
-	var wants_crouch = Input.is_action_pressed("slide")
+	# Без фокуса ввода присед не меняется (не встаём и не садимся сами)
+	var wants_crouch = Input.is_action_pressed("slide") if _has_input_focus() else is_crouched
 
 	if wants_crouch and not is_crouched and not skills.is_slamming and not wallrun.is_wallrunning:
 		is_crouched = true
@@ -346,7 +356,7 @@ func _physics_process(delta):
 	if not is_on_floor() and not skills.is_dashing and not skills.is_slamming and not wallrun.is_wallrunning:
 		velocity.y -= gravity * 2.5 * delta
 
-	if Input.is_action_just_pressed("jump") and not skills.is_slamming:
+	if Input.is_action_just_pressed("jump") and not skills.is_slamming and _has_input_focus():
 		jump_buffer_timer = jump_buffer_time
 
 	if jump_buffer_timer > 0.0 and not skills.is_slamming:
@@ -462,7 +472,7 @@ func handle_jump() -> bool:
 				var boosted = clamp(speed_2d * mult, speed_2d, cap)
 				var dir = Vector2(velocity.x, velocity.z).normalized()
 				if dir == Vector2.ZERO:
-					var input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
+					var input_dir = _get_move_input()
 					if input_dir != Vector2.ZERO:
 						var wish = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 						dir = Vector2(wish.x, wish.z).normalized()
@@ -624,6 +634,7 @@ func heal(amount: int, is_melee_bonus: bool = false):
 ## Ретрансляция смерти подписчикам Player и сброс состояния движения
 func _on_health_died():
 	died.emit()
+	weapons.deactivate_all_projectiles()
 	_reset_movement_state()
 	_stop_low_health_feedback()
 

@@ -26,6 +26,8 @@ var active: bool = false
 var style: StringName = &""
 ## Произвольные данные оружия о снаряде (например, нить у игл Швейной)
 var payload: Dictionary = {}
+## Идёт WeaponBase.on_projectile_hit этого снаряда — переиспользовать из пула нельзя
+var in_hit_callback: bool = false
 
 var _life: float = 0.0
 var _collision_mask: int = 1
@@ -38,6 +40,8 @@ var _mesh: MeshInstance3D = null
 ## попасть немного легче. Стены сфера не задевает, поэтому снаряд не цепляется за углы
 var _hit_radius: float = 0.0
 var _hit_shape: SphereShape3D = null
+# Не-цели сферы (стены, зоны секторов), уже встреченные за полёт: сфера не тратит на них запросы каждый тик
+var _sphere_skip: Array[RID] = []
 var _host: Node3D = null
 var _host_local: Transform3D = Transform3D.IDENTITY
 var _homing_target: Node3D = null
@@ -67,6 +71,7 @@ func launch(p_weapon: WeaponBase, origin: Vector3, p_velocity: Vector3, muzzle_p
 		if not _hit_shape:
 			_hit_shape = SphereShape3D.new()
 		_hit_shape.radius = hit_radius
+	_sphere_skip.clear()
 	mode = Mode.FLY
 	_host = null
 	_homing_target = null
@@ -158,10 +163,10 @@ func _physics_process(delta: float) -> void:
 			return
 		var to_target: Vector3 = _homing_point() - global_position
 		if to_target.length() <= maxf(HOMING_ARRIVE_DIST, _homing_speed * delta):
-			var w: WeaponBase = weapon
+			# Оружию — до гашения: deactivate стирает payload, по которому оружие различает снаряды
+			if is_instance_valid(weapon):
+				weapon.on_projectile_homed(self)
 			deactivate()
-			if is_instance_valid(w):
-				w.on_projectile_homed(self)
 			return
 		velocity = to_target.normalized() * _homing_speed
 		_orient()
@@ -171,7 +176,10 @@ func _physics_process(delta: float) -> void:
 	var to: Vector3 = from + velocity * delta
 	var hit: Dictionary = _sweep(from, to)
 	if not hit.is_empty():
+		# Пока оружие обрабатывает попадание (убийство → разлёт игл), пул не отдаёт этот снаряд под новый
+		in_hit_callback = true
 		var keep_flying: bool = is_instance_valid(weapon) and weapon.on_projectile_hit(self, hit)
+		in_hit_callback = false
 		# Оружие могло погасить снаряд или перевести его в другой режим (застрял)
 		if not active or mode == Mode.STUCK:
 			return
@@ -237,6 +245,7 @@ func _with_radius(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, 
 	params.collide_with_areas = true
 	params.collide_with_bodies = true
 	var exclude: Array[RID] = _exclude.duplicate()
+	exclude.append_array(_sphere_skip)
 	for i in range(MAX_AREA_SKIPS + 1):
 		params.exclude = exclude
 		params.transform = Transform3D(Basis.IDENTITY, from)
@@ -255,8 +264,9 @@ func _with_radius(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3, 
 		var collider: Object = instance_from_id(info.collider_id)
 		if collider and _is_enemy_collider(collider):
 			return {"collider": collider, "position": info.point, "rid": info.rid, "normal": info.normal}
-		# Стена или посторонняя область — не цель сферы, ищем дальше без неё
+		# Стена или посторонняя область — не цель сферы, ищем дальше без неё (и до конца полёта)
 		exclude.append(info.rid)
+		_sphere_skip.append(info.rid)
 	return ray_hit
 
 func _orient() -> void:

@@ -27,6 +27,9 @@ const PIN_TIME: float = 2.0
 ## Разлёт игл из умершего врага (StatusEffectComponent.trigger_needle_burst): физические иглы, долетают
 ## примерно до радиуса разлёта ×1.25
 const BURST_SPEED: float = 30.0
+## Радиус попадания иглы разлёта — допуск прежних мгновенных лучей (NEEDLE_TOLERANCE 0.40 сверх тела):
+## с радиусом обычной иглы (0.12) разлёт попадал заметно реже
+const BURST_HIT_RADIUS: float = 0.40
 
 var _stuck: Array[PlayerProjectile] = []
 
@@ -84,9 +87,12 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 func spawn_burst_needle(origin: Vector3, dir: Vector3, radius: float, damage: int, pierce: bool, depth: int, exclude: Array[RID]) -> void:
 	if not weapon_manager:
 		return
+	var player := _get_player()
+	if player and player.is_dead:
+		return
 	var style: StringName = &"needle_blood" if pierce else &"needle"
 	var p: PlayerProjectile = weapon_manager.spawn_projectile_from(self, origin, dir * BURST_SPEED, style, false,
-		radius * 1.25 / BURST_SPEED, 0.0, exclude)
+		radius * 1.25 / BURST_SPEED, 0.0, exclude, BURST_HIT_RADIUS)
 	if p:
 		p.payload = {"burst": true, "damage": damage, "pierce": pierce, "depth": depth, "seen": {}}
 
@@ -125,6 +131,9 @@ func _try_pin(swarm: Node, hit_pos: Vector3, dir: Vector3, projectile: PlayerPro
 	var wall: Dictionary = space.intersect_ray(query)
 	if wall.is_empty() or GameTypes.resolve_enemy(wall.collider) != null:
 		return false
+	# Только стена: выстрел сверху вниз упирается лучом в пол — к полу рой не прибивается
+	if absf(wall.normal.y) >= 0.5:
+		return false
 	var flat_dir := Vector3(dir.x, 0.0, dir.z).normalized()
 	var pin_pos: Vector3 = wall.position - flat_dir * 0.35
 	pin_pos.y = swarm.global_position.y
@@ -134,7 +143,9 @@ func _try_pin(swarm: Node, hit_pos: Vector3, dir: Vector3, projectile: PlayerPro
 
 func _stick(projectile: PlayerProjectile, host: Node3D, pos: Vector3) -> void:
 	projectile.stick(host, pos, STUCK_TIME)
-	_stuck.append(projectile)
+	# Снаряд из пула мог погаснуть и застрять снова до очистки списка — второй записи не нужно
+	if not _stuck.has(projectile):
+		_stuck.append(projectile)
 	_prune_stuck()
 	while _stuck.size() > MAX_STUCK:
 		_stuck.pop_front().deactivate()
@@ -164,9 +175,11 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 	AudioManager.play_sound("needle_shot")
 	AudioManager.play_sound("dash")
 
-	# Хозяева игл: сколько игл в каждом
+	# Хозяева игл: сколько игл в каждом. Иглы разлёта не считаются: меток игл (add_needle) они не ставили
 	var hosts: Dictionary = {} # instance_id -> [враг, число игл]
 	for p in _stuck:
+		if p.payload.get("burst", false):
+			continue
 		var host: Node3D = p.get_host()
 		if host:
 			var key: int = host.get_instance_id()
@@ -185,7 +198,8 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 		return_offset = Vector3.ZERO
 	var count: int = _stuck.size()
 	for p in _stuck:
-		p.payload = {}
+		# Признак иглы разлёта сохраняется на возврат: она не стоила патрона и не возвращает его
+		p.payload = {"burst": true} if p.payload.get("burst", false) else {}
 		p.home_to(return_target, RETURN_SPEED, RETURN_LIFETIME, return_offset)
 	_stuck.clear()
 	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Stitch! Needles recalled: %d | Hosts yanked: %d" % [count, hosts.size()])
@@ -211,9 +225,9 @@ func _yank_host(host: Node3D, needles: int, player: Player) -> void:
 		host.wall_slam_source_melee = false
 		host.wall_slam_source_shockwave = false
 
-## Игла вернулась — патрон обратно в магазин
-func on_projectile_homed(_projectile: PlayerProjectile) -> void:
-	if not weapon_manager or not data:
+## Игла вернулась — патрон обратно в магазин (кроме игл разлёта)
+func on_projectile_homed(projectile: PlayerProjectile) -> void:
+	if not weapon_manager or not data or projectile.payload.get("burst", false):
 		return
 	weapon_manager.ammos[slot_index] = mini(weapon_manager.ammos[slot_index] + 1, data.max_ammo)
 	weapon_manager.ammo_changed.emit(slot_index, weapon_manager.ammos[slot_index], data.max_ammo)

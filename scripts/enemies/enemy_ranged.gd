@@ -24,6 +24,9 @@ var is_telegraphing_shot: bool = false
 const STRAFE_SPEED_FACTOR: float = 0.45
 var _strafe_side: float = 1.0
 var _strafe_timer: float = 0.0
+# Пауза проверки края после разворота: в узком проходе оба края рядом, разворот каждый тик — дрожь на месте
+const STRAFE_EDGE_RECHECK: float = 0.3
+var _strafe_edge_timer: float = 0.0
 var antenna_material: StandardMaterial3D = null
 @onready var antenna_tip: MeshInstance3D = get_node_or_null("AntennaTip")
 
@@ -176,14 +179,22 @@ func _get_strafe_velocity(delta: float) -> Vector3:
 	if to_player.length_squared() < 0.01:
 		return Vector3.ZERO
 	var strafe_dir: Vector3 = to_player.normalized().cross(Vector3.UP) * _strafe_side
-	# Край навмеша (уступ, стена) впереди по стрейфу — разворот
-	if nav_agent:
+	# Край навмеша (уступ, стена) впереди по стрейфу — разворот. Сравнение по горизонтали: центр тела
+	# выше навмеша на ~1 м, и полная 3D-дистанция до ближайшей точки была больше порога всегда
+	_strafe_edge_timer -= delta
+	if nav_agent and _strafe_edge_timer <= 0.0:
 		var map: RID = nav_agent.get_navigation_map()
 		if NavigationServer3D.map_get_iteration_id(map) > 0:
 			var ahead: Vector3 = global_position + strafe_dir * 1.5
-			if NavigationServer3D.map_get_closest_point(map, ahead).distance_to(ahead) > 0.6:
+			var ahead_on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, ahead)
+			var off_mesh: Vector3 = ahead_on_mesh - ahead
+			off_mesh.y = 0.0
+			# Перепад до точки впереди — уступ (ближайшей оказалась точка другого яруса); пандусы до ~33° проходят
+			var drop: float = absf(ahead_on_mesh.y - NavigationServer3D.map_get_closest_point(map, global_position).y)
+			if off_mesh.length() > 0.6 or drop > 1.0:
 				_strafe_side = -_strafe_side
 				strafe_dir = -strafe_dir
+				_strafe_edge_timer = STRAFE_EDGE_RECHECK
 	return strafe_dir * (move_speed * STRAFE_SPEED_FACTOR * slow_factor)
 
 func _get_projectile_spawn_position() -> Vector3:

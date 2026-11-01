@@ -92,6 +92,9 @@ const PITCH_VARIATION: Dictionary = {
 # Лимит одновременных копий одного звука: новый звук сверх лимита перезапускает самую старую копию,
 # а не занимает ещё один плеер (рой из 30 попаданий за кадр — шум, а не информация)
 const MAX_VOICES_PER_SOUND: int = 4
+## Лимит копий для приоритетных звуков (PRIORITY_SOUNDS) — выше самого большого пула токенов атак
+## (рой — 5): каждый одновременный телеграф слышен, пятый замах не обрывает первый
+const MAX_VOICES_PER_PRIORITY_SOUND: int = 6
 ## Телеграфы атак — высший приоритет микса: когда свободных плееров нет, вытесняется самый старый
 ## не-телеграф (смерть, взрыв, тиканье), а телеграф — только если играют одни телеграфы
 const PRIORITY_SOUNDS: Array[String] = [
@@ -296,7 +299,8 @@ func _pick_voice(pool: Array, voice_sound: Array[String], voice_start: Array[int
 		elif free_idx < 0:
 			free_idx = i
 	var idx: int = oldest_low if oldest_low >= 0 else oldest_any
-	if same_count >= MAX_VOICES_PER_SOUND:
+	var voice_limit: int = MAX_VOICES_PER_PRIORITY_SOUND if PRIORITY_SOUNDS.has(sound_name) else MAX_VOICES_PER_SOUND
+	if same_count >= voice_limit:
 		idx = oldest_same
 	elif free_idx >= 0:
 		idx = free_idx

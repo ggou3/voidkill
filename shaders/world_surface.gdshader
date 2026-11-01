@@ -25,7 +25,7 @@ varying vec3 world_normal;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	world_normal = normalize(MODEL_NORMAL_MATRIX * NORMAL);
 }
 
 float hash(vec2 p) {
@@ -66,7 +66,7 @@ vec3 surface_pattern(vec2 uv) {
 	vec2 id = floor(cell);
 	vec2 f = fract(cell);
 	vec2 edge = min(f, 1.0 - f);
-	edge.x /= aspect;
+	edge.x *= aspect; // в единицах высоты кирпича: ширина плитки = aspect × высота
 	float gw = groove_width;
 	float groove = 1.0 - smoothstep(gw * 0.5, gw, min(edge.x, edge.y));
 	float rivet = 0.0;

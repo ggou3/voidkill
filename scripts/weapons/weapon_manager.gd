@@ -62,14 +62,14 @@ func spawn_projectile(weapon: WeaponBase, direction: Vector3, speed: float, styl
 	if player is CollisionObject3D:
 		exclude.append(player.get_rid())
 	var mask: int = head.raycast.collision_mask if head.raycast else 1
-	p.launch(weapon, head.camera.global_position, direction.normalized() * speed + inherit, head.get_muzzle_position(),
+	p.launch(weapon, head.get_physics_camera_position(), direction.normalized() * speed + inherit, head.get_muzzle_position(),
 		style, visual[0], visual[1], visual[2], lifetime, is_alt, exclude, mask, gravity, visual[3])
 	return p
 
 ## Выпустить снаряд из произвольной точки мира (не из камеры): разлёт игл из умершего врага и т.п.
-## exclude — что снаряд не задевает (игрок исключён всегда)
+## exclude — что снаряд не задевает (игрок исключён всегда), hit_radius < 0 — радиус попадания стиля
 func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector3, style: StringName, is_alt: bool = false,
-		lifetime: float = 2.0, gravity: float = 0.0, exclude: Array[RID] = []) -> PlayerProjectile:
+		lifetime: float = 2.0, gravity: float = 0.0, exclude: Array[RID] = [], hit_radius: float = -1.0) -> PlayerProjectile:
 	var p: PlayerProjectile = _get_free_projectile()
 	if not p:
 		return null
@@ -79,7 +79,8 @@ func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector
 	if player is CollisionObject3D:
 		all_exclude.append(player.get_rid())
 	var mask: int = head.raycast.collision_mask if is_instance_valid(head) and head.raycast else 1
-	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity, visual[3])
+	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity,
+		hit_radius if hit_radius >= 0.0 else visual[3])
 	return p
 
 ## Оружие слота по классу-проверке (например, Швейная для разлёта игл)
@@ -96,6 +97,13 @@ func get_active_projectiles() -> Array[PlayerProjectile]:
 		if is_instance_valid(p) and p.active:
 			result.append(p)
 	return result
+
+## Погасить все снаряды игрока (летящие, застрявшие, возвращающиеся): после смерти игрока они не наносят
+## урона и не начисляют BPM за убийства
+func deactivate_all_projectiles() -> void:
+	for p in _projectiles:
+		if is_instance_valid(p) and p.active:
+			p.deactivate()
 
 func _get_free_projectile() -> PlayerProjectile:
 	# Снаряды — дети сцены: перезапуск сцены их освобождает (filter вернул бы нетипизированный Array)
@@ -114,10 +122,15 @@ func _get_free_projectile() -> PlayerProjectile:
 		scene_root.add_child(p)
 		_projectiles.append(p)
 		return p
-	_projectile_cursor = (_projectile_cursor + 1) % _projectiles.size()
-	var reused: PlayerProjectile = _projectiles[_projectile_cursor]
-	reused.deactivate()
-	return reused
+	# Пул полон — следующий по кругу, кроме снаряда, чьё попадание сейчас обрабатывается (его состояние
+	# после возврата из оружия ещё читается)
+	for _i in range(_projectiles.size()):
+		_projectile_cursor = (_projectile_cursor + 1) % _projectiles.size()
+		var reused: PlayerProjectile = _projectiles[_projectile_cursor]
+		if not reused.in_hit_callback:
+			reused.deactivate()
+			return reused
+	return null
 
 func _get_projectile_visual(style: StringName) -> Array:
 	if _projectile_visuals.has(style):

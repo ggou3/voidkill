@@ -20,6 +20,8 @@ const INERTIA_SCALE_MIN: float = 0.75
 const INERTIA_SCALE_MAX: float = 1.6
 const INERTIA_FEEDBACK_SCALE: float = 1.3 # от такого множителя — отдельный удар-отклик (раз на выстрел)
 var _inertia_fx_frame: int = -1
+var _inertia_vel_frame: int = -1
+var _inertia_target_vel: Dictionary = {} # instance_id цели -> скорость до первого попадания в тике
 
 func _init() -> void:
 	if not data:
@@ -64,11 +66,19 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 			head.add_trauma(0.12)
 	return false
 
-## Скорость столкновения вдоль выстрела (дробь минус цель) сверх PELLET_SPEED → множитель урона
+## Скорость столкновения вдоль выстрела (дробь минус цель) сверх PELLET_SPEED → множитель урона.
+## Скорость цели — на первое попадание в этом тике: дробины одного выстрела иначе видели бы отброс от первых
 func _inertia_scale(pellet_velocity: Vector3, target: Node, dir: Vector3) -> float:
 	var target_velocity: Vector3 = Vector3.ZERO
 	if is_instance_valid(target) and "velocity" in target:
-		target_velocity = target.velocity
+		var frame: int = Engine.get_physics_frames()
+		if frame != _inertia_vel_frame:
+			_inertia_vel_frame = frame
+			_inertia_target_vel.clear()
+		var key: int = target.get_instance_id()
+		if not _inertia_target_vel.has(key):
+			_inertia_target_vel[key] = target.velocity
+		target_velocity = _inertia_target_vel[key]
 	var excess: float = (pellet_velocity - target_velocity).dot(dir) - PELLET_SPEED
 	return clampf(1.0 + INERTIA_BONUS_AT_REF * excess / INERTIA_REF_SPEED, INERTIA_SCALE_MIN, INERTIA_SCALE_MAX)
 

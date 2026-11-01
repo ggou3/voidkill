@@ -32,6 +32,7 @@ const FLANK_CROWD_RADIUS: float = 5.0
 const FLANK_CLOSE_DIST: float = 4.5
 const FLANK_REROLL_MIN: float = 3.0 # с — угол подхода иногда меняется, чтобы рисунок не застывал
 const FLANK_REROLL_MAX: float = 6.0
+const FLANK_MAX_HEIGHT_DIFF: float = 1.5 # м — точка обхода выше/ниже пола под игроком отбрасывается
 const WEAVE_FREQ: float = 5.0 # рад/с
 const WEAVE_AMP: float = 0.6
 var _approach_angle: float = 0.0
@@ -232,9 +233,13 @@ func _process_chase(delta: float) -> void:
 		
 	# Проверка достижимости цели (защита от бесконечного застревания в недостижимой точке)
 	var is_reachable = nav_agent.is_target_reachable() if nav_agent else true
-	# С постоянным агром недостижимость не прерывает погоню: путь NavigationAgent3D к недостижимой
-	# цели ведёт к ближайшей достижимой точке, враг идёт туда и ждёт там
-	if not is_reachable and not persistent_aggro:
+	if not is_reachable and _approach_angle != 0.0:
+		# Недостижима точка обхода (остров навмеша), а не игрок — до следующей смены угла идём прямо
+		_approach_angle = 0.0
+		path_update_timer = 0.0
+	elif not is_reachable and not persistent_aggro:
+		# С постоянным агром недостижимость не прерывает погоню: путь NavigationAgent3D к недостижимой
+		# цели ведёт к ближайшей достижимой точке, враг идёт туда и ждёт там
 		unreachable_timer += delta
 		if unreachable_timer >= UNREACHABLE_TIMEOUT:
 			GameTypes.debug_log(&"enemy", "[%s] Target unreachable for %.1fs, returning to IDLE with repath cooldown" % [name, unreachable_timer])
@@ -313,6 +318,9 @@ func _get_approach_point(dist_to_player: float) -> Vector3:
 		return player_pos
 	var on_mesh: Vector3 = NavigationServer3D.map_get_closest_point(map, point)
 	if on_mesh.distance_to(point) > 3.0:
+		return player_pos
+	# Точка прилипла к другому ярусу (уступ, ящик, нижний этаж) — путь увёл бы от игрока или в тупик
+	if absf(on_mesh.y - NavigationServer3D.map_get_closest_point(map, player_pos).y) > FLANK_MAX_HEIGHT_DIFF:
 		return player_pos
 	return on_mesh
 

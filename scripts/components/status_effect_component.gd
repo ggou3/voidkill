@@ -310,6 +310,10 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 	var exclude: Array[RID] = []
 	if is_instance_valid(actor) and actor is CollisionObject3D:
 		exclude.append((actor as CollisionObject3D).get_rid())
+		# Иглы стартуют внутри головы умершего: без исключения сфера попадания цепляла её первым тиком
+		var head_hitbox = actor.get_node_or_null("HeadHitbox")
+		if head_hitbox is CollisionObject3D:
+			exclude.append((head_hitbox as CollisionObject3D).get_rid())
 
 	for i in range(count):
 		var needle_dir: Vector3 = Vector3.FORWARD

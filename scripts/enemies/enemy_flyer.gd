@@ -49,6 +49,8 @@ var bob_time: float = 0.0
 @onready var left_ray: RayCast3D = get_node_or_null("LeftRay")
 @onready var right_ray: RayCast3D = get_node_or_null("RightRay")
 @onready var laser_root: Node3D = get_node_or_null("LaserRoot")
+var _enemy_exclude: Array[RID] = []
+var _enemy_exclude_frame: int = -1
 @onready var laser_outer: MeshInstance3D = get_node_or_null("LaserRoot/LaserOuter")
 @onready var laser_core: MeshInstance3D = get_node_or_null("LaserRoot/LaserCore")
 
@@ -347,11 +349,7 @@ func _cast_laser_and_damage(eye_pos: Vector3) -> void:
 	var space_state = get_world_3d().direct_space_state
 	if space_state:
 		var q = PhysicsRayQueryParameters3D.create(eye_pos, beam_end)
-		var exclude: Array[RID] = [get_rid()]
-		for enemy in get_tree().get_nodes_in_group("enemy"):
-			if enemy is CollisionObject3D:
-				exclude.append(enemy.get_rid())
-		q.exclude = exclude
+		q.exclude = _get_enemy_exclude()
 		var hit = space_state.intersect_ray(q)
 		if not hit.is_empty():
 			beam_end = hit.position
@@ -383,6 +381,7 @@ func _orient_cylinder_between(node: Node3D, start_pos: Vector3, end_pos: Vector3
 	if dist < 0.1:
 		node.visible = false
 		return
+	var was_hidden: bool = not node.visible
 	node.visible = true
 	node.global_position = (start_pos + end_pos) * 0.5
 	var dir = (end_pos - start_pos).normalized()
@@ -392,6 +391,9 @@ func _orient_cylinder_between(node: Node3D, start_pos: Vector3, end_pos: Vector3
 		node.look_at(node.global_position + dir, Vector3.UP)
 	node.rotate_object_local(Vector3.RIGHT, deg_to_rad(90.0))
 	node.scale = Vector3(thickness, dist, thickness)
+	# Луч появился — без сброса интерполяция кадр тянула бы его из положения прошлой атаки
+	if was_hidden:
+		node.reset_physics_interpolation()
 
 func _render_beam_between(start_pos: Vector3, end_pos: Vector3, thickness: float, alpha: float) -> void:
 	if not laser_root or not laser_outer:
@@ -407,16 +409,26 @@ func _update_boundary_visuals() -> void:
 		return
 	var eye_pos = _get_eye_position()
 	var space_state = get_world_3d().direct_space_state
-	var exclude: Array[RID] = [get_rid()]
-	for enemy in get_tree().get_nodes_in_group("enemy"):
-		if enemy is CollisionObject3D:
-			exclude.append(enemy.get_rid())
+	var exclude: Array[RID] = _get_enemy_exclude().duplicate()
 	var p = get_tree().get_first_node_in_group("player")
 	if is_instance_valid(p) and p is CollisionObject3D:
 		exclude.append(p.get_rid())
 		
 	_cast_boundary_line(eye_pos, boundary_left_dir, boundary_left_root, boundary_left_marker, space_state, exclude)
 	_cast_boundary_line(eye_pos, boundary_right_dir, boundary_right_root, boundary_right_marker, space_state, exclude)
+
+## Исключения лучей лазера и границ сектора: сам летун и все враги. Группа обходится раз за физический
+## тик — луч и границы в одном тике обходили её дважды
+func _get_enemy_exclude() -> Array[RID]:
+	var frame: int = Engine.get_physics_frames()
+	if frame != _enemy_exclude_frame:
+		_enemy_exclude_frame = frame
+		_enemy_exclude.clear()
+		_enemy_exclude.append(get_rid())
+		for enemy in get_tree().get_nodes_in_group("enemy"):
+			if enemy is CollisionObject3D:
+				_enemy_exclude.append(enemy.get_rid())
+	return _enemy_exclude
 
 func _cast_boundary_line(eye_pos: Vector3, dir: Vector3, root: Node3D, marker: MeshInstance3D, space_state: PhysicsDirectSpaceState3D, exclude: Array[RID]) -> void:
 	var end_pos = eye_pos + dir * 45.0

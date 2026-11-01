@@ -12,6 +12,7 @@ const WALK_SPEED = 10.0
 # текущую физическую позицию тела, чтобы лучи прицела шли из актуальной точки.
 ## Высота глаз над началом тела (присед при слайде твинит её к 0)
 var eye_height: float = 0.6
+var _default_eye_height: float = 0.6 # высота глаз стоя (из сцены), к ней возвращает reset_view
 var _pitch: float = 0.0
 # Входные данные визуала камеры и вьюмодели — записывает Player в физическом тике, применяет _process
 var _vis_speed: float = 0.0
@@ -69,6 +70,7 @@ var muzzle_flash_tween: Tween
 
 func _ready():
 	eye_height = position.y
+	_default_eye_height = eye_height
 	top_level = true
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	_sync_to_player(false)
@@ -140,9 +142,29 @@ func _sync_to_player(interpolated: bool) -> void:
 	var origin: Vector3 = player.get_global_transform_interpolated().origin if interpolated else player.global_position
 	global_transform = Transform3D(player.global_transform.basis * Basis(Vector3.RIGHT, _pitch), origin + Vector3.UP * eye_height)
 
-## Сброс взгляда по вертикали (возрождение) и немедленная постановка на тело
+## Позиция камеры по физическому положению тела. В кадре голова стоит на интерполированном теле, которое
+## отстаёт от физического до тика (на 25 м/с — ~0.4 м); снаряды стартуют отсюда, а не из-за спины
+func get_physics_camera_position() -> Vector3:
+	return camera.global_position + (player.global_position + Vector3.UP * eye_height - global_position)
+
+## Сброс взгляда по вертикали (возрождение) и немедленная постановка на тело. Сбрасывается и всё, что
+## застыло со смерти (update_visuals у мёртвого не идёт): высота глаз после слайда, отдача, тряска, крен, FOV
 func reset_view() -> void:
 	_pitch = 0.0
+	if slide_tween:
+		slide_tween.kill()
+	eye_height = _default_eye_height
+	if _zoom_tween:
+		_zoom_tween.kill()
+	_zoom_offset = 0.0
+	_fov_base = BASE_FOV
+	camera.fov = BASE_FOV
+	camera_recoil = 0.0
+	trauma = 0.0
+	_cam_roll = 0.0
+	landing_dip = 0.0
+	camera.position = Vector3.ZERO
+	camera.rotation = Vector3.ZERO
 	_sync_to_player(false)
 
 func _physics_process(_delta: float) -> void:

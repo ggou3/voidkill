@@ -101,8 +101,9 @@ func force_max_bpm():
 func add_bpm(amount: float, reason: StringName = &""):
 	if amount <= 0.0:
 		return
+	# В подсказку — фактическая прибавка после клампа (на MAX_BPM — ноль, без подсказки)
 	if reason != &"":
-		bpm_event.emit(amount, reason, 1.0)
+		bpm_event.emit(_clamped_gain(amount), reason, 1.0)
 	var old_tier = get_bpm_tier()
 	bpm = clamp(bpm + amount, MIN_BPM, MAX_BPM)
 	time_since_bpm_gain = 0.0
@@ -131,15 +132,21 @@ func record_kill_bpm(weapon_type: String, is_shockwave: bool = false) -> float:
 		last_kill_weapon = weapon_type
 
 	var total_bpm = (base_bpm + bonus_bpm) * combat_momentum
-	bpm_event.emit(base_bpm * combat_momentum, &"shockwave" if is_shockwave else &"kill", combat_momentum)
+	# Подсказка — фактическая прибавка после клампа, поделённая между убийством и разнообразием
+	var gain_share: float = _clamped_gain(total_bpm) / total_bpm
+	bpm_event.emit(base_bpm * combat_momentum * gain_share, &"shockwave" if is_shockwave else &"kill", combat_momentum)
 	if bonus_bpm > 0.0:
-		bpm_event.emit(bonus_bpm * combat_momentum, &"variety", combat_momentum)
+		bpm_event.emit(bonus_bpm * combat_momentum * gain_share, &"variety", combat_momentum)
 	if combat_momentum > 1.0:
 		GameTypes.debug_log(&"bpm", "[COMBAT MOMENTUM] x%.2f applied: +%.1f -> +%.1f BPM" % [
 			combat_momentum, base_bpm + bonus_bpm, total_bpm
 		])
 	add_bpm(total_bpm)
 	return total_bpm
+
+## Сколько BPM реально прибавится от amount с учётом потолка MAX_BPM
+func _clamped_gain(amount: float) -> float:
+	return clampf(bpm + amount, MIN_BPM, MAX_BPM) - bpm
 
 func _show_combo_popup(bonus_amount: float):
 	hud_popup_requested.emit("★ VARIETY +%d ★" % int(round(bonus_amount)))
