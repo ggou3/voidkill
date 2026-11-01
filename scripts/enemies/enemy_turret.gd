@@ -195,6 +195,7 @@ func _start_telegraph() -> void:
 	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	is_telegraphing = true
+	AudioManager.play_sound_at("turret_windup", global_position)
 	if telegraph_tween and telegraph_tween.is_valid():
 		telegraph_tween.kill()
 	telegraph_tween = create_tween().set_parallel(true)

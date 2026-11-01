@@ -10,7 +10,7 @@ const POOL_SIZE: int = 16
 var players: Array[AudioStreamPlayer] = []
 
 # Позиционный пул (play_sound_at): звуки врагов в мире
-const POOL_SIZE_3D: int = 12
+const POOL_SIZE_3D: int = 16
 const POSITIONAL_UNIT_SIZE: float = 8.0 # до этого расстояния — полная громкость
 const POSITIONAL_MAX_DISTANCE: float = 60.0
 var players_3d: Array[AudioStreamPlayer3D] = []
@@ -43,7 +43,18 @@ var sound_durations: Dictionary = {
 	"shield_block": 0.22,
 	"bomber_tick": 0.045,
 	"hunter_awaken": 0.35,
-	"stalker_reveal": 0.30
+	"stalker_reveal": 0.30,
+	# Звуки врагов (в точке мира, play_sound_at). Телеграфы — восходящий тон в средней полосе:
+	# выстрелы игрока, наоборот, падают по высоте, поэтому угроза не путается со своим оружием
+	"melee_windup": 0.25,
+	"swarm_windup": 0.15,
+	"lunge_windup": 0.38,
+	"lunge_dash": 0.2,
+	"ranged_windup": 0.35,
+	"ranged_shot": 0.22,
+	"turret_windup": 0.35,
+	"flyer_charge": 0.6,
+	"flyer_laser": 0.45
 }
 
 var external_sounds: Dictionary = {}
@@ -68,10 +79,25 @@ const PITCH_VARIATION: Dictionary = {
 	"shield_block": 0.06,
 	"parry_deflect": 0.04,
 	"dry_fire": 0.05,
+	"melee_windup": 0.05,
+	"swarm_windup": 0.08,
+	"lunge_windup": 0.04,
+	"lunge_dash": 0.05,
+	"ranged_windup": 0.03,
+	"ranged_shot": 0.05,
+	"turret_windup": 0.02,
+	"flyer_charge": 0.03,
+	"flyer_laser": 0.04,
 }
 # Лимит одновременных копий одного звука: новый звук сверх лимита перезапускает самую старую копию,
 # а не занимает ещё один плеер (рой из 30 попаданий за кадр — шум, а не информация)
 const MAX_VOICES_PER_SOUND: int = 4
+## Телеграфы атак — высший приоритет микса: когда свободных плееров нет, вытесняется самый старый
+## не-телеграф (смерть, взрыв, тиканье), а телеграф — только если играют одни телеграфы
+const PRIORITY_SOUNDS: Array[String] = [
+	"melee_windup", "swarm_windup", "lunge_windup", "ranged_windup", "turret_windup", "flyer_charge",
+	"bomber_tick", "stalker_reveal"
+]
 var _voice_sound: Array[String] = []
 var _voice_start_ms: Array[int] = []
 
@@ -219,6 +245,7 @@ func _pick_voice(pool: Array, voice_sound: Array[String], voice_start: Array[int
 	var oldest_same: int = -1
 	var free_idx: int = -1
 	var oldest_any: int = 0
+	var oldest_low: int = -1 # самый старый плеер с не-приоритетным звуком
 	for i in range(pool.size()):
 		if pool[i].playing:
 			if voice_sound[i] == sound_name:
@@ -227,9 +254,11 @@ func _pick_voice(pool: Array, voice_sound: Array[String], voice_start: Array[int
 					oldest_same = i
 			if voice_start[i] < voice_start[oldest_any]:
 				oldest_any = i
+			if not PRIORITY_SOUNDS.has(voice_sound[i]) and (oldest_low < 0 or voice_start[i] < voice_start[oldest_low]):
+				oldest_low = i
 		elif free_idx < 0:
 			free_idx = i
-	var idx: int = oldest_any
+	var idx: int = oldest_low if oldest_low >= 0 else oldest_any
 	if same_count >= MAX_VOICES_PER_SOUND:
 		idx = oldest_same
 	elif free_idx >= 0:
@@ -334,6 +363,15 @@ func _generate_all_procedural_sounds():
 	sound_buffers["bomber_tick"] = _gen_bomber_tick()
 	sound_buffers["hunter_awaken"] = _gen_hunter_awaken()
 	sound_buffers["stalker_reveal"] = _gen_stalker_reveal()
+	sound_buffers["melee_windup"] = _gen_melee_windup("melee_windup", 140.0, 420.0)
+	sound_buffers["swarm_windup"] = _gen_swarm_windup()
+	sound_buffers["lunge_windup"] = _gen_melee_windup("lunge_windup", 90.0, 300.0)
+	sound_buffers["lunge_dash"] = _gen_lunge_dash()
+	sound_buffers["ranged_windup"] = _gen_charge_whine("ranged_windup", 220.0, 880.0, 9.0)
+	sound_buffers["ranged_shot"] = _gen_ranged_shot()
+	sound_buffers["turret_windup"] = _gen_turret_windup()
+	sound_buffers["flyer_charge"] = _gen_charge_whine("flyer_charge", 300.0, 1500.0, 14.0)
+	sound_buffers["flyer_laser"] = _gen_flyer_laser()
 
 func _gen_dry_fire() -> PackedVector2Array:
 	var dur = sound_durations["dry_fire"]
@@ -966,4 +1004,144 @@ func _gen_stalker_reveal() -> PackedVector2Array:
 		arr[i] = Vector2(s, s)
 	return arr
 
+# ==============================================================================
+# ЗВУКИ ВРАГОВ (телеграфы атак и выстрелы, играются в точке мира)
+# ==============================================================================
 
+# "melee_windup" / "lunge_windup" — нарастающий хриплый рык замаха: тон растёт от f_start к f_end,
+# громкость нарастает к концу (удар приходит на пике)
+func _gen_melee_windup(sound_name: String, f_start: float, f_end: float) -> PackedVector2Array:
+	var dur: float = sound_durations[sound_name]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	var rasp: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var k: float = t / dur
+		var freq: float = lerpf(f_start, f_end, k * k)
+		phase += TAU * freq * dt
+		# Пилообразный тон (рык) + отфильтрованный шум (хрип)
+		var saw: float = fposmod(phase / TAU, 1.0) * 2.0 - 1.0
+		rasp = lerpf(rasp, randf_range(-1.0, 1.0), 0.3)
+		var env: float = (0.25 + 0.75 * k) * minf(1.0, (dur - t) / 0.03)
+		var s: float = clampf((saw * 0.45 + rasp * 0.5) * env * 0.8, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "swarm_windup" — короткий стрекот роя: высокий восходящий тон с быстрой модуляцией 55 Гц
+func _gen_swarm_windup() -> PackedVector2Array:
+	var dur: float = sound_durations["swarm_windup"]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var k: float = t / dur
+		var freq: float = lerpf(700.0, 1300.0, k)
+		phase += TAU * freq * dt
+		var chitter: float = 0.5 + 0.5 * signf(sin(TAU * 55.0 * t))
+		var env: float = (0.4 + 0.6 * k) * minf(1.0, (dur - t) / 0.02)
+		var s: float = clampf(sin(phase) * chitter * env * 0.5, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "lunge_dash" — свист рывка врага: полоса шума, частота фильтра растёт и падает
+func _gen_lunge_dash() -> PackedVector2Array:
+	var dur: float = sound_durations["lunge_dash"]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var low: float = 0.0
+	var band: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var k: float = t / dur
+		var cutoff: float = 0.08 + 0.25 * sin(k * PI)
+		var raw: float = randf_range(-1.0, 1.0)
+		low = lerpf(low, raw, cutoff)
+		band = lerpf(band, low, 0.5)
+		var env: float = sin(k * PI)
+		var s: float = clampf((low - band) * env * 2.2, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "ranged_windup" / "flyer_charge" — заряд: восходящий тон с вибрато, громкость растёт к выстрелу
+func _gen_charge_whine(sound_name: String, f_start: float, f_end: float, vibrato_hz: float) -> PackedVector2Array:
+	var dur: float = sound_durations[sound_name]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var k: float = t / dur
+		var freq: float = lerpf(f_start, f_end, k) * (1.0 + 0.03 * sin(TAU * vibrato_hz * t))
+		phase += TAU * freq * dt
+		var tone: float = sin(phase) * 0.6 + sin(phase * 2.0) * 0.15
+		var env: float = (0.15 + 0.85 * k * k) * minf(1.0, (dur - t) / 0.02)
+		var s: float = clampf(tone * env * 0.7, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "ranged_shot" — плазменный «туп» выстрела дальника: мягкий низкий спад с колебанием, без щелчка
+# (не путать с резким выстрелом Калибра)
+func _gen_ranged_shot() -> PackedVector2Array:
+	var dur: float = sound_durations["ranged_shot"]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var freq: float = (180.0 + 420.0 * exp(-18.0 * t)) * (1.0 + 0.08 * sin(TAU * 32.0 * t))
+		phase += TAU * freq * dt
+		var attack: float = minf(1.0, t / 0.008)
+		var s: float = clampf(sin(phase) * attack * exp(-11.0 * t) * 0.75, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "turret_windup" — электронный писк наводки турели: три учащающихся сигнала 1250 Гц
+func _gen_turret_windup() -> PackedVector2Array:
+	var dur: float = sound_durations["turret_windup"]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var beeps: Array[Vector2] = [Vector2(0.0, 0.07), Vector2(0.13, 0.2), Vector2(0.24, 0.34)]
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var on: float = 0.0
+		for b in beeps:
+			if t >= b.x and t < b.y:
+				on = minf(1.0, minf(t - b.x, b.y - t) / 0.004)
+		var sq: float = signf(sin(TAU * 1250.0 * t)) * 0.3 + sin(TAU * 2500.0 * t) * 0.15
+		var s: float = clampf(sq * on * 0.8, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr
+
+# "flyer_laser" — включение луча летуна: гудящая пила 110 Гц с гармониками и вспышкой шума
+func _gen_flyer_laser() -> PackedVector2Array:
+	var dur: float = sound_durations["flyer_laser"]
+	var samples: int = int(dur * MIX_RATE)
+	var arr := PackedVector2Array()
+	arr.resize(samples)
+	var dt: float = 1.0 / MIX_RATE
+	var phase: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		phase += TAU * 110.0 * dt
+		var saw: float = fposmod(phase / TAU, 1.0) * 2.0 - 1.0
+		var buzz: float = saw * 0.35 + sin(phase * 3.0) * 0.2
+		var burst: float = randf_range(-1.0, 1.0) * exp(-25.0 * t) * 0.45
+		var env: float = minf(1.0, t / 0.01) * minf(1.0, (dur - t) / 0.12)
+		var s: float = clampf((buzz + burst) * env * 0.8, -0.9, 0.9)
+		arr[i] = Vector2(s, s)
+	return arr

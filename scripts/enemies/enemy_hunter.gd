@@ -183,10 +183,15 @@ func _process_attack(delta: float) -> void:
 		if angle_diff > 0.08:
 			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, rotation_speed * delta))
 	
-	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
-		if is_inside_tree() and current_state == State.ATTACK:
+	# Замах (телеграф) → удар в конце замаха, если игрок не ушёл; период ударов прежний (attack_cooldown)
+	var windup := _tick_melee_windup(delta)
+	if windup == MeleeWindup.DONE:
+		if dist_to_player <= attack_range * 1.3:
 			perform_attack()
-		attack_timer = attack_cooldown
+		attack_timer = maxf(0.0, attack_cooldown - melee_windup_time)
+	elif windup == MeleeWindup.NONE and attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
+		if is_inside_tree() and current_state == State.ATTACK:
+			_begin_melee_windup("melee_windup", hunter_eyes_material, SILVER_WHITE_COLOR)
 
 func perform_attack() -> void:
 	if not is_inside_tree() or current_state == State.DEAD:

@@ -203,7 +203,7 @@ func perform_attack() -> void:
 	scene_root.add_child(proj)
 	proj.global_position = spawn_pos
 		
-	AudioManager.play_sound("flask_throw")
+	AudioManager.play_sound_at("ranged_shot", spawn_pos)
 	GameTypes.debug_log(&"enemy", "[%s] RANGED ATTACK: fired projectile at %s (dir: %s, speed: %.1f, dmg: %d)" % [
 		name, target_player.name, fly_dir, projectile_speed, attack_damage
 	])
@@ -212,6 +212,7 @@ func _start_ranged_telegraph() -> void:
 	if not is_inside_tree() or current_state == State.DEAD:
 		return
 	is_telegraphing_shot = true
+	AudioManager.play_sound_at("ranged_windup", global_position)
 	if eyes_material:
 		if telegraph_tween_eyes and telegraph_tween_eyes.is_valid():
 			telegraph_tween_eyes.kill()

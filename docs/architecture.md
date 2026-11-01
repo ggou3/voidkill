@@ -38,6 +38,16 @@
   звучит не больше 4 копий (`MAX_VOICES_PER_SOUND`): сверх лимита перезапускается самая старая копия.
   Архитектура позволяет заменить процедурные звуки на настоящие файлы позже без переписывания
   вызовов `play_sound()`.
+  - **Звук в точке мира** `play_sound_at(sound_name, world_pos)` — пул из 16 `AudioStreamPlayer3D`
+    (`unit_size` 8 м, `max_distance` 60 м), тот же лимит копий и вариации высоты. Для угроз: телеграфы и
+    атаки врагов (таблица — [enemies.md](enemies.md)). Звуки игрока и интерфейса — `play_sound` (2D).
+  - **Приоритет телеграфов** (`PRIORITY_SOUNDS`): когда свободных плееров нет, вытесняется самый старый
+    не-телеграф (смерть, взрыв), а телеграф — только если играют одни телеграфы. Сюда же входят
+    `bomber_tick` и `stalker_reveal`.
+  - Звуки врагов (9): melee_windup, swarm_windup, lunge_windup, lunge_dash, ranged_windup, ranged_shot,
+    turret_windup, flyer_charge, flyer_laser. Телеграфы — восходящий тон в средней полосе (выстрелы игрока,
+    наоборот, падают по высоте), выстрел дальника — мягкий низкий «туп» без щелчка.
+  - Остановка плеера по концу буфера — таймер в реальном времени (стоп-кадр звук не замедляет).
 - **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), методы `resolve_damageable(collider)` и `resolve_enemy(node)` для надёжного и унифицированного разрешения узлов целей с `take_damage` и проверкой принадлежности к врагам (включая дочерние хитбоксы `HeadHitbox` и метаданные `"enemy"`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`. Методы объявлены как обычные методы экземпляра (без `static`), чтобы исключить предупреждения GDScript при вызове через автозагрузку-синглтон `GameTypes`.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).

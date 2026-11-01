@@ -253,7 +253,7 @@ func _start_telegraph() -> void:
 		eye_light.light_energy = 2.8
 		
 	_update_beam_visual(true, 0.015, 0.25)
-	AudioManager.play_sound("needle_shot")
+	AudioManager.play_sound_at("flyer_charge", global_position)
 
 func _process_telegraph(delta: float) -> void:
 	telegraph_timer -= delta
@@ -291,7 +291,7 @@ func _start_firing() -> void:
 		
 	_update_beam_visual(true, 0.06, 1.0)
 	_update_boundary_visuals()
-	AudioManager.play_sound("rail_shot")
+	AudioManager.play_sound_at("flyer_laser", global_position)
 
 func _process_firing(delta: float) -> void:
 	laser_timer -= delta

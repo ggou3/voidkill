@@ -103,7 +103,7 @@ func _physics_process(delta: float) -> void:
 			var current_tick_interval = lerp(0.22, 0.06, progress)
 			tick_timer -= delta
 			if tick_timer <= 0.0:
-				AudioManager.play_sound("bomber_tick")
+				AudioManager.play_sound_at("bomber_tick", global_position)
 				tick_timer = current_tick_interval
 				
 			# Нарастающее накаливание ядра и всего тела (от красного к ослепительно-раскаленному)
@@ -155,7 +155,7 @@ func _explode() -> void:
 	var explosion_pos = global_position + Vector3(0, 0.75, 0)
 	GameTypes.debug_log(&"enemy", "[%s] BOMBER EXPLODED at %s! Radius: %.1fm, Dmg: %d" % [name, explosion_pos, explosion_radius, explosion_damage])
 	
-	AudioManager.play_sound("explosion")
+	AudioManager.play_sound_at("explosion", explosion_pos)
 	var player_node = get_tree().get_first_node_in_group("player") as Player
 	if player_node and player_node.head:
 		player_node.head.add_trauma_at(explosion_pos, 0.7, explosion_radius, explosion_radius * 3.0)

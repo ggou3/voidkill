@@ -188,7 +188,7 @@ func _start_telegraph() -> void:
 	telegraph_timer = telegraph_duration
 	velocity.x = 0.0
 	velocity.z = 0.0
-	AudioManager.play_sound("stalker_reveal")
+	AudioManager.play_sound_at("stalker_reveal", global_position)
 	if eyes:
 		eyes.visible = true
 

@@ -17,6 +17,18 @@ extends EnemyBase
 @export var lunge_telegraph_time: float = 0.38
 @export var lunge_cooldown: float = 4.5
 
+## Замах ближнего удара (телеграф): глаза загораются оранжевым, как перед выпадом, и звучит замах в
+## точке врага; удар — в конце замаха и только по игроку в радиусе выхода из ATTACK (attack_range × 1.3),
+## поэтому от удара можно уйти дэшем. Попадание по врагу во время замаха (реакция на урон) сбивает удар.
+## Общий для ближних (Enemy, щитоносец, рой, Охотник); рой ставит 0.15 с в _ready.
+@export var melee_windup_time: float = 0.25
+const MELEE_WINDUP_COLOR: Color = Color(1.0, 0.6, 0.0)
+enum MeleeWindup { NONE, ACTIVE, DONE }
+var melee_windup_timer: float = 0.0
+var _melee_windup_tween: Tween = null
+var _melee_windup_material: StandardMaterial3D = null
+var _melee_windup_base_color: Color = Color(1.0, 1.0, 1.0)
+
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 var wall_slam_timer: float = 0.0
 # Источник толчка, открывшего окно wall slam. Запоминается в момент толчка отдельно от
@@ -136,6 +148,8 @@ func set_state(new_state: State) -> void:
 	if prev_state == State.LUNGE and new_state != State.LUNGE:
 		_reset_lunge_visuals()
 		lunge_phase = 0
+	if prev_state == State.ATTACK and new_state != State.ATTACK:
+		_cancel_melee_windup()
 	
 	super.set_state(new_state)
 	
@@ -387,7 +401,9 @@ func start_lunge() -> void:
 			eyes.position = Vector3(0.0, 0.38, -0.28)
 		if head_hitbox:
 			head_hitbox.position = Vector3(0.0, 0.38, 0.0)
-			
+
+	# Звуковой телеграф выпада в точке врага: длительность звука = lunge_telegraph_time (0.38 с)
+	AudioManager.play_sound_at("lunge_windup", global_position)
 	GameTypes.debug_log(&"enemy", "[%s] LUNGE started: Telegraph (%.2fs) towards %s" % [name, lunge_telegraph_time, lunge_dir])
 
 func _process_lunge(delta: float) -> void:
@@ -439,7 +455,7 @@ func _process_lunge(delta: float) -> void:
 				if head_hitbox:
 					head_hitbox.position = Vector3(0.0, 0.55, 0.0)
 					
-			AudioManager.play_sound("dash")
+			AudioManager.play_sound_at("lunge_dash", global_position)
 			GameTypes.debug_log(&"enemy", "[%s] LUNGE DASH START! dir: %s, target_dist: %.2fm, speed: %.1f" % [
 				name, lunge_dir, lunge_target_distance, lunge_speed
 			])
@@ -720,3 +736,42 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()
 		set_state(State.DEAD)
+
+## Начать замах ближнего удара: mat — материал глаз (может быть null), base_color — его обычный цвет
+func _begin_melee_windup(sound_name: String, mat: StandardMaterial3D, base_color: Color) -> void:
+	melee_windup_timer = melee_windup_time
+	AudioManager.play_sound_at(sound_name, global_position)
+	_melee_windup_material = mat
+	_melee_windup_base_color = base_color
+	if _melee_windup_tween and _melee_windup_tween.is_valid():
+		_melee_windup_tween.kill()
+	_melee_windup_tween = null
+	if mat:
+		_melee_windup_tween = create_tween()
+		_melee_windup_tween.tween_property(mat, "emission", MELEE_WINDUP_COLOR, melee_windup_time)
+
+## Тик замаха из _process_attack. DONE — замах закончился в этом кадре (бить, если игрок в радиусе),
+## ACTIVE — замах идёт или только что сбит попаданием (новую атаку не начинать), NONE — замаха нет.
+func _tick_melee_windup(delta: float) -> MeleeWindup:
+	if melee_windup_timer <= 0.0:
+		return MeleeWindup.NONE
+	if hit_reaction_timer > 0.0:
+		_cancel_melee_windup()
+		return MeleeWindup.ACTIVE
+	melee_windup_timer -= delta
+	if melee_windup_timer > 0.0:
+		return MeleeWindup.ACTIVE
+	melee_windup_timer = 0.0
+	_melee_windup_tween = null
+	return MeleeWindup.DONE
+
+## Сбросить замах: таймер и цвет глаз (состояние не меняет)
+func _cancel_melee_windup() -> void:
+	if melee_windup_timer <= 0.0:
+		return
+	melee_windup_timer = 0.0
+	if _melee_windup_tween and _melee_windup_tween.is_valid():
+		_melee_windup_tween.kill()
+	_melee_windup_tween = null
+	if _melee_windup_material:
+		_melee_windup_material.emission = _melee_windup_base_color
