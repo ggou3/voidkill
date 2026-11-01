@@ -2,26 +2,46 @@
 
 [ext_resource type="Script" uid="uid://dfl340l5yigqc" path="res://scripts/effects/blood_splatter.gd" id="1_nd4dr"]
 
+[sub_resource type="Gradient" id="Gradient_blood"]
+offsets = PackedFloat32Array(0, 1)
+colors = PackedColorArray(0.9, 0.03, 0.03, 1, 0.32, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_blood"]
+gradient = SubResource("Gradient_blood")
+
+[sub_resource type="Curve" id="Curve_blood_scale"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0.3), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_blood_scale"]
+curve = SubResource("Curve_blood_scale")
+
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_jq8tk"]
+particle_flag_align_y = true
 direction = Vector3(0, 0, 1)
 spread = 30.0
 initial_velocity_min = 4.0
 initial_velocity_max = 8.0
+gravity = Vector3(0, -18, 0)
 scale_min = 0.099999994
 scale_max = 0.29999998
+scale_curve = SubResource("CurveTexture_blood_scale")
+color_ramp = SubResource("GradientTexture1D_blood")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h83rl"]
-albedo_color = Color(0.77226824, 0, 0.021207564, 1)
+vertex_color_use_as_albedo = true
+roughness = 0.25
 
-[sub_resource type="SphereMesh" id="SphereMesh_dwbtc"]
+[sub_resource type="BoxMesh" id="BoxMesh_droplet"]
 material = SubResource("StandardMaterial3D_h83rl")
+size = Vector3(0.22, 0.7, 0.22)
 
 [node name="BloodSplatter" type="GPUParticles3D" unique_id=370756337]
 emitting = false
 amount = 30
-lifetime = 2.11
+lifetime = 1.4
 one_shot = true
 explosiveness = 1.0
 process_material = SubResource("ParticleProcessMaterial_jq8tk")
-draw_pass_1 = SubResource("SphereMesh_dwbtc")
+draw_pass_1 = SubResource("BoxMesh_droplet")
 script = ExtResource("1_nd4dr")

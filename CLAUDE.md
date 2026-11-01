@@ -20,7 +20,7 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
   player_combat, player_wallrun
 - `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing, player_projectile,
   projectile_enemy (вражеский снаряд), `data/*.tres`
-- `effects/` — blood_pool, blood_splatter
+- `effects/` — blood_pool, blood_splatter, gib_pool (ошмётки и пятна крови, пул на сцену)
 - `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD)
 - `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)

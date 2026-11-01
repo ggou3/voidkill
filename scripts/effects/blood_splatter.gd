@@ -5,6 +5,6 @@ func _ready():
 	# Принудительно запускаем взрыв в момент создания объекта
 	emitting = true
 	
-	# Ждем 1 секунду (с запасом, чтобы частицы успели разлететься) и удаляем мусор
-	await get_tree().create_timer(1.0).timeout
+	# Удаляем, когда последняя капля отжила (lifetime) — с небольшим запасом
+	await get_tree().create_timer(lifetime + 0.1).timeout
 	queue_free()

@@ -33,6 +33,7 @@ func _ready() -> void:
 	attack_cooldown = 0.8
 	reaction_delay = 0.25
 	melee_windup_time = 0.15 # короткий стрекот перед касанием
+	gib_scale = 0.6 # ошмётки под уменьшенный силуэт
 	lunge_cooldown_timer = 999999.0
 	
 	# Назначение общего материала глаз всем дополнительным точкам-глазам в кластере

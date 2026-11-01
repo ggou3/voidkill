@@ -51,6 +51,8 @@ var last_headshot_bonus_frame: int = -1
 
 var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
+## Масштаб ошмётков при смерти (рой мельче)
+@export var gib_scale: float = 1.0
 
 @onready var health_component: HealthComponent = _get_or_create_health_component()
 @onready var status_effect_component: StatusEffectComponent = _get_or_create_status_effect_component()
@@ -366,6 +368,47 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 
 	_ensure_health_component().take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
+## Ошмётки (GibPool) и радиальный выброс крови при смерти. Кусков 4, +2 за хедшот или добивание, +2 за мощный
+## толчок (от 20 м/с), +3 у раздутого (взрыв); у мелких (gib_scale < 1) на один меньше, не меньше 2.
+## Скорость разлёта 6–18 м/с растёт с толчком, у раздутого — не меньше 14
+func _spawn_death_gore(death_info: Dictionary) -> void:
+	var pool: GibPool = GibPool.get_pool(get_tree())
+	if not pool:
+		return
+	var knock: Vector3 = death_info.get("knockback", Vector3.ZERO)
+	var count: int = 4
+	if death_info.get("is_headshot", false) or death_info.get("is_execute", false):
+		count += 2
+	if knock.length() >= 20.0:
+		count += 2
+	if is_inflated:
+		count += 3
+	if gib_scale < 1.0:
+		count = maxi(2, count - 1)
+	var speed: float = clampf(6.0 + knock.length() * 0.3, 6.0, 18.0)
+	if is_inflated:
+		speed = maxf(speed, 14.0)
+	var center: Vector3 = global_position + Vector3.UP * 0.8 * gib_scale
+	pool.spawn_gibs(center, knock, count, speed, gib_scale)
+
+	# Радиальный выброс крови вверх и в стороны (брызги попадания летят только по направлению удара)
+	if blood_splatter_scene:
+		var splatter = blood_splatter_scene.instantiate()
+		var pmat = splatter.process_material.duplicate()
+		pmat.direction = Vector3.UP
+		pmat.spread = 75.0
+		pmat.initial_velocity_min = 4.0
+		pmat.initial_velocity_max = 11.0
+		pmat.scale_min = 0.15
+		pmat.scale_max = 0.35
+		splatter.process_material = pmat
+		splatter.amount = 70 if count >= 6 else 45
+		splatter.scale = Vector3.ONE * (1.6 * gib_scale)
+		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
+		if scene_root:
+			scene_root.add_child(splatter)
+			splatter.global_position = center
+
 func _spawn_hit_blood_splatter(amount: int, hit_pos: Vector3, is_crit: bool, knock_vec: Vector3) -> void:
 	if not blood_splatter_scene:
 		return
@@ -500,6 +543,8 @@ func die(death_info: Dictionary = {}) -> void:
 		if head_col:
 			head_col.set_deferred("disabled", true)
 
+	# Ошмётки — до эффектов смерти: детонация раздутого может снять признак is_inflated
+	_spawn_death_gore(death_info)
 	_trigger_death_effects()
 
 	if blood_pool_scene:
