@@ -7,6 +7,8 @@ const MAX_DASH = 3
 @export var dash_target_speed: float = 16.0 # Базовая целевая скорость рывка (от 10 м/с бега до 16 м/с)
 @export var dash_boost: float = 5.0 # Добавочный импульс к скорости движения
 const DASH_DUR = 0.15
+## Стоп-кадр при приземлении слэма, если волна задела хотя бы одного врага (с, 0 — выкл.)
+@export var hit_stop_slam: float = 0.045
 
 const SLAM_SPEED = 60.0
 const SLAM_AOE = 6.0
@@ -180,6 +182,7 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 		
 		# Волна: небольшой урон + горизонтальный разброс от центра (сильнее в центре, слабее на краю)
 		var enemies = player.get_tree().get_nodes_in_group("enemy")
+		var hit_any: bool = false
 		for e in enemies:
 			if is_instance_valid(e):
 				var dist = player.global_position.distance_to(e.global_position)
@@ -187,7 +190,11 @@ func process_slam(delta, vel: Vector3) -> Vector3:
 					var t = clampf(dist / effective_aoe, 0.0, 1.0)
 					var knock_speed = lerp(SLAM_KNOCKBACK_CENTER, SLAM_KNOCKBACK_EDGE, t)
 					var knock_vec = _flat_dir_from_player(e) * knock_speed
+					if e is EnemyBase and e.current_state != e.State.DEAD:
+						hit_any = true
 					e.take_damage(SLAM_DMG, knock_vec, e.global_position, false, false, true, false, -1, "slam")
+		if hit_any:
+			GameManager.hit_stop(hit_stop_slam)
 
 	if is_slamming:
 		vel.y = -SLAM_SPEED

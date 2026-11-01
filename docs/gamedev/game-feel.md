@@ -80,8 +80,8 @@
   Критическое демпфирование: `damping = 2 * sqrt(stiffness)`.
 
 ## Применительно к VOIDKILL
-- Hit-stop в коде нет (`Engine.time_scale` нигде не меняется) — кандидат на крупные события
-  (парирование, добивание, конусная волна, слэм).
+- Hit-stop — глобальный, `GameManager.hit_stop()` на парирование, добивание, конусную волну и слэм
+  (`docs/combat.md`).
 - Тряска в `scripts/player/head.gd` — модель травмы (`trauma²`), плавный шум `FastNoiseLite`,
   вращательная (pitch/yaw/roll), поверх отдачи и крена; таблица событий — в `docs/movement.md`.
 - В скриптах 64 места вида `lerp(..., k * delta)`; большинство в `_physics_process`, то есть

@@ -20,6 +20,11 @@ extends Node
 @export var cone_min_damage_ratio: float = 0.35
 @export var cone_min_knockback_ratio: float = 0.40
 
+# Стоп-кадр (hit-stop, секунды реального времени; 0 — выкл.)
+@export var hit_stop_parry: float = 0.07
+@export var hit_stop_execute: float = 0.06
+@export var hit_stop_cone: float = 0.05
+
 var melee_timer: float = 0.0
 var recent_peak_speed: float = 0.0
 var recent_peak_timer: float = 0.0
@@ -180,6 +185,7 @@ func _check_and_deflect_projectiles(from_pos: Vector3, aim_dir: Vector3, is_shoc
 		AudioManager.play_sound("parry_deflect")
 		player.head.trigger_melee_impact(false)
 		player.head.add_recoil(0.08, 0.4)
+		GameManager.hit_stop(hit_stop_parry)
 
 	return deflected_any
 
@@ -452,6 +458,7 @@ func perform_melee():
 
 		if hit_count > 0:
 			head.trigger_melee_impact(executed_any)
+			GameManager.hit_stop(maxf(hit_stop_cone, hit_stop_execute if executed_any else 0.0))
 			if killed_any and skills:
 				skills.add_dash_charge()
 	else:
@@ -518,6 +525,8 @@ func perform_melee():
 
 			hit_collider.take_damage(dmg, knockback_vector, hit_pos, true, is_execute, false, false, -1, "melee")
 			head.trigger_melee_impact(is_execute)
+			if is_execute:
+				GameManager.hit_stop(hit_stop_execute)
 
 			if will_kill and skills:
 				skills.add_dash_charge()

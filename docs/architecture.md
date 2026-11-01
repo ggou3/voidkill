@@ -19,6 +19,8 @@
     зачищенных секторах) ставит дерево на паузу и эмитит `level_completed(stats)`. Статистика
     уровня: `level_time`, `kills`, `damage_taken`, `overdrive_time`, `deaths`. Вне уровня (`level`
     не зарегистрирован) поведение прежнее — перезапуск сцены.
+  - **Стоп-кадр** `hit_stop(duration)` — единственное место, где меняется `Engine.time_scale`
+    (подробности — [combat.md](combat.md)).
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameManager` — конфликтует с именем автозагрузки.
 - **AudioManager** (`res://scripts/audio_manager.gd`) — процедурная генерация звуков через
   `AudioStreamGenerator` (без внешних аудиофайлов). `AudioManager.play_sound(sound_name: String)`,

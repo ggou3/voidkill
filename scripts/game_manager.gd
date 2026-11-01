@@ -31,6 +31,11 @@ var overdrive_time: float = 0.0   # время в тире OVERDRIVE
 var deaths: int = 0
 var _last_health: int = -1
 
+## Стоп-кадр (hit-stop): на крупных событиях мир на долю секунды почти замирает (Engine.time_scale).
+## Перекрывающиеся стоп-кадры не суммируются — действует самый поздний срок окончания.
+const HIT_STOP_TIME_SCALE: float = 0.05
+var _hit_stop_end_ms: int = 0
+
 ## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
 ## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
 var show_enemy_health_bars: bool = false
@@ -101,15 +106,38 @@ func _on_player_died():
 		deaths += 1
 	trigger_game_over()
 
+## Стоп-кадр длительностью duration секунд реального времени (только во время игры)
+func hit_stop(duration: float) -> void:
+	if duration <= 0.0 or current_state != State.PLAYING:
+		return
+	var end_ms: int = Time.get_ticks_msec() + int(duration * 1000.0)
+	if end_ms <= _hit_stop_end_ms:
+		return
+	_hit_stop_end_ms = end_ms
+	Engine.time_scale = HIT_STOP_TIME_SCALE
+	# Таймер в реальном времени: идёт при паузе и не замедляется самим time_scale
+	get_tree().create_timer(duration, true, false, true).timeout.connect(_on_hit_stop_timeout)
+
+func _on_hit_stop_timeout() -> void:
+	if _hit_stop_end_ms != 0 and Time.get_ticks_msec() >= _hit_stop_end_ms:
+		_end_hit_stop()
+
+## Снять стоп-кадр немедленно (смерть, перезапуск, конец уровня — время всегда возвращается к 1.0)
+func _end_hit_stop() -> void:
+	_hit_stop_end_ms = 0
+	Engine.time_scale = 1.0
+
 func trigger_game_over():
 	if current_state == State.GAME_OVER:
 		return
+	_end_hit_stop()
 	current_state = State.GAME_OVER
 	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	game_over_triggered.emit()
 
 ## Продолжить после смерти: на уровне — возрождение на последнем чекпоинте, вне уровня — перезапуск сцены
 func restart_game():
+	_end_hit_stop()
 	if is_level_active() and is_instance_valid(player):
 		current_state = State.PLAYING
 		level.respawn_player(player)
@@ -119,6 +147,7 @@ func restart_game():
 
 ## Перезапуск уровня (сцены) с самого начала
 func restart_level():
+	_end_hit_stop()
 	current_state = State.PLAYING
 	level = null
 	get_tree().paused = false
@@ -131,6 +160,7 @@ func complete_level() -> void:
 		return
 	if level.has_method("all_sectors_cleared") and not level.all_sectors_cleared():
 		return
+	_end_hit_stop()
 	current_state = State.LEVEL_COMPLETE
 	var stats: Dictionary = {
 		"time": level_time,
