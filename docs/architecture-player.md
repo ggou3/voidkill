@@ -11,6 +11,9 @@
 - **Связь**: Player держит прямые ссылки на детей (`$PlayerHealth`, `$PlayerCombat`, `$PlayerWallrun`, `$BPMSystem`) и передаёт себя через `setup(self)` в `_ready()`; компоненты не ищут родителя по путям.
 - **Обратная совместимость**: `health`, `max_health`, `is_dead` на Player — проксирующие свойства к `PlayerHealth`; `take_damage`, `heal` — делегирующие методы (`restart_game` на Player удалён на Шаге 5.4 — рестарт только через GameManager). Сигналы `health_changed`/`died` по-прежнему объявлены на Player и ретранслируются из компонента, поэтому HUD и внешний код (враги, снаряды, `StatusEffectComponent.heal`) не изменены. Сброс состояния движения при смерти выполняет Player в обработчике `died`. Порядок после Шага 5.4: `PlayerHealth.die()` → `health_changed(0)` → `died` → `Player._on_health_died()` эмитит `Player.died` (первым подписан GameManager: `deaths`++, `trigger_game_over()` → `game_over_triggered` → экран Game Over в HUD; затем HUD мгновенно обнуляет HP-бар) → `_reset_movement_state()`. Взаимных зависимостей между шагами нет.
 - View-model рук (в `head.gd`): правая рука держит активное оружие, левая — melee-анимация.
+  Модели всех 4 стволов — CSG-узлы под `Head/Camera3D` в `player.tscn` (`Revolver`, `Shotgun`, `Injector`,
+  `SewingMachine`), у каждого `Muzzle` с `MuzzleLight` и `FlashMesh`. Швейная машина: корпус, нависающий
+  верх, горизонтальная катушка, тонкая серебристая игла; до ноября 2026 модели не было — на слоте 4 рука пропадала.
   Обе руки разведены по краям экрана (не в центре). Тени view-model отключены.
 - **Полная система тела персонажа (Skeleton3D, ноги/торс с процедурной анимацией) была
   реализована и ОТКАЧЕНА** — блокировала обзор, ломала тени. Причина: попытка сделать всё

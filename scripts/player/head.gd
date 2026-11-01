@@ -61,6 +61,10 @@ func _ready():
 		injector_model.visible = false
 		injector_model.position = weapon_default_pos
 		injector_model.rotation = Vector3.ZERO
+	if smg_model:
+		smg_model.visible = false
+		smg_model.position = weapon_default_pos
+		smg_model.rotation = Vector3.ZERO
 	if revolver_model:
 		revolver_model.visible = true
 		revolver_model.position = weapon_default_pos
@@ -72,7 +76,7 @@ func _ready():
 		
 	# Инициализация дульных вспышек (star flare mesh + индивидуальные материалы)
 	var star_mesh = _create_star_flash_mesh()
-	for w in [revolver_model, shotgun_model, injector_model]:
+	for w in [revolver_model, shotgun_model, injector_model, smg_model]:
 		if w:
 			var m = w.get_node_or_null("Muzzle")
 			if m:
