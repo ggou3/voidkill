@@ -7,16 +7,22 @@ extends EnemyBase
 @export var preferred_dist_min: float = 12.0
 @export var preferred_dist_max: float = 18.0
 
-# Параметры лазерной атаки
-@export var telegraph_duration: float = 0.6
-@export var laser_duration: float = 1.8
-@export var laser_tracking_speed: float = 1.05 # рад/с
+# Параметры лазерной атаки (ноябрь 2026 ослаблены по плейтесту: луч «прилипал» к игроку — доворот 1.05 рад/с
+# на 15 м это 15.7 м/с, быстрее бега; подготовка была короткой и малозаметной)
+## Подготовка: прицельный луч следит за игроком, затем фиксируется на aim_lock_time до выстрела
+@export var telegraph_duration: float = 1.0
+@export var aim_lock_time: float = 0.3
+@export var laser_duration: float = 1.4
+## Доворот луча при стрельбе: 0.35 рад/с — на 15 м ≈ 5 м/с, от луча уходит обычный бег (10 м/с)
+@export var laser_tracking_speed: float = 0.35 # рад/с
 @export var max_sector_angle_deg: float = 60.0 # полуугол сектора
 @export var boundary_color: Color = Color(0.2, 0.85, 1.0, 0.28)
 @export var attack_cooldown_min: float = 4.0
 @export var attack_cooldown_max: float = 5.0
 @export var tick_damage: int = 4
-@export var tick_interval: float = 0.25
+@export var tick_interval: float = 0.3
+# Штраф BPM за урон — только за первый тик залпа (иначе каждый тик срезал 25% BPM)
+var _volley_bpm_penalty_used: bool = false
 
 var attack_cooldown_timer: float = 0.0
 var telegraph_timer: float = 0.0
@@ -252,20 +258,29 @@ func _start_telegraph() -> void:
 		eye_light.light_color = EYE_COLOR_TELEGRAPH
 		eye_light.light_energy = 2.8
 		
-	_update_beam_visual(true, 0.015, 0.25)
+	_update_beam_visual(true, 0.012, 0.3)
 	AudioManager.play_sound_at("flyer_charge", global_position)
 
 func _process_telegraph(delta: float) -> void:
 	telegraph_timer -= delta
 	_maintain_hover_height(delta, Vector3.ZERO)
 	
-	if is_instance_valid(target_player):
+	# Прицельный луч растёт и ярчает к выстрелу; последние aim_lock_time — зафиксирован и мигает:
+	# стоящий на линии игрок видит, куда придёт луч, и успевает шагнуть в сторону
+	var progress: float = clampf(1.0 - telegraph_timer / maxf(telegraph_duration, 0.001), 0.0, 1.0)
+	var locked: bool = telegraph_timer <= aim_lock_time
+	if is_instance_valid(target_player) and not locked:
 		var target_aim = (target_player.global_position + Vector3(0, 0.2, 0) - _get_eye_position()).normalized()
 		current_beam_dir = current_beam_dir.slerp(target_aim, min(1.0, 5.0 * delta)).normalized()
 		var dir_h = Vector3(current_beam_dir.x, 0, current_beam_dir.z).normalized()
 		if dir_h.length_squared() > 0.01:
 			rotation.y = lerp_angle(rotation.y, atan2(-dir_h.x, -dir_h.z), min(1.0, 6.0 * delta))
-		_update_beam_visual(true, 0.015, 0.35)
+	var guide_alpha: float = lerpf(0.3, 0.75, progress)
+	if locked:
+		guide_alpha *= 0.55 + 0.45 * signf(sin(telegraph_timer * 60.0))
+	_update_beam_visual(true, lerpf(0.012, 0.035, progress), guide_alpha)
+	if eye_light:
+		eye_light.light_energy = lerpf(2.8, 5.0, progress)
 		
 	if telegraph_timer <= 0.0:
 		_start_firing()
@@ -274,6 +289,7 @@ func _start_firing() -> void:
 	set_state(State.FIRING)
 	laser_timer = laser_duration
 	laser_tick_timer = 0.0
+	_volley_bpm_penalty_used = false
 	initial_laser_dir = current_beam_dir.normalized()
 	
 	var max_angle = deg_to_rad(max_sector_angle_deg)
@@ -343,7 +359,12 @@ func _cast_laser_and_damage(eye_pos: Vector3) -> void:
 			if target and (target.is_in_group("player") or target.has_method("take_damage")):
 				if laser_tick_timer <= 0.0:
 					laser_tick_timer = tick_interval
-					target.take_damage(tick_damage, current_beam_dir * 2.5 + Vector3.UP * 0.8, hit.position)
+					var knock: Vector3 = current_beam_dir * 2.5 + Vector3.UP * 0.8
+					if target is Player:
+						target.take_damage(tick_damage, knock, hit.position, not _volley_bpm_penalty_used)
+						_volley_bpm_penalty_used = true
+					else:
+						target.take_damage(tick_damage, knock, hit.position)
 					
 	_render_beam_between(eye_pos, beam_end, 0.06, 1.0)
 

@@ -53,7 +53,7 @@ var sound_durations: Dictionary = {
 	"ranged_windup": 0.35,
 	"ranged_shot": 0.22,
 	"turret_windup": 0.35,
-	"flyer_charge": 0.6,
+	"flyer_charge": 1.0, # = EnemyFlyer.telegraph_duration
 	"flyer_laser": 0.45
 }
 

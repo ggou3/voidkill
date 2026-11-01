@@ -614,8 +614,9 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 
 # --- Делегирование в PlayerHealth (внешние вызовы: враги, снаряды, статус-эффекты) ---
 
-func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO):
-	health_component.take_damage(amount, knockback_vector, hit_pos)
+## bpm_penalty = false — урон без штрафа BPM (повторные тики одного залпа лазера летуна)
+func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO, bpm_penalty: bool = true):
+	health_component.take_damage(amount, knockback_vector, hit_pos, bpm_penalty)
 
 func heal(amount: int, is_melee_bonus: bool = false):
 	health_component.heal(amount, is_melee_bonus)

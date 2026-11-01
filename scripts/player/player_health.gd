@@ -23,7 +23,7 @@ func setup(p: Player) -> void:
 	health = max_health
 	health_changed.emit(health, max_health)
 
-func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO):
+func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos: Vector3 = Vector3.ZERO, bpm_penalty: bool = true):
 	if is_dead or amount <= 0:
 		return
 	var reduction = player.bpm_system.get_bpm_damage_reduction()
@@ -31,7 +31,7 @@ func take_damage(amount: int, knockback_vector: Vector3 = Vector3.ZERO, hit_pos:
 	health = max(0, health - final_damage)
 	health_changed.emit(health, max_health)
 	damaged.emit(final_damage, _source_direction(knockback_vector, hit_pos))
-	if player.bpm_system is BPMSystem:
+	if bpm_penalty and player.bpm_system is BPMSystem:
 		player.bpm_system.drop_bpm_on_damage()
 	if player.head:
 		player.head.add_recoil(0.25, 0.0)
