@@ -169,11 +169,11 @@ func _physics_process(delta: float) -> void:
 func _spawn_stain(pos: Vector3, normal: Vector3, gib_size: float) -> void:
 	var idx: int
 	if _stains.size() < MAX_STAINS:
-		var st := MeshInstance3D.new()
-		st.mesh = _stain_mesh
-		st.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		add_child(st)
-		_stains.append(st)
+		var new_stain := MeshInstance3D.new()
+		new_stain.mesh = _stain_mesh
+		new_stain.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(new_stain)
+		_stains.append(new_stain)
 		_stain_life.append(0.0)
 		_stain_size.append(1.0)
 		idx = _stains.size() - 1
@@ -186,9 +186,9 @@ func _spawn_stain(pos: Vector3, normal: Vector3, gib_size: float) -> void:
 	var x: Vector3 = y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
 	var z: Vector3 = x.cross(y)
 	var size: float = gib_size * randf_range(2.5, 4.5) * 0.15
-	var basis := Basis(x, y, z).rotated(y, randf() * TAU)
+	var stain_basis := Basis(x, y, z).rotated(y, randf() * TAU)
 	# Масштаб в локальных осях пятна (по плоскости), как и при затухании через scale
-	st.global_transform = Transform3D(basis * Basis.from_scale(Vector3(size, 1.0, size)), pos + y * 0.012)
+	st.global_transform = Transform3D(stain_basis * Basis.from_scale(Vector3(size, 1.0, size)), pos + y * 0.012)
 	_stain_life[idx] = STAIN_LIFETIME
 	_stain_size[idx] = size
 	st.visible = true
