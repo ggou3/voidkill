@@ -804,9 +804,9 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 			player.skills.add_dash_charge()
 		set_state(State.DEAD)
 
-## Пришпилить к стене в точке position на duration секунд (игла Швейной прошила врага в стену).
+## Пришпилить к стене в точке pin_position на duration секунд (игла Швейной прошила врага в стену).
 ## Замах и выпад сбрасываются; состояние FSM не меняется — после пришпиливания враг продолжает, где был
-func pin_to(position: Vector3, duration: float) -> void:
+func pin_to(pin_position: Vector3, duration: float) -> void:
 	if current_state == State.DEAD:
 		return
 	_cancel_melee_windup()
@@ -814,9 +814,9 @@ func pin_to(position: Vector3, duration: float) -> void:
 		end_lunge()
 	is_jumping_link = false
 	wall_slam_timer = 0.0
-	_pin_position = position
+	_pin_position = pin_position
 	pinned_timer = duration
-	global_position = position
+	global_position = pin_position
 
 ## Начать замах ближнего удара: mat — материал глаз (может быть null), base_color — его обычный цвет
 func _begin_melee_windup(sound_name: String, mat: StandardMaterial3D, base_color: Color) -> void:
