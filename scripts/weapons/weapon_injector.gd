@@ -2,12 +2,18 @@ class_name WeaponInjector
 extends WeaponBase
 
 ## Инъектор (Слот 3): Шприцемёт / токсичное биооружие.
-## ЛКМ: Очередь из 3 дротиков (интервал 0.07с) с наложением стакающегося яда DoT (3.0с, 3 тика).
+## ЛКМ: Очередь из 3 физических дротиков (интервал 0.07с) с наложением стакающегося яда DoT (3.0с, 3 тика).
+## Дротики (ноябрь 2026): DART_SPEED плюс скорость игрока, лёгкая дуга (DART_GRAVITY). Дротик, упавший в лужу
+## крови, отравляет её на POOL_POISON_TIME — лужа травит врагов в ней (BloodPool.poison).
 ## ПКМ: Раздутие врага кровью (inflate, кулдаун 4.5с), вызывающее мощный АОЕ-взрыв при гибели цели.
 
 const ALT_COOLDOWN: float = 4.5
 const BURST_COUNT: int = 3
 const BURST_INTERVAL: float = 0.07
+const DART_SPEED: float = 90.0
+const DART_GRAVITY: float = 6.0
+const DART_LIFETIME: float = 1.2
+const POOL_POISON_TIME: float = 8.0
 
 func _init() -> void:
 	if not data:
@@ -38,20 +44,24 @@ func _fire_injector_burst() -> void:
 			head.trigger_muzzle_flash(false)
 		AudioManager.play_sound("injector_shot")
 		
-		var aim_dir = head.get_aim_direction() if head else Vector3.FORWARD
-		var ray = head.get_aim_raycast(0.045) if head else null
-		var hit_pos = ray.to_global(ray.target_position) if ray else Vector3.ZERO
-		var collider: Node = null
-		if ray and ray.is_colliding():
-			hit_pos = ray.get_collision_point()
-			collider = ray.get_collider()
-			
-		_apply_hit(collider, hit_pos, aim_dir, false)
+		var inherit: Vector3 = player.velocity if player is Player else Vector3.ZERO
+		_fire_projectile(_get_shot_direction(0.045), DART_SPEED, false, DART_LIFETIME, DART_GRAVITY, inherit)
 		
 		if i < BURST_COUNT - 1:
 			await get_tree().create_timer(BURST_INTERVAL).timeout
 			
 	is_bursting = false
+
+## Попадание дротика: по врагу — урон и яд (общие правила), мимо — отравление лужи крови в точке падения
+func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
+	var dir: Vector3 = projectile.velocity.normalized()
+	var target: Node = _deal_hit(hit.collider, hit.position, dir, projectile.is_alt)
+	if not is_instance_valid(target):
+		TracerPool.spawn_tracer(hit.position - dir * 0.3, hit.position, projectile.style)
+		for pool in get_tree().get_nodes_in_group("blood_pool"):
+			if pool is BloodPool and pool.contains_point(hit.position):
+				pool.poison(POOL_POISON_TIME)
+	return false
 
 ## Наложение яда DoT при попадании дротика
 func _on_hit_target(target: Node, _hit_pos: Vector3, _is_headshot: bool, _is_alt: bool) -> void:
