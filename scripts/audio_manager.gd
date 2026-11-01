@@ -8,7 +8,14 @@ const MIX_RATE: float = 22050.0
 const POOL_SIZE: int = 16
 
 var players: Array[AudioStreamPlayer] = []
-var current_player_idx: int = 0
+
+# Позиционный пул (play_sound_at): звуки врагов в мире
+const POOL_SIZE_3D: int = 12
+const POSITIONAL_UNIT_SIZE: float = 8.0 # до этого расстояния — полная громкость
+const POSITIONAL_MAX_DISTANCE: float = 60.0
+var players_3d: Array[AudioStreamPlayer3D] = []
+var _voice3d_sound: Array[String] = []
+var _voice3d_start_ms: Array[int] = []
 
 var sound_buffers: Dictionary = {}
 var sound_durations: Dictionary = {
@@ -88,6 +95,17 @@ func _ready():
 		_voice_sound.append("")
 		_voice_start_ms.append(0)
 
+	for i in range(POOL_SIZE_3D):
+		var p3 = AudioStreamPlayer3D.new()
+		p3.name = "AudioPlayer3D_" + str(i)
+		p3.bus = "Master"
+		p3.unit_size = POSITIONAL_UNIT_SIZE
+		p3.max_distance = POSITIONAL_MAX_DISTANCE
+		add_child(p3)
+		players_3d.append(p3)
+		_voice3d_sound.append("")
+		_voice3d_start_ms.append(0)
+
 	# Поиск реальных аудиофайлов в res://audio/
 	_scan_external_audio()
 	
@@ -110,23 +128,21 @@ func play_sound(sound_name: String):
 		start_slide()
 		return
 
-	# 1. Приоритет: реальный аудиофайл из res://audio/
-	if external_sounds.has(sound_name):
-		_play_stream(external_sounds[sound_name], sound_name)
-		return
-
-	# Динамическая проверка внешнего файла, если он был добавлен на лету
-	if _check_single_external_file(sound_name):
-		_play_stream(external_sounds[sound_name], sound_name)
-		return
-
-	# 2. Процедурно сгенерированный звук через AudioStreamGenerator
-	if sound_buffers.has(sound_name):
-		var buffer: PackedVector2Array = sound_buffers[sound_name]
-		var duration: float = sound_durations.get(sound_name, 0.2)
-		_play_buffer(buffer, duration, sound_name)
-	else:
+	# Приоритет: реальный аудиофайл из res://audio/ (в т.ч. добавленный на лету), иначе процедурный буфер
+	if not _has_sound(sound_name):
 		push_warning("[AudioManager] Unknown sound name: '%s'" % sound_name)
+		return
+	_start_on(_get_available_player(sound_name), sound_name)
+
+## Звук в точке мира — враги: телеграфы атак, их выстрелы и рывки. Слышно направление и расстояние,
+## поэтому атака за спиной читается на слух. Звуки самого игрока и интерфейса — play_sound (2D).
+func play_sound_at(sound_name: String, world_pos: Vector3):
+	if not _has_sound(sound_name):
+		push_warning("[AudioManager] Unknown sound name: '%s'" % sound_name)
+		return
+	var p = _get_available_player_3d(sound_name)
+	p.global_position = world_pos
+	_start_on(p, sound_name)
 
 func stop_sound(sound_name: String):
 	if sound_name == "slide":
@@ -196,45 +212,58 @@ func _setup_slide_stream():
 	# 2. Процедурный зацикленный звук скольжения
 	slide_player.stream = _gen_slide_wav()
 
-func _get_available_player(sound_name: String) -> AudioStreamPlayer:
-	# Лимит копий одного звука: сверх лимита перезапускается самая старая копия
+## Выбор плеера в пуле: лимит копий одного звука (сверх лимита перезапускается самая старая копия),
+## иначе свободный плеер, иначе самый давно запущенный
+func _pick_voice(pool: Array, voice_sound: Array[String], voice_start: Array[int], sound_name: String) -> int:
 	var same_count: int = 0
-	var oldest_idx: int = -1
-	for i in range(players.size()):
-		if players[i].playing and _voice_sound[i] == sound_name:
-			same_count += 1
-			if oldest_idx < 0 or _voice_start_ms[i] < _voice_start_ms[oldest_idx]:
-				oldest_idx = i
-	var idx: int = -1
+	var oldest_same: int = -1
+	var free_idx: int = -1
+	var oldest_any: int = 0
+	for i in range(pool.size()):
+		if pool[i].playing:
+			if voice_sound[i] == sound_name:
+				same_count += 1
+				if oldest_same < 0 or voice_start[i] < voice_start[oldest_same]:
+					oldest_same = i
+			if voice_start[i] < voice_start[oldest_any]:
+				oldest_any = i
+		elif free_idx < 0:
+			free_idx = i
+	var idx: int = oldest_any
 	if same_count >= MAX_VOICES_PER_SOUND:
-		idx = oldest_idx
-	else:
-		for i in range(players.size()):
-			if not players[i].playing:
-				idx = i
-				break
-	if idx < 0:
-		# Если все заняты, используем round-robin ротацию
-		idx = current_player_idx
-		current_player_idx = (current_player_idx + 1) % POOL_SIZE
-	var p = players[idx]
-	p.stop()
-	_voice_sound[idx] = sound_name
-	_voice_start_ms[idx] = Time.get_ticks_msec()
+		idx = oldest_same
+	elif free_idx >= 0:
+		idx = free_idx
+	voice_sound[idx] = sound_name
+	voice_start[idx] = Time.get_ticks_msec()
+	pool[idx].stop()
 	var variation: float = PITCH_VARIATION.get(sound_name, 0.0)
-	p.pitch_scale = 1.0 + randf_range(-variation, variation)
-	return p
+	pool[idx].pitch_scale = 1.0 + randf_range(-variation, variation)
+	return idx
 
-func _play_stream(stream: AudioStream, sound_name: String):
-	var p = _get_available_player(sound_name)
-	p.stream = stream
-	p.play()
+func _get_available_player(sound_name: String) -> AudioStreamPlayer:
+	return players[_pick_voice(players, _voice_sound, _voice_start_ms, sound_name)]
 
-func _play_buffer(buffer: PackedVector2Array, duration: float, sound_name: String):
+func _get_available_player_3d(sound_name: String) -> AudioStreamPlayer3D:
+	return players_3d[_pick_voice(players_3d, _voice3d_sound, _voice3d_start_ms, sound_name)]
+
+## Есть ли такой звук (внешний файл или процедурный буфер)
+func _has_sound(sound_name: String) -> bool:
+	return external_sounds.has(sound_name) or _check_single_external_file(sound_name) or sound_buffers.has(sound_name)
+
+## Запуск звука на выбранном плеере (2D или 3D)
+func _start_on(player: Node, sound_name: String) -> void:
+	if external_sounds.has(sound_name):
+		player.stream = external_sounds[sound_name]
+		player.play()
+		return
+	var buffer: PackedVector2Array = sound_buffers[sound_name]
+	_play_buffer(player, buffer, sound_durations.get(sound_name, 0.2))
+
+func _play_buffer(player: Node, buffer: PackedVector2Array, duration: float):
 	if buffer.is_empty():
 		return
 
-	var player = _get_available_player(sound_name)
 	# При пониженной высоте звук длится дольше — остановку сдвигаем на столько же
 	duration /= player.pitch_scale
 
