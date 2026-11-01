@@ -17,6 +17,4 @@ knockback = 1.0
 headshot_multiplier = 1.5
 is_automatic = true
 alt_cooldown = 1.5
-alt_ammo_cost = 10
-alt_projectile_count = 12
 alt_damage = 4

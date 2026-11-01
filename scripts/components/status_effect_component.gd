@@ -220,6 +220,18 @@ func add_needle(_is_blood_needle: bool = false) -> void:
 	var actor_name = String(actor.name) if is_instance_valid(actor) else "Enemy"
 	GameTypes.debug_log(&"enemy", "[%s] Needle stuck! Total needles: %d" % [actor_name, needle_count])
 
+## Выдернуть count игл (Стежок Швейной): сначала самые старые
+func remove_needles(count: int) -> void:
+	if count <= 0 or needle_timers.is_empty():
+		return
+	var n: int = mini(count, needle_timers.size())
+	for i in range(n):
+		needle_timers.pop_front()
+	needle_count = needle_timers.size()
+	visuals_need_update.emit(&"needle")
+	if needle_count == 0:
+		effect_expired.emit(&"needle")
+
 func _process_needles(delta: float) -> void:
 	if needle_timers.is_empty():
 		return

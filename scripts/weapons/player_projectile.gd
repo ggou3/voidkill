@@ -11,6 +11,12 @@ extends Node3D
 
 const VISUAL_CATCHUP_TIME: float = 0.08
 const MAX_AREA_SKIPS: int = 4 # сколько посторонних Area3D (зоны секторов, выход) луч обходит за тик
+const HOMING_ARRIVE_DIST: float = 1.2 # м до цели самонаведения — «долетел»
+
+## FLY — летит по прямой; STUCK — застрял (в стене или во враге и движется с ним, stick);
+## HOMING — летит к цели, поворачивая каждый тик (home_to), по прибытии — WeaponBase.on_projectile_homed
+enum Mode { FLY, STUCK, HOMING }
+var mode: Mode = Mode.FLY
 
 var weapon: WeaponBase = null
 var velocity: Vector3 = Vector3.ZERO
@@ -28,6 +34,10 @@ var _visual_offset: Vector3 = Vector3.ZERO
 var _visual_catchup_speed: float = 0.0
 var _mesh_basis: Basis = Basis.IDENTITY
 var _mesh: MeshInstance3D = null
+var _host: Node3D = null
+var _host_local: Transform3D = Transform3D.IDENTITY
+var _homing_target: Node3D = null
+var _homing_speed: float = 0.0
 
 func _init() -> void:
 	_mesh = MeshInstance3D.new()
@@ -47,6 +57,9 @@ func launch(p_weapon: WeaponBase, origin: Vector3, p_velocity: Vector3, muzzle_p
 		mesh: Mesh, material: Material, mesh_stretch: float, lifetime: float, p_is_alt: bool,
 		exclude: Array[RID], collision_mask: int, p_gravity: float = 0.0) -> void:
 	weapon = p_weapon
+	mode = Mode.FLY
+	_host = null
+	_homing_target = null
 	velocity = p_velocity
 	gravity = p_gravity
 	is_alt = p_is_alt
@@ -74,7 +87,45 @@ func deactivate() -> void:
 	visible = false
 	weapon = null
 	payload = {}
+	mode = Mode.FLY
+	_host = null
+	_homing_target = null
 	set_physics_process(false)
+
+## Застрять в точке hit_pos: в стене (host = null) или во враге (двигается вместе с ним, пока тот жив).
+## Через lifetime исчезает; враг умер или исчез — тоже
+func stick(host: Node3D, hit_pos: Vector3, lifetime: float) -> void:
+	mode = Mode.STUCK
+	_life = lifetime
+	global_position = hit_pos
+	_visual_offset = Vector3.ZERO
+	_update_mesh()
+	_host = host
+	if is_instance_valid(host):
+		_host_local = host.global_transform.affine_inverse() * global_transform
+
+func is_stuck() -> bool:
+	return active and mode == Mode.STUCK
+
+## Хозяин застрявшего снаряда (враг) или null (стена)
+func get_host() -> Node3D:
+	return _host if is_instance_valid(_host) else null
+
+## Лететь к target со скоростью speed, доворачивая каждый тик (возврат игл к игроку). Луч по пути
+## по-прежнему отдаёт попадания оружию (вернуть true — прошить насквозь)
+func home_to(target: Node3D, speed: float, lifetime: float) -> void:
+	mode = Mode.HOMING
+	_host = null
+	_homing_target = target
+	_homing_speed = speed
+	_life = lifetime
+	_visual_offset = Vector3.ZERO
+	velocity = (_homing_point() - global_position).normalized() * speed
+	_orient()
+	_update_mesh()
+
+func _homing_point() -> Vector3:
+	return _homing_target.global_position + Vector3.UP * 0.9 if is_instance_valid(_homing_target) else global_position
 
 ## Не задевать этот объект дальше (снаряд прошил врага насквозь)
 func add_exclude(rid: RID) -> void:
@@ -87,13 +138,31 @@ func _physics_process(delta: float) -> void:
 	if _life <= 0.0:
 		deactivate()
 		return
-	velocity.y -= gravity * delta
+	if mode == Mode.STUCK:
+		_follow_host()
+		return
+	if mode == Mode.HOMING:
+		if not is_instance_valid(_homing_target):
+			deactivate()
+			return
+		var to_target: Vector3 = _homing_point() - global_position
+		if to_target.length() <= HOMING_ARRIVE_DIST:
+			var w: WeaponBase = weapon
+			deactivate()
+			if is_instance_valid(w):
+				w.on_projectile_homed(self)
+			return
+		velocity = to_target.normalized() * _homing_speed
+		_orient()
+	else:
+		velocity.y -= gravity * delta
 	var from: Vector3 = global_position
 	var to: Vector3 = from + velocity * delta
 	var hit: Dictionary = _sweep(from, to)
 	if not hit.is_empty():
 		var keep_flying: bool = is_instance_valid(weapon) and weapon.on_projectile_hit(self, hit)
-		if not active:
+		# Оружие могло погасить снаряд или перевести его в другой режим (застрял)
+		if not active or mode == Mode.STUCK:
 			return
 		if not keep_flying:
 			global_position = hit.position
@@ -107,6 +176,16 @@ func _physics_process(delta: float) -> void:
 		_orient()
 	_visual_offset = _visual_offset.move_toward(Vector3.ZERO, _visual_catchup_speed * delta)
 	_update_mesh()
+
+func _follow_host() -> void:
+	if _host == null:
+		return
+	var host_alive: bool = is_instance_valid(_host) and _host.is_inside_tree() \
+			and not ("health" in _host and _host.health <= 0)
+	if not host_alive:
+		deactivate()
+		return
+	global_transform = _host.global_transform * _host_local
 
 ## Луч по отрезку пути: тела и хитбоксы голов; прочие Area3D (зоны секторов, выход уровня) пропускаются
 func _sweep(from: Vector3, to: Vector3) -> Dictionary:

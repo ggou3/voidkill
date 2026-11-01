@@ -37,6 +37,10 @@ var _weave_time: float = 0.0
 ## Личный множитель скорости 0.9–1.1: одинаковые враги не идут строем
 var _speed_mult: float = 1.0
 
+## Пришпилен иглой к стене (pin_to): стоит на месте, не атакует, урон получает
+var pinned_timer: float = 0.0
+var _pin_position: Vector3 = Vector3.ZERO
+
 ## Замах ближнего удара (телеграф): глаза загораются оранжевым, как перед выпадом, и звучит замах в
 ## точке врага; удар — в конце замаха и только по игроку в радиусе выхода из ATTACK (attack_range × 1.3),
 ## поэтому от удара можно уйти дэшем. Попадание по врагу во время замаха (реакция на урон) сбивает удар.
@@ -127,6 +131,13 @@ func _physics_process(delta: float) -> void:
 		hit_reaction_timer -= delta
 	if lunge_cooldown_timer > 0.0:
 		lunge_cooldown_timer -= delta
+
+	if pinned_timer > 0.0:
+		pinned_timer -= delta
+		velocity = Vector3.ZERO
+		knockback_velocity = Vector3.ZERO
+		global_position = _pin_position
+		return
 		
 	if is_jumping_link:
 		jump_grace_timer -= delta
@@ -792,6 +803,20 @@ func trigger_wall_slam(impact_speed: float, col: KinematicCollision3D) -> void:
 		if is_instance_valid(player) and "skills" in player and player.skills:
 			player.skills.add_dash_charge()
 		set_state(State.DEAD)
+
+## Пришпилить к стене в точке position на duration секунд (игла Швейной прошила врага в стену).
+## Замах и выпад сбрасываются; состояние FSM не меняется — после пришпиливания враг продолжает, где был
+func pin_to(position: Vector3, duration: float) -> void:
+	if current_state == State.DEAD:
+		return
+	_cancel_melee_windup()
+	if current_state == State.LUNGE:
+		end_lunge()
+	is_jumping_link = false
+	wall_slam_timer = 0.0
+	_pin_position = position
+	pinned_timer = duration
+	global_position = position
 
 ## Начать замах ближнего удара: mat — материал глаз (может быть null), base_color — его обычный цвет
 func _begin_melee_windup(sound_name: String, mat: StandardMaterial3D, base_color: Color) -> void:

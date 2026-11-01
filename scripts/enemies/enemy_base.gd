@@ -595,6 +595,9 @@ func _apply_poison_tick(damage: int) -> void:
 func add_needle(_is_blood_needle: bool = false) -> void:
 	_ensure_status_effect_component().add_needle(_is_blood_needle)
 
+func remove_needles(count: int) -> void:
+	_ensure_status_effect_component().remove_needles(count)
+
 func _update_needle_visuals() -> void:
 	if current_state == State.DEAD:
 		return
