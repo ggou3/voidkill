@@ -154,14 +154,21 @@ func _process_attack(delta: float) -> void:
 	if has_los:
 		# Визуальный телеграф перед выстрелом (за 0.35с)
 		if attack_timer <= 0.35 and hit_reaction_timer <= 0.0 and not is_telegraphing:
-			_start_telegraph()
+			# Токен атаки на телеграф + выстрел; пул занят — выстрел откладывается
+			if GameManager.request_attack_token(&"ranged", 0.7):
+				_start_telegraph()
+			else:
+				attack_timer = 0.35 + randf_range(0.3, 0.7)
 		elif attack_timer > 0.35 and is_telegraphing:
 			_reset_telegraph()
-			
-		# Выстрел по завершении кулдауна (2.0с)
+
+		# Выстрел по завершении кулдауна (2.0с) — только после полного телеграфа
 		if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
-			perform_attack()
-			attack_timer = attack_cooldown
+			if not is_telegraphing:
+				attack_timer = 0.36
+			else:
+				perform_attack()
+				attack_timer = attack_cooldown
 	else:
 		_reset_telegraph()
 

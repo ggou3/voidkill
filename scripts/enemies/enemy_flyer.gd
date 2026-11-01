@@ -198,7 +198,11 @@ func _process_flight_movement(delta: float) -> void:
 	_maintain_hover_height(delta, target_horiz_vel)
 	
 	if attack_cooldown_timer <= 0.0 and dist <= 22.0 and _has_line_of_sight_to(target_player):
-		_start_telegraph()
+		# Токен атаки на телеграф + залп; пул занят — залп откладывается
+		if GameManager.request_attack_token(&"ranged", telegraph_duration + laser_duration + 0.2):
+			_start_telegraph()
+		else:
+			attack_cooldown_timer = randf_range(0.4, 0.8)
 
 func _apply_obstacle_avoidance(desired_vel: Vector3) -> Vector3:
 	if desired_vel.length_squared() <= 0.1 or not forward_ray:

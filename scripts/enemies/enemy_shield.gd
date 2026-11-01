@@ -123,6 +123,9 @@ func _process_attack(delta: float) -> void:
 			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, rotation_speed * delta))
 	
 	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
+		if is_inside_tree() and current_state == State.ATTACK and not GameManager.request_attack_token(&"melee", 0.5):
+			attack_timer = randf_range(0.15, 0.3) # пул токенов занят — удар чуть позже
+			return
 		if is_inside_tree() and current_state == State.ATTACK:
 			perform_attack()
 		attack_timer = attack_cooldown

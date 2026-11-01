@@ -49,6 +49,17 @@ const MULTI_KILL_HIT_STOP_MAX: float = 0.14
 var _recent_kill_ms: Array[int] = []
 var _multi_kill_burst_ms: int = -100000
 
+## Токены атак (как в DOOM 2016): ограничивают число врагов, атакующих одновременно. Враг берёт токен
+## на время атаки (телеграф + удар/выстрел); нет свободного — атака откладывается, враг продолжает манёвр.
+## Токен истекает сам по времени, возвращать его при смерти или прерывании не нужно.
+## Размер пула — главная ручка давления/сложности. Охотник, соглядатай и подрывник токенов не берут.
+const ATTACK_TOKEN_LIMITS: Dictionary = {
+	&"melee": 3,  # удары и выпады ближних врагов, удары щитоносца
+	&"swarm": 5,  # касания роя
+	&"ranged": 3, # выстрелы дальников и турелей, лазер летуна
+}
+var _attack_tokens: Dictionary = {} # вид -> Array[int] (время окончания, мс)
+
 ## Отладка: полоски HP над врагами. По умолчанию выключены — компонент полоски у врагов тогда не
 ## создаётся вообще. Состояние живёт в автозагрузке, поэтому держится всю сессию (и после перезапуска сцены).
 var show_enemy_health_bars: bool = false
@@ -94,6 +105,7 @@ func register_player(p: Node) -> void:
 ## Регистрация уровня. Вызывается LevelController из _ready() (в том числе после перезагрузки сцены).
 func register_level(l: Node) -> void:
 	level = l
+	_attack_tokens.clear()
 	current_state = State.PLAYING
 	level_time = 0.0
 	kills = 0
@@ -136,6 +148,20 @@ func hit_stop(duration: float) -> void:
 	# которая при раннем срабатывании таймера оставила бы игру в замедлении навсегда
 	get_tree().create_timer(duration, true, false, true).timeout.connect(_on_hit_stop_timeout.bind(_hit_stop_token))
 
+## Взять токен атаки вида kind на hold_time секунд. false — пул занят, атаку отложить.
+func request_attack_token(kind: StringName, hold_time: float) -> bool:
+	var limit: int = ATTACK_TOKEN_LIMITS.get(kind, 0)
+	if limit <= 0:
+		return true
+	var now: int = Time.get_ticks_msec()
+	var active: Array = _attack_tokens.get(kind, []).filter(func(end_ms): return end_ms > now)
+	if active.size() >= limit:
+		_attack_tokens[kind] = active
+		return false
+	active.append(now + int(hold_time * 1000.0))
+	_attack_tokens[kind] = active
+	return true
+
 ## Враг убит (EnemyBase.die, подрывник — до взрыва). Считает мультикилл.
 func register_enemy_kill() -> void:
 	if current_state != State.PLAYING:
@@ -175,6 +201,7 @@ func trigger_game_over():
 ## Продолжить после смерти: на уровне — возрождение на последнем чекпоинте, вне уровня — перезапуск сцены
 func restart_game():
 	_end_hit_stop()
+	_attack_tokens.clear()
 	if is_level_active() and is_instance_valid(player):
 		current_state = State.PLAYING
 		level.respawn_player(player)

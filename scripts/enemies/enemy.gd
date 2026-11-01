@@ -48,8 +48,11 @@ func _process_chase(delta: float) -> void:
 		
 	if lunge_cooldown_timer <= 0.0 and dist_to_player >= lunge_min_range and dist_to_player <= lunge_max_range:
 		if is_on_floor() and not is_jumping_link and wall_slam_timer <= 0.0 and _can_lunge_to_player():
-			start_lunge()
-			return
+			# Токен атаки на телеграф + рывок; пул занят — повторная проверка чуть позже
+			if GameManager.request_attack_token(&"melee", 0.9):
+				start_lunge()
+				return
+			lunge_cooldown_timer = randf_range(0.25, 0.5)
 			
 	super._process_chase(delta)
 
@@ -76,6 +79,9 @@ func _process_attack(delta: float) -> void:
 			rotation.y = lerp_angle(rotation.y, target_angle, min(1.0, rotation_speed * delta))
 	
 	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
+		if is_inside_tree() and current_state == State.ATTACK and not GameManager.request_attack_token(&"melee", 0.5):
+			attack_timer = randf_range(0.15, 0.3) # пул токенов занят — удар чуть позже
+			return
 		if is_inside_tree() and current_state == State.ATTACK:
 			perform_attack()
 		attack_timer = attack_cooldown

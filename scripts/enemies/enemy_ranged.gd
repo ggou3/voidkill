@@ -137,13 +137,21 @@ func _process_attack(delta: float) -> void:
 	# Визуальный телеграф перед выстрелом (за 0.35с до конца кулдауна глаза загораются золотым цветом)
 	if attack_timer <= 0.35 and hit_reaction_timer <= 0.0 and not is_telegraphing_shot:
 		if is_inside_tree() and current_state == State.ATTACK:
-			_start_ranged_telegraph()
+			# Токен атаки на телеграф + выстрел; пул занят — выстрел откладывается
+			if GameManager.request_attack_token(&"ranged", 0.7):
+				_start_ranged_telegraph()
+			else:
+				attack_timer = 0.35 + randf_range(0.3, 0.7)
 	elif attack_timer > 0.35 and is_telegraphing_shot:
 		_reset_ranged_telegraph()
-		
-	# Выстрел по завершении кулдауна (2.5-3.0с)
+
+	# Выстрел по завершении кулдауна (2.5-3.0с) — только после телеграфа: если телеграф не начался
+	# (реакция на урон, нет токена), сначала полный телеграф
 	if attack_timer <= 0.0 and hit_reaction_timer <= 0.0:
 		if is_inside_tree() and current_state == State.ATTACK:
+			if not is_telegraphing_shot:
+				attack_timer = 0.36
+				return
 			perform_attack()
 		attack_timer = attack_cooldown
 
