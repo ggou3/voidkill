@@ -298,8 +298,19 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 	
 	AudioManager.play_sound("needle_shot")
 	
-	const NEEDLE_TOLERANCE: float = 0.40
-	
+	# Иглы — физические снаряды Швейной (ноябрь 2026, раньше — мгновенные лучи): летят к ближайшим врагам
+	# с разбросом (или веером, если врагов рядом нет); урон и пробивание — WeaponSewing._on_burst_needle_hit
+	var player = get_tree().get_first_node_in_group("player")
+	# Без типа WeaponSewing: компонент врага не тянет за собой скрипты оружия игрока
+	var sewing = null
+	if is_instance_valid(player) and "weapons" in player and is_instance_valid(player.weapons) and player.weapons.has_method("get_sewing"):
+		sewing = player.weapons.get_sewing()
+	if not is_instance_valid(sewing):
+		return
+	var exclude: Array[RID] = []
+	if is_instance_valid(actor) and actor is CollisionObject3D:
+		exclude.append((actor as CollisionObject3D).get_rid())
+
 	for i in range(count):
 		var needle_dir: Vector3 = Vector3.FORWARD
 		if nearby_enemies.size() > 0:
@@ -311,60 +322,7 @@ func trigger_needle_burst(was_inflated: bool, depth: int) -> void:
 		else:
 			var angle = (float(i) / float(count)) * TAU + randf_range(-0.1, 0.1)
 			needle_dir = Vector3(cos(angle), randf_range(-0.2, 0.3), sin(angle)).normalized()
-			
-		var max_dist = burst_radius
-		var wall_query = PhysicsRayQueryParameters3D.create(burst_pos, burst_pos + needle_dir * max_dist)
-		wall_query.exclude = [actor]
-		wall_query.collide_with_areas = false
-		wall_query.collide_with_bodies = true
-		var wall_res = space_state.intersect_ray(wall_query)
-		var needle_end = burst_pos + needle_dir * max_dist
-		if not wall_res.is_empty():
-			var col = wall_res.collider
-			if col and not (col.is_in_group("enemy") or col.is_in_group("enemy_head")):
-				needle_end = wall_res.position
-				max_dist = burst_pos.distance_to(needle_end)
-				
-		var line_vec = needle_end - burst_pos
-		var line_len = line_vec.length()
-		if line_len < 0.05:
-			continue
-		var line_dir = line_vec / line_len
-		
-		var hit_on_path: Array = []
-		for cand in nearby_enemies:
-			var e = cand["enemy"]
-			if not is_instance_valid(e):
-				continue
-			var e_pos = cand["pos"]
-			var t = clamp((e_pos - burst_pos).dot(line_dir), 0.0, line_len)
-			if t < 0.05:
-				continue
-			var pt = burst_pos + line_dir * t
-			var d = pt.distance_to(e_pos)
-			if d <= (0.36 + NEEDLE_TOLERANCE):
-				hit_on_path.append({"enemy": e, "hit_pos": pt, "dist": t})
-				
-		hit_on_path.sort_custom(func(a, b): return a["dist"] < b["dist"])
-		
-		if not was_inflated:
-			# Обычный разлёт: игла поражает только ближайшего врага на траектории (не пробивает)
-			if not hit_on_path.is_empty():
-				var first_hit = hit_on_path[0]
-				var target = first_hit["enemy"]
-				if is_instance_valid(target) and ("health" in target and target.health > 0):
-					var knock = needle_dir * 1.5 + Vector3.UP * 0.5
-					target.take_damage(damage_per_needle, knock, first_hit["hit_pos"], false, false, false, false, -1, "sewing")
-				needle_end = first_hit["hit_pos"]
-		else:
-			# Раздутый враг: иглы пробивают навылет всех врагов на своей траектории с наследованием chain_depth
-			for hit_info in hit_on_path:
-				var target = hit_info["enemy"]
-				if is_instance_valid(target) and ("health" in target and target.health > 0):
-					var knock = needle_dir * 2.5 + Vector3.UP * 0.8
-					target.take_damage(damage_per_needle, knock, hit_info["hit_pos"], false, false, false, false, depth, "sewing")
-					
-		TracerPool.spawn_tracer(burst_pos, needle_end, &"shrapnel", was_inflated)
+		sewing.spawn_burst_needle(burst_pos, needle_dir, burst_radius, damage_per_needle, was_inflated, depth, exclude)
 
 # ==============================================================================
 # ИНФЛЯЦИЯ (РАЗДУТИЕ И ДЕТОНАЦИЯ)

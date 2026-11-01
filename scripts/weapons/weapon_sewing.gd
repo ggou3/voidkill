@@ -24,6 +24,9 @@ const YANK_UP: float = 3.0
 const YANK_SLAM_WINDOW: float = 0.6 # окно удара о стену/врагов после рывка (как у мили)
 const PIN_RANGE: float = 2.5
 const PIN_TIME: float = 2.0
+## Разлёт игл из умершего врага (StatusEffectComponent.trigger_needle_burst): физические иглы, долетают
+## примерно до радиуса разлёта ×1.25
+const BURST_SPEED: float = 30.0
 
 var _stuck: Array[PlayerProjectile] = []
 
@@ -64,6 +67,8 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 				projectile.payload["seen"] = seen
 				_deal_hit(hit.collider, hit.position, dir, true, RETURN_DAMAGE_SCALE)
 		return true
+	if projectile.payload.get("burst", false):
+		return _on_burst_needle_hit(projectile, hit, dir)
 	var target: Node = _deal_hit(hit.collider, hit.position, dir, false)
 	if is_instance_valid(target):
 		if target is EnemySwarm and _try_pin(target, hit.position, dir, projectile):
@@ -71,6 +76,39 @@ func on_projectile_hit(projectile: PlayerProjectile, hit: Dictionary) -> bool:
 		_stick(projectile, target as Node3D, hit.position)
 	else:
 		_stick(projectile, null, hit.position)
+	return false
+
+## Игла из разлёта при смерти врага. Урон и правила прежние: обычная — урон первому врагу и застревает
+## в нём; из раздутого — прошивает всех на пути (с глубиной цепи Инъектора). В стене застревает. Застрявшие
+## иглы разлёта можно выдернуть «Стежком», как обычные
+func spawn_burst_needle(origin: Vector3, dir: Vector3, radius: float, damage: int, pierce: bool, depth: int, exclude: Array[RID]) -> void:
+	if not weapon_manager:
+		return
+	var style: StringName = &"needle_blood" if pierce else &"needle"
+	var p: PlayerProjectile = weapon_manager.spawn_projectile_from(self, origin, dir * BURST_SPEED, style, false,
+		radius * 1.25 / BURST_SPEED, 0.0, exclude)
+	if p:
+		p.payload = {"burst": true, "damage": damage, "pierce": pierce, "depth": depth, "seen": {}}
+
+func _on_burst_needle_hit(projectile: PlayerProjectile, hit: Dictionary, dir: Vector3) -> bool:
+	var target: Node = _resolve_hit_target(hit.collider)[0]
+	if is_instance_valid(target) and target.has_method("take_damage"):
+		if "health" in target and target.health <= 0:
+			return true
+		var seen: Dictionary = projectile.payload["seen"]
+		var key: int = target.get_instance_id()
+		if seen.has(key):
+			return true
+		seen[key] = true
+		var pierce: bool = projectile.payload["pierce"]
+		var knock: Vector3 = dir * (2.5 if pierce else 1.5) + Vector3.UP * (0.8 if pierce else 0.5)
+		var depth: int = projectile.payload["depth"] if pierce else -1
+		target.take_damage(projectile.payload["damage"], knock, hit.position, false, false, false, false, depth, "sewing")
+		if pierce:
+			return true
+		_stick(projectile, target as Node3D, hit.position)
+		return false
+	_stick(projectile, null, hit.position)
 	return false
 
 ## Роевик со стеной за спиной: игла прибивает его к стене и застревает в стене
@@ -147,6 +185,7 @@ func alt_fire(_has_infinite_ammo: bool = false) -> void:
 		return_offset = Vector3.ZERO
 	var count: int = _stuck.size()
 	for p in _stuck:
+		p.payload = {}
 		p.home_to(return_target, RETURN_SPEED, RETURN_LIFETIME, return_offset)
 	_stuck.clear()
 	GameTypes.debug_log(&"weapon", "[SEWING MACHINE] Stitch! Needles recalled: %d | Hosts yanked: %d" % [count, hosts.size()])

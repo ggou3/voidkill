@@ -32,6 +32,7 @@ const PROJECTILE_STYLES: Dictionary = {
 	&"needle": {"radius": 0.012, "length": 0.3, "color": Color(0.85, 0.92, 1.0), "energy": 3.0, "stretch": 1.6},
 	&"pellet": {"radius": 0.03, "length": 0.07, "color": Color(1.0, 0.55, 0.15), "energy": 4.0, "stretch": 4.0},
 	&"syringe": {"radius": 0.028, "length": 0.28, "color": Color(0.35, 1.0, 0.35), "energy": 3.0, "stretch": 1.2},
+	&"needle_blood": {"radius": 0.016, "length": 0.32, "color": Color(1.0, 0.12, 0.08), "energy": 3.5, "stretch": 1.6},
 }
 
 var is_bursting: bool:
@@ -64,6 +65,29 @@ func spawn_projectile(weapon: WeaponBase, direction: Vector3, speed: float, styl
 	p.launch(weapon, head.camera.global_position, direction.normalized() * speed + inherit, head.get_muzzle_position(),
 		style, visual[0], visual[1], visual[2], lifetime, is_alt, exclude, mask, gravity)
 	return p
+
+## Выпустить снаряд из произвольной точки мира (не из камеры): разлёт игл из умершего врага и т.п.
+## exclude — что снаряд не задевает (игрок исключён всегда)
+func spawn_projectile_from(weapon: WeaponBase, origin: Vector3, velocity: Vector3, style: StringName, is_alt: bool = false,
+		lifetime: float = 2.0, gravity: float = 0.0, exclude: Array[RID] = []) -> PlayerProjectile:
+	var p: PlayerProjectile = _get_free_projectile()
+	if not p:
+		return null
+	var visual: Array = _get_projectile_visual(style)
+	var all_exclude: Array[RID] = exclude.duplicate()
+	var player = get_parent()
+	if player is CollisionObject3D:
+		all_exclude.append(player.get_rid())
+	var mask: int = head.raycast.collision_mask if is_instance_valid(head) and head.raycast else 1
+	p.launch(weapon, origin, velocity, origin, style, visual[0], visual[1], visual[2], lifetime, is_alt, all_exclude, mask, gravity)
+	return p
+
+## Оружие слота по классу-проверке (например, Швейная для разлёта игл)
+func get_sewing() -> WeaponSewing:
+	for w in weapons:
+		if w is WeaponSewing:
+			return w
+	return null
 
 ## Все летящие снаряды (для механик, которым нужен обход, например возврат игл)
 func get_active_projectiles() -> Array[PlayerProjectile]:
