@@ -18,14 +18,17 @@ extends EnemyBase
 @export var lunge_cooldown: float = 4.5
 
 ## Манера подхода в погоне (ноябрь 2026, против «паровозика»: все шли по одному пути в одну точку — к игроку).
-## FLANK — каждый идёт в свою точку сбоку от игрока (угол 30–77° от своего направления, радиус сжимается с
-## дистанцией), поэтому толпа расходится веером и окружает; ближе FLANK_CLOSE_DIST — прямо на игрока.
+## FLANK — в толпе (рядом, в FLANK_CROWD_RADIUS, есть другие враги) каждый идёт в свою точку сбоку от игрока
+## (угол 15–40° от своего направления, радиус сжимается с дистанцией) — толпа расходится и окружает; одиночка и
+## все ближе FLANK_CLOSE_DIST идут прямо на игрока. Плейтест: при 29–77° всегда враги разбегались без нужды.
 ## WEAVE — то же плюс петляние из стороны в сторону (рой). DIRECT — напролом (Охотник, щитоносец, подрывник).
 enum Approach { DIRECT, FLANK, WEAVE }
 @export var approach_style: Approach = Approach.FLANK
-const FLANK_ANGLE_MIN: float = 0.5 # рад (~29°)
-const FLANK_ANGLE_MAX: float = 1.35 # рад (~77°)
-const FLANK_MAX_RADIUS: float = 9.0
+const FLANK_ANGLE_MIN: float = 0.26 # рад (~15°)
+const FLANK_ANGLE_MAX: float = 0.7 # рад (~40°)
+const FLANK_MAX_RADIUS: float = 6.0
+const FLANK_RADIUS_FACTOR: float = 0.4 # радиус точки обхода = дистанция × это
+const FLANK_CROWD_RADIUS: float = 5.0
 const FLANK_CLOSE_DIST: float = 4.5
 const FLANK_REROLL_MIN: float = 3.0 # с — угол подхода иногда меняется, чтобы рисунок не застывал
 const FLANK_REROLL_MAX: float = 6.0
@@ -299,7 +302,9 @@ func _get_approach_point(dist_to_player: float) -> Vector3:
 	if from_player.length_squared() < 0.01:
 		return player_pos
 	var side: Vector3 = from_player.normalized().rotated(Vector3.UP, _approach_angle)
-	var radius: float = minf(dist_to_player * 0.6, FLANK_MAX_RADIUS)
+	if _approach_angle == 0.0:
+		return player_pos
+	var radius: float = minf(dist_to_player * FLANK_RADIUS_FACTOR, FLANK_MAX_RADIUS)
 	var point: Vector3 = player_pos + side * radius
 	# Пустая/несинхронизированная карта отвечает (0,0,0) (урок «Рантайм-запекание навмеша…»); точка над
 	# пропастью притягивается далеко — в обоих случаях идём прямо к игроку
@@ -311,9 +316,17 @@ func _get_approach_point(dist_to_player: float) -> Vector3:
 		return player_pos
 	return on_mesh
 
+## Новый угол обхода: в толпе — случайный 15–40° в случайную сторону, без соседей — 0 (прямо на игрока)
 func _reroll_approach_angle() -> void:
-	_approach_angle = randf_range(FLANK_ANGLE_MIN, FLANK_ANGLE_MAX) * (1.0 if randf() < 0.5 else -1.0)
 	_approach_reroll_timer = randf_range(FLANK_REROLL_MIN, FLANK_REROLL_MAX)
+	_approach_angle = 0.0
+	if approach_style == Approach.DIRECT or not is_inside_tree():
+		return
+	var crowd_radius_sq: float = FLANK_CROWD_RADIUS * FLANK_CROWD_RADIUS
+	for other in get_tree().get_nodes_in_group("enemy"):
+		if other != self and other is Node3D and global_position.distance_squared_to(other.global_position) <= crowd_radius_sq:
+			_approach_angle = randf_range(FLANK_ANGLE_MIN, FLANK_ANGLE_MAX) * (1.0 if randf() < 0.5 else -1.0)
+			return
 
 func _on_velocity_computed(safe_velocity: Vector3) -> void:
 	if is_jumping_link or current_state == State.LUNGE:
