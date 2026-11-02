@@ -7,7 +7,7 @@ extends Node3D
 ## упавший на пол быстро, оставляет пятно крови. Лежащий кусок луч не пускает; через GIB_LIFETIME кусок
 ## сжимается и пропадает. Больше MAX_GIBS кусков — переиспользуется следующий по кругу (самый старый).
 
-const MAX_GIBS: int = 120
+const MAX_GIBS: int = 200
 const MAX_STAINS: int = 64
 const GIB_LIFETIME: float = 4.0 # + до 1 с случайно
 const GIB_FADE_TIME: float = 0.5
@@ -23,6 +23,17 @@ const GIB_RADIUS: float = 0.08 # при масштабе 1
 const COLOR_FLESH: Color = Color(0.42, 0.02, 0.02)
 const COLOR_BODY: Color = Color(0.05, 0.045, 0.045)
 const COLOR_STAIN: Color = Color(0.28, 0.0, 0.0)
+const COLOR_CLOT: Color = Color(0.16, 0.0, 0.01)
+const COLOR_BONE: Color = Color(0.78, 0.72, 0.6)
+## Вид куска (ноябрь 2026, «более разные фракции»): форма, материал и доля среди кусков разлёта.
+## Мясо — кубики, полосы, лоскуты; сгустки — тёмные глянцевые шарики; обломки корпуса — чёрные; кость — светлая
+## палочка (реже всего)
+enum GibKind { FLESH, STRIP, FLAP, CLOT, BODY, BONE }
+const GIB_KIND_WEIGHTS: Array[float] = [0.3, 0.16, 0.14, 0.14, 0.18, 0.08]
+## Мелкая крошка поверх основных кусков: доля от их числа, масштаб и прибавка к скорости
+const CRUMB_SHARE: float = 0.5
+const CRUMB_SCALE: float = 0.45
+const CRUMB_SPEED_MULT: float = 1.25
 
 var _gibs: Array[MeshInstance3D] = []
 var _vel: PackedVector3Array = PackedVector3Array()
@@ -38,9 +49,9 @@ var _stain_life: PackedFloat32Array = PackedFloat32Array()
 var _stain_size: PackedFloat32Array = PackedFloat32Array()
 var _stain_cursor: int = -1
 
-var _gib_meshes: Array[Mesh] = []
-var _mat_flesh: StandardMaterial3D = null
-var _mat_body: StandardMaterial3D = null
+var _kind_meshes: Array = [] # по GibKind: Array[Mesh]
+var _kind_materials: Array[StandardMaterial3D] = [] # по GibKind
+var _kind_weight_total: float = 0.0
 var _stain_mesh: PlaneMesh = null
 var _ray: PhysicsRayQueryParameters3D = null
 
@@ -61,16 +72,7 @@ func _ready() -> void:
 	add_to_group("gib_pool")
 	# Куски летят в физическом тике — интерполируются (урок «Интерполяция физики — только по выбору…»)
 	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_ON
-	for size in [Vector3(0.18, 0.12, 0.14), Vector3(0.26, 0.14, 0.1), Vector3(0.12, 0.12, 0.22), Vector3(0.2, 0.08, 0.2)]:
-		var box := BoxMesh.new()
-		box.size = size
-		_gib_meshes.append(box)
-	_mat_flesh = StandardMaterial3D.new()
-	_mat_flesh.albedo_color = COLOR_FLESH
-	_mat_flesh.roughness = 0.35
-	_mat_body = StandardMaterial3D.new()
-	_mat_body.albedo_color = COLOR_BODY
-	_mat_body.roughness = 0.7
+	_setup_gib_kinds()
 	_stain_mesh = PlaneMesh.new()
 	_stain_mesh.size = Vector2(1.0, 1.0)
 	var stain_mat := StandardMaterial3D.new()
@@ -82,24 +84,74 @@ func _ready() -> void:
 	_ray.collide_with_bodies = true
 	_ray.collision_mask = 1
 
+## Меши и материалы видов кусков — один раз на пул
+func _setup_gib_kinds() -> void:
+	var flesh: Array[Mesh] = []
+	for size in [Vector3(0.18, 0.12, 0.14), Vector3(0.26, 0.14, 0.1), Vector3(0.12, 0.12, 0.22), Vector3(0.2, 0.08, 0.2)]:
+		flesh.append(_box(size))
+	var strip: Array[Mesh] = [_box(Vector3(0.34, 0.05, 0.07)), _box(Vector3(0.26, 0.06, 0.05))]
+	var flap: Array[Mesh] = [_box(Vector3(0.24, 0.03, 0.2)), _box(Vector3(0.18, 0.025, 0.26))]
+	var clot_mesh := SphereMesh.new()
+	clot_mesh.radius = 0.08
+	clot_mesh.height = 0.13
+	clot_mesh.radial_segments = 6
+	clot_mesh.rings = 3
+	var body: Array[Mesh] = [_box(Vector3(0.2, 0.1, 0.16)), _box(Vector3(0.28, 0.06, 0.12))]
+	var bone_mesh := CylinderMesh.new()
+	bone_mesh.top_radius = 0.022
+	bone_mesh.bottom_radius = 0.03
+	bone_mesh.height = 0.26
+	bone_mesh.radial_segments = 5
+	bone_mesh.rings = 1
+	_kind_meshes = [flesh, strip, flap, [clot_mesh], body, [bone_mesh]]
+	var mat_flesh := _material(COLOR_FLESH, 0.35)
+	var mat_clot := _material(COLOR_CLOT, 0.08)
+	_kind_materials = [mat_flesh, mat_flesh, mat_flesh, mat_clot, _material(COLOR_BODY, 0.7), _material(COLOR_BONE, 0.6)]
+	for w in GIB_KIND_WEIGHTS:
+		_kind_weight_total += w
+
+func _box(size: Vector3) -> BoxMesh:
+	var box := BoxMesh.new()
+	box.size = size
+	return box
+
+func _material(color: Color, roughness: float) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = roughness
+	return mat
+
+func _random_kind() -> int:
+	var r: float = randf() * _kind_weight_total
+	for k in range(GIB_KIND_WEIGHTS.size()):
+		r -= GIB_KIND_WEIGHTS[k]
+		if r <= 0.0:
+			return k
+	return GibKind.FLESH
+
 ## Разлёт count кусков из origin: основное направление base_dir (толчок убийства, может быть нулевым),
-## скорость speed, масштаб кусков size_scale (рой мельче)
+## скорость speed, масштаб кусков size_scale (рой мельче). Сверх count — мелкая крошка (CRUMB_SHARE от count),
+## она мельче и летит быстрее
 func spawn_gibs(origin: Vector3, base_dir: Vector3, count: int, speed: float, size_scale: float) -> void:
 	var flat_dir: Vector3 = Vector3(base_dir.x, 0.0, base_dir.z)
 	flat_dir = flat_dir.normalized() if flat_dir.length_squared() > 0.0001 else Vector3.ZERO
-	for i in range(count):
+	var crumbs: int = int(round(count * CRUMB_SHARE))
+	for i in range(count + crumbs):
+		var is_crumb: bool = i >= count
 		var idx: int = _alloc_gib()
 		var g: MeshInstance3D = _gibs[idx]
-		g.mesh = _gib_meshes[randi() % _gib_meshes.size()]
-		g.material_override = _mat_flesh if randf() < 0.6 else _mat_body
-		var s: float = size_scale * randf_range(0.7, 1.3)
+		var kind: int = _random_kind()
+		var meshes: Array = _kind_meshes[kind]
+		g.mesh = meshes[randi() % meshes.size()]
+		g.material_override = _kind_materials[kind]
+		var s: float = size_scale * (randf_range(0.7, 1.0) * CRUMB_SCALE if is_crumb else randf_range(0.6, 1.5))
 		_size[idx] = s
 		var jitter: Vector3 = Vector3(randf_range(-1.0, 1.0), randf_range(-0.3, 1.0), randf_range(-1.0, 1.0))
 		g.global_transform = Transform3D(
 			Basis.from_euler(Vector3(randf() * TAU, randf() * TAU, randf() * TAU)).scaled(Vector3.ONE * s),
 			origin + jitter * 0.25 * size_scale)
 		var dir: Vector3 = (flat_dir * 1.2 + jitter.normalized() * 0.8 + Vector3.UP * 0.7).normalized()
-		_vel[idx] = dir * speed * randf_range(0.6, 1.2)
+		_vel[idx] = dir * speed * randf_range(0.6, 1.2) * (CRUMB_SPEED_MULT if is_crumb else 1.0)
 		_spin[idx] = Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * 14.0
 		_life[idx] = GIB_LIFETIME + randf()
 		_resting[idx] = 0

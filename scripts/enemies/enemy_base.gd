@@ -53,6 +53,13 @@ var blood_pool_scene = preload("res://blood_pool.tscn")
 var blood_splatter_scene = preload("res://blood_splatter.tscn")
 ## Масштаб ошмётков при смерти (рой мельче)
 @export var gib_scale: float = 1.0
+## Брызги попадания, которое не убило: доля частиц и масштаб (ноябрь 2026, «меньше брызг без убийства»)
+const NONLETHAL_SPLATTER_AMOUNT: float = 0.6
+const NONLETHAL_SPLATTER_SCALE: float = 0.85
+## Отхил игрока, рядом с которым умер враг (ноябрь 2026): радиус и HP; мелкие враги (gib_scale < 1, рой) — меньше
+const NEAR_KILL_HEAL_RADIUS: float = 5.0
+const NEAR_KILL_HEAL: int = 5
+const NEAR_KILL_HEAL_SMALL: int = 2
 
 @onready var health_component: HealthComponent = _get_or_create_health_component()
 @onready var status_effect_component: StatusEffectComponent = _get_or_create_status_effect_component()
@@ -376,15 +383,16 @@ func _spawn_death_gore(death_info: Dictionary) -> void:
 	if not pool:
 		return
 	var knock: Vector3 = death_info.get("knockback", Vector3.ZERO)
-	var count: int = 4
+	# Крупные куски; мелкую крошку (ещё половину сверху) добавляет GibPool.spawn_gibs
+	var count: int = 6
 	if death_info.get("is_headshot", false) or death_info.get("is_execute", false):
-		count += 2
-	if knock.length() >= 20.0:
-		count += 2
-	if is_inflated:
 		count += 3
+	if knock.length() >= 20.0:
+		count += 3
+	if is_inflated:
+		count += 5
 	if gib_scale < 1.0:
-		count = maxi(2, count - 1)
+		count = maxi(3, count - 2)
 	var speed: float = clampf(6.0 + knock.length() * 0.3, 6.0, 18.0)
 	if is_inflated:
 		speed = maxf(speed, 14.0)
@@ -460,8 +468,12 @@ func _spawn_hit_blood_splatter(amount: int, hit_pos: Vector3, is_crit: bool, kno
 		pmat.scale_min = 0.10
 		pmat.scale_max = 0.25
 		
+	# Попадание не убило — брызг меньше: полный выброс остаётся за убийством (вместе с ошмётками смерти)
+	if health > 0:
+		splatter.amount = maxi(1, int(round(splatter.amount * NONLETHAL_SPLATTER_AMOUNT)))
+		splatter.scale *= NONLETHAL_SPLATTER_SCALE
 	splatter.process_material = pmat
-	
+
 	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 	if scene_root:
 		scene_root.add_child(splatter)
@@ -548,18 +560,9 @@ func die(death_info: Dictionary = {}) -> void:
 	_trigger_death_effects()
 
 	if blood_pool_scene:
-		var space_state = get_world_3d().direct_space_state
-		var query = PhysicsRayQueryParameters3D.create(global_position, global_position + Vector3.DOWN * 50.0)
-		var result = space_state.intersect_ray(query)
-
-		var pool = blood_pool_scene.instantiate()
 		var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
 		if scene_root:
-			scene_root.add_child(pool)
-			if result:
-				pool.global_position = result.position + Vector3(0, 0.01, 0)
-			else:
-				pool.global_position = global_position
+			BloodPool.spawn_on_floor(blood_pool_scene, scene_root, global_position, [get_rid()])
 
 	queue_free()
 
@@ -596,6 +599,16 @@ func _credit_kill() -> void:
 		if player.bpm_system.has_method("record_kill_bpm"):
 			# Бонус ударной волны (+8.0 вместо +5.5) — только у мили-ударной волны (конусная волна мили)
 			player.bpm_system.record_kill_bpm(weapon_used, killed_by_shockwave and weapon_used == "melee")
+
+	_heal_player_if_near(player)
+
+## Враг умер рядом с игроком — отхил (бой вплотную окупается здоровьем). Полное HP — без отхила и надписи
+func _heal_player_if_near(player: Node) -> void:
+	if not (player is Player) or player.is_dead or player.health >= player.max_health:
+		return
+	if global_position.distance_to(player.global_position) > NEAR_KILL_HEAL_RADIUS:
+		return
+	player.heal(NEAR_KILL_HEAL_SMALL if gib_scale < 1.0 else NEAR_KILL_HEAL)
 
 ## Эффекты смерти от статусов: разлёт игл, облако яда, взрыв раздутого. Зовут die() и подрывник,
 ## убитый до взрыва.

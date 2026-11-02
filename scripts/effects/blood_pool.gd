@@ -9,17 +9,59 @@ var _base_scale: Vector3 = Vector3.ZERO
 ## Для игрока лужа остаётся кровью: сёрф по ней работает как обычно.
 const POOL_RADIUS: float = 1.75 # радиус меша 3.5×3.5 / 2; форма-цилиндр 1.7
 const POISON_TICK_INTERVAL: float = 1.0
-const POISON_COLOR: Color = Color(0.12, 0.32, 0.04)
+## Визуал — shaders/blood_pool.gdshader (ноябрь 2026): форма от seed, растекание spread, отравление poison
+## (параметры экземпляра меша). Лужа появляется маленькой и растекается за SPREAD_TIME
+const SPREAD_START: float = 0.2
+const SPREAD_TIME: float = 0.6
+const POISON_FADE_TIME: float = 0.3
+## Поиск пола под точкой смерти: длина луча и сколько тел (враги, игрок) он может пропустить
+const FLOOR_RAY_LENGTH: float = 50.0
+const FLOOR_RAY_MAX_SKIPS: int = 8
+const FLOOR_MIN_NORMAL_Y: float = 0.7 # круче — лужа ложится ровно
 var poison_timer: float = 0.0
 var _poison_tick_timer: float = 0.0
 var _mesh: MeshInstance3D = null
-var _blood_material: Material = null
-var _poison_material: StandardMaterial3D = null
+var _poison_tween: Tween = null
+
+## Лужа на полу под from: луч вниз только до геометрии мира. Враги и игрок на пути пропускаются (раньше
+## лужа ложилась на голову врага снизу), пола нет — лужа не создаётся (раньше висела в воздухе на месте
+## смерти). Лужа ложится по нормали пола. exclude — что луч не задевает с самого начала (умерший)
+static func spawn_on_floor(scene: PackedScene, parent: Node, from: Vector3, exclude: Array[RID] = []) -> BloodPool:
+	if not parent.is_inside_tree():
+		return null
+	var space: PhysicsDirectSpaceState3D = parent.get_viewport().world_3d.direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * FLOOR_RAY_LENGTH, 1)
+	var skip: Array[RID] = exclude.duplicate()
+	for i in range(FLOOR_RAY_MAX_SKIPS):
+		query.exclude = skip
+		var hit: Dictionary = space.intersect_ray(query)
+		if hit.is_empty():
+			return null
+		var collider: Object = hit.collider
+		if collider is CharacterBody3D or (collider is Node and (collider.is_in_group("enemy") or collider.is_in_group("player"))):
+			skip.append(hit.rid)
+			continue
+		var pool: BloodPool = scene.instantiate()
+		parent.add_child(pool)
+		# Наклон пола — по нормали; крутая нормаль (луч попал в ребро ступеньки) — лужа ровно, а не боком
+		var up: Vector3 = hit.normal.normalized()
+		if up.y < FLOOR_MIN_NORMAL_Y:
+			up = Vector3.UP
+		var pool_basis: Basis = Basis(Quaternion(Vector3.UP, up)) if up.y < 0.999 else Basis.IDENTITY
+		pool.global_transform = Transform3D(pool_basis, hit.position + up * 0.01)
+		return pool
+	return null
 
 func _ready():
 	set_physics_process(false)
 	_mesh = get_node_or_null("MeshInstance3D")
 	add_to_group("blood_pool")
+	if _mesh:
+		_mesh.set_instance_shader_parameter("seed", randf() * 100.0)
+		_mesh.set_instance_shader_parameter("spread", SPREAD_START)
+		_mesh.set_instance_shader_parameter("poison", 0.0)
+		create_tween().tween_method(_set_spread, SPREAD_START, 1.0, SPREAD_TIME) \
+			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	# Подключаем сигналы касания кодом
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -55,15 +97,7 @@ func poison(duration: float) -> void:
 		return
 	_poison_tick_timer = 0.0
 	set_physics_process(true)
-	if _mesh:
-		if not _poison_material:
-			_blood_material = _mesh.get_surface_override_material(0)
-			_poison_material = StandardMaterial3D.new()
-			_poison_material.albedo_color = POISON_COLOR
-			_poison_material.emission_enabled = true
-			_poison_material.emission = POISON_COLOR
-			_poison_material.emission_energy_multiplier = 0.6
-		_mesh.set_surface_override_material(0, _poison_material)
+	_fade_poison(1.0)
 
 func _physics_process(delta: float) -> void:
 	if poison_timer <= 0.0:
@@ -71,8 +105,7 @@ func _physics_process(delta: float) -> void:
 	poison_timer -= delta
 	if poison_timer <= 0.0:
 		set_physics_process(false)
-		if _mesh and _blood_material:
-			_mesh.set_surface_override_material(0, _blood_material)
+		_fade_poison(0.0)
 		return
 	_poison_tick_timer -= delta
 	if _poison_tick_timer > 0.0:
@@ -81,6 +114,24 @@ func _physics_process(delta: float) -> void:
 	for body in get_overlapping_bodies():
 		if body.is_in_group("enemy") and body.has_method("apply_poison_dot"):
 			body.apply_poison_dot(3.0, 3, 0.5)
+
+func _set_spread(value: float) -> void:
+	if _mesh:
+		_mesh.set_instance_shader_parameter("spread", value)
+
+func _set_poison(value: float) -> void:
+	if _mesh:
+		_mesh.set_instance_shader_parameter("poison", value)
+
+## Плавный переход цвета лужи к яду (1) или обратно к крови (0)
+func _fade_poison(target: float) -> void:
+	if not _mesh:
+		return
+	if _poison_tween and _poison_tween.is_valid():
+		_poison_tween.kill()
+	var current: float = float(_mesh.get_instance_shader_parameter("poison"))
+	_poison_tween = create_tween()
+	_poison_tween.tween_method(_set_poison, current, target, POISON_FADE_TIME)
 
 func expand_temporarily(multiplier: float = 1.4, duration: float = 4.0):
 	if _base_scale == Vector3.ZERO:

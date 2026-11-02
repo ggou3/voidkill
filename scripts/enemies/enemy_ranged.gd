@@ -22,6 +22,11 @@ const EYES_TELEGRAPH_COLOR = Color(1.0, 0.85, 0.2)
 var is_telegraphing_shot: bool = false
 # Стрейф на позиции стрельбы: сторона (±1) и время до возможной смены
 const STRAFE_SPEED_FACTOR: float = 0.45
+## Упреждение выстрела (ноябрь 2026): доля полного упреждения по скорости игрока — случайная в этих пределах,
+## время полёта для расчёта не больше AIM_LEAD_MAX_TIME (на дальней дистанции не стреляет далеко вперёд)
+const AIM_LEAD_MIN: float = 0.3
+const AIM_LEAD_MAX: float = 0.55
+const AIM_LEAD_MAX_TIME: float = 0.8
 var _strafe_side: float = 1.0
 var _strafe_timer: float = 0.0
 # Пауза проверки края после разворота: в узком проходе оба края рядом, разворот каждый тик — дрожь на месте
@@ -232,8 +237,14 @@ func perform_attack() -> void:
 		
 	var spawn_pos = _get_projectile_spawn_position()
 	
-	# Точка прицеливания: корпус игрока на момент выстрела (прямая траектория, без самонаведения)
+	# Точка прицеливания: корпус игрока плюс частичное упреждение по его горизонтальной скорости (прямая
+	# траектория, без самонаведения). Доля упреждения случайная и меньше полной — стоящего игрока бьёт точно,
+	# бегущего «почти»: смена направления и рывок по-прежнему уводят из-под выстрела
 	var target_pos = target_player.global_position + Vector3(0.0, 0.2, 0.0)
+	if "velocity" in target_player and projectile_speed > 0.0:
+		var flight_time: float = minf(spawn_pos.distance_to(target_pos) / projectile_speed, AIM_LEAD_MAX_TIME)
+		var target_vel: Vector3 = target_player.velocity
+		target_pos += Vector3(target_vel.x, 0.0, target_vel.z) * flight_time * randf_range(AIM_LEAD_MIN, AIM_LEAD_MAX)
 	var fly_dir = (target_pos - spawn_pos).normalized()
 	
 	var proj = projectile_scene.instantiate()

@@ -217,20 +217,6 @@ func _explode() -> void:
 			
 	# Спавн лужи крови на полу
 	if blood_pool_scene and scene_root:
-		var pool = blood_pool_scene.instantiate()
-		scene_root.add_child(pool)
-		var space_state = get_world_3d().direct_space_state
-		if space_state:
-			var query = PhysicsRayQueryParameters3D.create(global_position + Vector3(0, 0.5, 0), global_position + Vector3(0, -3.0, 0))
-			query.collision_mask = 1
-			query.collide_with_areas = false
-			query.collide_with_bodies = true
-			var hit = space_state.intersect_ray(query)
-			if hit:
-				pool.global_position = hit.position + Vector3(0, 0.01, 0)
-			else:
-				pool.global_position = global_position
-		else:
-			pool.global_position = global_position
-			
+		BloodPool.spawn_on_floor(blood_pool_scene, scene_root, global_position + Vector3(0, 0.5, 0), [get_rid()])
+
 	queue_free()
