@@ -668,8 +668,7 @@ func _update_needle_visuals() -> void:
 		if body_mesh:
 			body_mesh.scale = target_scale
 			if not body_override_mat:
-				var orig_mat = body_mesh.get_surface_override_material(0)
-				body_override_mat = orig_mat.duplicate() if orig_mat else StandardMaterial3D.new()
+				body_override_mat = _make_body_override_mat()
 				body_mesh.set_surface_override_material(0, body_override_mat)
 			body_override_mat.emission_enabled = true
 			body_override_mat.emission = Color(0.75, 0.88, 1.0)
@@ -693,6 +692,17 @@ func inflate() -> void:
 		if is_instance_valid(player):
 			start_chase(player)
 
+## Свой материал тела для свечения игл и раздутия: копия StandardMaterial3D тела. Если тело на шейдере
+## (Соглядатай — ShaderMaterial невидимости), копировать нечего — новый тёмный StandardMaterial3D: раздутый
+## Соглядатай и так полностью раскрыт и остаётся раздутым до смерти (раньше — краш на присваивании)
+func _make_body_override_mat() -> StandardMaterial3D:
+	var orig_mat: Material = body_mesh.get_surface_override_material(0)
+	if orig_mat is StandardMaterial3D:
+		return orig_mat.duplicate()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.015, 0.015, 0.015, 1)
+	return mat
+
 func _update_inflation_visuals() -> void:
 	if current_state == State.DEAD:
 		return
@@ -701,12 +711,7 @@ func _update_inflation_visuals() -> void:
 	inflation_tween = create_tween().set_parallel(true)
 	
 	if body_mesh:
-		var orig_mat = body_mesh.get_surface_override_material(0)
-		if orig_mat:
-			body_override_mat = orig_mat.duplicate()
-		else:
-			body_override_mat = StandardMaterial3D.new()
-			body_override_mat.albedo_color = Color(0.015, 0.015, 0.015, 1)
+		body_override_mat = _make_body_override_mat()
 		body_override_mat.emission_enabled = true
 		body_override_mat.emission = Color(1.0, 0.12, 0.12)
 		body_override_mat.emission_energy_multiplier = 1.6
