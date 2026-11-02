@@ -162,7 +162,7 @@ func _ready():
 	low_health_player = AudioStreamPlayer.new()
 	low_health_player.name = "AudioPlayer_LowHealthLoop"
 	low_health_player.bus = "Master"
-	low_health_player.volume_db = -80.0
+	low_health_player.volume_db = -60.0
 	low_health_player.stream = _gen_low_health_wav()
 	add_child(low_health_player)
 
@@ -673,7 +673,8 @@ func _gen_jump() -> PackedVector2Array:
 		# Огибающая: плавное нарастание за 45 мс и затухание в ноль к концу (без щелчков), между ними мягкий спад
 		var rise = smoothstep(0.0, 0.045, t)
 		var env = rise * exp(-9.0 * maxf(0.0, t - 0.045)) * (1.0 - smoothstep(dur - 0.04, dur, t))
-		var s = clamp(band * 1.1 * grain * env, -0.7, 0.7)
+		# Громкость 0.55 (было 1.1 — по плейтесту вдвое тише)
+		var s = clamp(band * 0.55 * grain * env, -0.35, 0.35)
 		arr[i] = Vector2(s, s)
 
 	return arr
