@@ -48,6 +48,32 @@ var momentum_font_size: int = 28
 var weapon_hud_container: VBoxContainer
 var weapon_ui_slots: Array = []
 
+# Покачивание HUD (ноябрь 2026): панели по углам (HP, BPM, моментум, дэш, скорость, оружие, счётчик врагов)
+# лежат в общем узле SwayRoot и смещаются от поворота камеры, движения, прыжков и приземлений, вздрагивают
+# от отдачи и урона. Прицел, подсказки у прицела, попап комбо, индикатор урона и экраны смерти/конца уровня
+# остаются на месте — стрелять по прицелу покачивание не мешает
+## Сила покачивания HUD: 0 — выключено, 1 — по умолчанию
+@export var sway_strength: float = 1.0
+const SWAY_LOOK: float = 2.5 # px на рад/с поворота камеры (HUD отстаёт от поворота)
+const SWAY_MOVE: float = 0.5 # px на м/с скорости вбок
+const SWAY_VERTICAL: float = 0.35 # px на м/с вертикальной скорости
+const SWAY_MAX: float = 26.0 # px — предел смещения
+const SWAY_ROLL: float = 0.0012 # рад крена на px смещения по горизонтали
+const SWAY_STIFFNESS: float = 140.0 # пружина возврата
+const SWAY_DAMPING: float = 16.0
+const SWAY_RECOIL_KICK: float = 6000.0 # px/с толчка вниз на рад отдачи камеры (выстрел, жёсткое приземление)
+const SWAY_LAND_KICK: float = 22.0 # px/с толчка вниз на м/с скорости падения сверх SWAY_LAND_MIN_SPEED
+const SWAY_LAND_MIN_SPEED: float = 5.0
+const SWAY_HIT_KICK: float = 14.0 # px/с толчка на HP урона, от стороны удара
+const SWAY_KICK_MAX: float = 700.0
+var _sway_root: Control = null
+var _sway_pos: Vector2 = Vector2.ZERO
+var _sway_vel: Vector2 = Vector2.ZERO
+var _prev_look: Vector2 = Vector2.ZERO # (рысканье, тангаж) прошлого кадра
+var _prev_recoil: float = 0.0
+var _was_on_floor: bool = true
+var _air_min_vy: float = 0.0
+
 func _ready() -> void:
 	_init_static_elements()
 	call_deferred("_connect_systems")
@@ -61,7 +87,8 @@ func _init_static_elements() -> void:
 		crosshair.visible = true
 	if restart_button:
 		restart_button.pressed.connect(_on_restart_pressed)
-		
+
+	_setup_sway_root()
 	_setup_health_bar()
 	_setup_weapon_hud_container()
 	_setup_feedback_elements()
@@ -128,6 +155,81 @@ func _process(delta: float) -> void:
 	if weapon_manager:
 		_process_weapon_hud(delta)
 	_process_level_hud()
+	_process_sway(delta)
+
+# --- Покачивание HUD ---
+
+## Общий узел панелей, которые покачиваются: на весь экран, под прицелом (индекс 0). Панели переносятся в него
+## без пересчёта якорей — родитель на весь экран, раскладка прежняя
+func _setup_sway_root() -> void:
+	_sway_root = Control.new()
+	_sway_root.name = "SwayRoot"
+	_sway_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_sway_root)
+	move_child(_sway_root, 0)
+	_sway_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	for node in [ammo_label, dash_label, bpm_label, momentum_label, health_bar, speed_label, blood_buff_label]:
+		if node:
+			node.reparent(_sway_root, false)
+
+## Куда добавлять панели, созданные кодом (список оружия, счётчик врагов) — в покачивающийся узел
+func _panels_parent() -> Node:
+	return _sway_root if _sway_root else self
+
+func _process_sway(delta: float) -> void:
+	if not _sway_root or delta <= 0.0:
+		return
+	var target: Vector2 = Vector2.ZERO
+	var active: bool = is_instance_valid(player) and not player.is_dead and sway_strength > 0.0 \
+			and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED
+	if active:
+		target = _sway_target(delta)
+		_sway_events()
+	else:
+		_sway_vel = Vector2.ZERO
+	# Пружина к цели: смещение догоняет её с затуханием, толчки событий — в скорость пружины
+	var accel: Vector2 = (target - _sway_pos) * SWAY_STIFFNESS - _sway_vel * SWAY_DAMPING
+	_sway_vel += accel * delta
+	_sway_pos += _sway_vel * delta
+	_sway_pos = _sway_pos.limit_length(SWAY_MAX * 1.5)
+	_sway_root.position = _sway_pos
+	_sway_root.pivot_offset = _sway_root.size * 0.5
+	_sway_root.rotation = _sway_pos.x * SWAY_ROLL
+
+## Цель смещения: отставание от поворота камеры, от скорости вбок и по вертикали
+func _sway_target(delta: float) -> Vector2:
+	var look: Vector2 = Vector2.ZERO
+	if player.head:
+		var rot: Vector3 = player.head.global_rotation
+		look = Vector2(rot.y, rot.x)
+	var look_vel: Vector2 = Vector2(angle_difference(_prev_look.x, look.x), angle_difference(_prev_look.y, look.y)) / delta
+	_prev_look = look
+	var local_vel: Vector3 = player.global_basis.inverse() * player.velocity
+	var target: Vector2 = look_vel * SWAY_LOOK
+	target.x -= local_vel.x * SWAY_MOVE
+	target.y += player.velocity.y * SWAY_VERTICAL
+	return (target * sway_strength).limit_length(SWAY_MAX)
+
+## Толчки: отдача камеры (выстрел, жёсткое приземление) и приземление — вниз
+func _sway_events() -> void:
+	if player.head:
+		var recoil: float = player.head.camera_recoil
+		var added: float = _prev_recoil - recoil # отдача копится в минус
+		_prev_recoil = recoil
+		if added > 0.0005:
+			_sway_kick(Vector2(randf_range(-0.25, 0.25), 1.0) * added * SWAY_RECOIL_KICK)
+	var on_floor: bool = player.is_on_floor()
+	if not on_floor:
+		_air_min_vy = minf(_air_min_vy, player.velocity.y)
+	elif not _was_on_floor:
+		var impact: float = -_air_min_vy - SWAY_LAND_MIN_SPEED
+		if impact > 0.0:
+			_sway_kick(Vector2(0.0, impact * SWAY_LAND_KICK))
+		_air_min_vy = 0.0
+	_was_on_floor = on_floor
+
+func _sway_kick(impulse: Vector2) -> void:
+	_sway_vel += (impulse * sway_strength).limit_length(SWAY_KICK_MAX)
 
 # --- Здоровье ---
 
@@ -201,6 +303,11 @@ func _on_enemy_health_bars_toggled(bars_visible: bool) -> void:
 
 func _on_player_damaged(amount: int, from_dir: Vector3) -> void:
 	damage_indicator.add_hit(from_dir, amount)
+	# HUD вздрагивает в сторону от удара (сбоку — вбок, спереди — вниз)
+	if is_instance_valid(player) and sway_strength > 0.0:
+		var local_dir: Vector3 = player.global_basis.inverse() * from_dir
+		var away: Vector2 = Vector2(-local_dir.x, 0.6).normalized()
+		_sway_kick(away * float(amount) * SWAY_HIT_KICK)
 
 # --- Скорость и Блад-сёрф ---
 
@@ -315,7 +422,7 @@ func _setup_weapon_hud_container() -> void:
 		weapon_hud_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 		weapon_hud_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
 		weapon_hud_container.add_theme_constant_override("separation", 8)
-		add_child(weapon_hud_container)
+		_panels_parent().add_child(weapon_hud_container)
 
 func _rebuild_weapon_slots() -> void:
 	if not weapon_hud_container or not weapon_manager:
@@ -497,7 +604,7 @@ func _ensure_enemies_label() -> Label:
 	enemies_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.2, 1.0))
 	enemies_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	enemies_label.add_theme_constant_override("outline_size", 6)
-	add_child(enemies_label)
+	_panels_parent().add_child(enemies_label)
 	return enemies_label
 
 # --- Game Over & Рестарт ---
