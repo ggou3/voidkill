@@ -5,7 +5,12 @@ const WALK_SPEED = 10.0
 const CROUCH_SPEED = 3.5
 const JUMP_VELOCITY = 11.0 
 
-const GROUND_ACCEL = 14.0
+const GROUND_ACCEL = 20.0
+## Доворот скорости к wish-направлению в окне bhop после приземления (прежнее значение GROUND_ACCEL,
+## чтобы резкость бега не меняла распрыжку)
+const BHOP_LANDING_STEER = 14.0
+## Разгон в воздухе к WALK_SPEED, пока горизонтальная скорость ниже неё
+const AIR_LOW_SPEED_CONTROL = 6.0
 const GROUND_FRICTION = 14.0
 const AIR_FRICTION = 0.0
 
@@ -575,7 +580,7 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 			var wish_dir = Vector2(direction.x, direction.z).normalized()
 			var speed_2d = vel_2d.length()
 			if speed_2d < WALK_SPEED:
-				vel_2d = vel_2d.lerp(wish_dir * WALK_SPEED, 4.0 * delta)
+				vel_2d = vel_2d.lerp(wish_dir * WALK_SPEED, AIR_LOW_SPEED_CONTROL * delta)
 			else:
 				# Quake / Source air-strafe physics:
 				# Проекция текущей скорости на вектор желаемого направления движения
@@ -604,8 +609,8 @@ func handle_walk_physics(vel_2d: Vector2, direction: Vector3, _current_speed: fl
 			if speed_2d > target_speed + 0.8 and time_on_ground <= bhop_window:
 				# Кратковременное переходное окно (0.12 сек) после приземления на высокой скорости:
 				# Сохраняем набранный импульс для следующего прыжка (bhop) или слайда,
-				# при этом давая полное и отзывчивое управление направлением (GROUND_ACCEL)
-				vel_2d = vel_2d.lerp(wish_dir * speed_2d, GROUND_ACCEL * delta)
+				# при этом давая полное и отзывчивое управление направлением (BHOP_LANDING_STEER)
+				vel_2d = vel_2d.lerp(wish_dir * speed_2d, BHOP_LANDING_STEER * delta)
 				var preserved_speed = move_toward(speed_2d, target_speed, GROUND_FRICTION * 0.5 * delta)
 				if vel_2d.length_squared() > 0.001:
 					vel_2d = vel_2d.normalized() * preserved_speed
