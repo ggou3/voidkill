@@ -50,8 +50,11 @@ var attack_flash_tween_antenna: Tween = null
 const BODY_TINT: Color = Color(0.06, 0.055, 0.07)
 const GUN_TINT: Color = Color(0.2, 0.2, 0.22)
 const MUZZLE_FLASH_TIME: float = 0.06
-## Дуло в прицельной стойке: x — вправо, y — вверх, z — вперёд (было (0, 0.55, 0.4) — точка у лица капсулы)
-const MUZZLE_OFFSET: Vector3 = Vector3(0.11, 0.32, 1.03)
+## Дуло в прицельной стойке модели масштаба 1.25: x — вправо, y — вверх, z — вперёд (было (0, 0.55, 0.4) —
+## точка у лица капсулы)
+const MUZZLE_OFFSET: Vector3 = Vector3(0.13, 0.65, 1.29)
+## Высота отладочной полоски HP над моделью (макушка ~1.28)
+const MODEL_HEALTH_BAR_HEIGHT: float = 1.5
 ## Клипы-циклы; остальные (telegraph, fire, hit, death) играют один раз
 const ANIM_LOOPED: Array[StringName] = [&"idle", &"aim", &"run", &"strafe_left", &"strafe_right", &"back"]
 const ANIM_BLEND: float = 0.12
@@ -112,6 +115,20 @@ func _setup_model() -> void:
 			if anim:
 				anim.loop_mode = Animation.LOOP_LINEAR
 		_play_anim(&"idle")
+
+## Полоска HP над макушкой модели; без модели (турель) — как у всех
+func _setup_health_bar() -> void:
+	if not model_root:
+		super._setup_health_bar()
+		return
+	_ensure_health_bar().setup(
+		health,
+		max_health,
+		MODEL_HEALTH_BAR_HEIGHT,
+		Color(0.95, 0.15, 0.15, 1.0),
+		Color(1.0, 0.9, 0.9),
+		health_component
+	)
 
 func _play_anim(anim_name: StringName, restart: bool = false) -> void:
 	if anim_name == _anim_current and not restart:
@@ -248,7 +265,10 @@ func _process_attack(delta: float) -> void:
 		away_dir.y = 0.0
 		if away_dir.length_squared() > 0.01:
 			var retreat_vel = away_dir.normalized() * (move_speed * 0.6 * slow_factor)
-			_apply_movement(retreat_vel, delta)
+			# Скорость напрямую, как в стрейфе: _apply_movement разворачивал врага по движению, а поворот выше —
+			# к игроку; два разворота боролись, и дальник убегал боком
+			velocity.x = lerp(velocity.x, retreat_vel.x + knockback_velocity.x, min(1.0, acceleration * delta))
+			velocity.z = lerp(velocity.z, retreat_vel.z + knockback_velocity.z, min(1.0, acceleration * delta))
 	elif is_telegraphing_shot or wall_slam_timer > 0.0:
 		# Заряд выстрела — стоит на месте, чтобы выстрел читался
 		velocity.x = lerp(velocity.x, knockback_velocity.x, 10.0 * delta)
