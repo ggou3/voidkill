@@ -30,7 +30,7 @@ var sound_durations: Dictionary = {
 	"melee_heavy_hit": 0.24,
 	"dash": 0.16,
 	"slam_impact": 0.25,
-	"jump": 0.08,
+	"jump": 0.14,
 	"footstep": 0.045,
 	"enemy_hit": 0.07,
 	"enemy_death": 0.35,
@@ -645,7 +645,8 @@ func _gen_slam_impact() -> PackedVector2Array:
 		
 	return arr
 
-# 7. "jump" — короткий лёгкий звук
+# 7. "jump" — толчок от земли (ноябрь 2026): глухой удар ногами, шорох подошвы и короткий поток воздуха.
+# Без тона: прежний восходящий чирп 220 -> 460 Гц звучал как падающая капля
 func _gen_jump() -> PackedVector2Array:
 	var dur = sound_durations["jump"]
 	var samples = int(dur * MIX_RATE)
@@ -653,16 +654,25 @@ func _gen_jump() -> PackedVector2Array:
 	arr.resize(samples)
 	var dt = 1.0 / MIX_RATE
 	var phase: float = 0.0
-	
+	var scuff_lp: float = 0.0
+	var air_lp: float = 0.0
+
 	for i in range(samples):
 		var t = float(i) * dt
-		var progress = t / dur
-		# Короткий лёгкий восходящий чирп 220 -> 460 Гц
-		var freq = 220.0 + 240.0 * progress
+		var n = randf_range(-1.0, 1.0)
+		# Толчок: низкий удар 110 -> 70 Гц с быстрым затуханием
+		var freq = 70.0 + 40.0 * exp(-30.0 * t)
 		phase += TAU * freq * dt
-		var s = sin(phase) * 0.45 * (1.0 - progress)
+		var thud = sin(phase) * 0.5 * exp(-38.0 * t)
+		# Шорох подошвы: высокие частоты шума (шум минус его сглаживание), очень коротко
+		scuff_lp = lerp(scuff_lp, n, 0.5)
+		var scuff = (n - scuff_lp) * 0.35 * exp(-70.0 * t)
+		# Поток воздуха: сглаженный шум, нарастает за 15 мс и спадает
+		air_lp = lerp(air_lp, n, 0.12)
+		var air = air_lp * 0.9 * minf(1.0, t / 0.015) * exp(-22.0 * t)
+		var s = clamp(thud + scuff + air, -0.8, 0.8)
 		arr[i] = Vector2(s, s)
-		
+
 	return arr
 
 # 8. "footstep" — тихий короткий щелчок/стук

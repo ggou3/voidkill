@@ -384,7 +384,7 @@ func _spawn_death_gore(death_info: Dictionary) -> void:
 		return
 	var knock: Vector3 = death_info.get("knockback", Vector3.ZERO)
 	# Крупные куски; мелкую крошку (ещё половину сверху) добавляет GibPool.spawn_gibs
-	var count: int = 6
+	var count: int = 8
 	if death_info.get("is_headshot", false) or death_info.get("is_execute", false):
 		count += 3
 	if knock.length() >= 20.0:
@@ -392,7 +392,7 @@ func _spawn_death_gore(death_info: Dictionary) -> void:
 	if is_inflated:
 		count += 5
 	if gib_scale < 1.0:
-		count = maxi(3, count - 2)
+		count = maxi(4, count - 2)
 	var speed: float = clampf(6.0 + knock.length() * 0.3, 6.0, 18.0)
 	if is_inflated:
 		speed = maxf(speed, 14.0)

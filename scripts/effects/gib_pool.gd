@@ -32,6 +32,8 @@ enum GibKind { FLESH, STRIP, FLAP, CLOT, BODY, BONE }
 const GIB_KIND_WEIGHTS: Array[float] = [0.3, 0.16, 0.14, 0.14, 0.18, 0.08]
 ## Мелкая крошка поверх основных кусков: доля от их числа, масштаб и прибавка к скорости
 const CRUMB_SHARE: float = 0.5
+## Общий множитель размера кусков (ноябрь 2026, по плейтесту «ошмётки крупнее» — было 1.0)
+const GIB_SIZE_MULT: float = 1.5
 const CRUMB_SCALE: float = 0.45
 const CRUMB_SPEED_MULT: float = 1.25
 
@@ -144,7 +146,7 @@ func spawn_gibs(origin: Vector3, base_dir: Vector3, count: int, speed: float, si
 		var meshes: Array = _kind_meshes[kind]
 		g.mesh = meshes[randi() % meshes.size()]
 		g.material_override = _kind_materials[kind]
-		var s: float = size_scale * (randf_range(0.7, 1.0) * CRUMB_SCALE if is_crumb else randf_range(0.6, 1.5))
+		var s: float = size_scale * GIB_SIZE_MULT * (randf_range(0.7, 1.0) * CRUMB_SCALE if is_crumb else randf_range(0.6, 1.5))
 		_size[idx] = s
 		var jitter: Vector3 = Vector3(randf_range(-1.0, 1.0), randf_range(-0.3, 1.0), randf_range(-1.0, 1.0))
 		g.global_transform = Transform3D(
