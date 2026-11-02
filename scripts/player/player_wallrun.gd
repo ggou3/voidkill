@@ -19,6 +19,10 @@ var wallrun_normal: Vector3 = Vector3.ZERO
 var wallrun_cooldown: float = 0.0
 var last_wallrun_normal: Vector3 = Vector3.ZERO
 var wallrun_exhausted: bool = false
+## Без клавиш движения wallrun заканчивается через столько секунд (ноябрь 2026, раньше бег по стене шёл сам);
+## короткая пауза прощает смену клавиш (A → W), когда на кадр не нажато ничего
+const WALLRUN_INPUT_GRACE: float = 0.08
+var _no_input_timer: float = 0.0
 
 var player: Player
 var left_wall_ray: RayCast3D
@@ -41,10 +45,12 @@ func tick_cooldown(delta: float) -> void:
 
 ## Проверка входа в wallrun и принудительный выход при дэше/слэме.
 ## Вызывается из Player._physics_process до обработки приседа, гравитации и прыжка.
-func update_entry_and_exit() -> void:
+## Вход — только с зажатой клавишей движения (не «назад»): без ввода игрок у стены просто падает
+func update_entry_and_exit(input_dir: Vector2) -> void:
 	var skills = player.skills
 	# Проверка условий входа в wallrun
-	if not player.is_on_floor() and not is_wallrunning and not skills.is_dashing and not skills.is_slamming and wallrun_cooldown <= 0.0:
+	if not player.is_on_floor() and not is_wallrunning and not skills.is_dashing and not skills.is_slamming and wallrun_cooldown <= 0.0 \
+			and _has_run_input(input_dir):
 		if player.current_horiz_speed >= wallrun_min_speed:
 			var wall_info = check_wallrun_wall()
 			if wall_info.found:
@@ -106,6 +112,7 @@ func start_wallrun(normal: Vector3, side: float):
 	wallrun_side = side
 	wallrun_normal = normal
 	wallrun_timer = 0.0
+	_no_input_timer = 0.0
 	player.wall_jump_count = 0
 	wallrun_exhausted = false
 	player.coyote_timer = 0.0
@@ -126,6 +133,10 @@ func end_wallrun():
 	wallrun_timer = 0.0
 	wallrun_cooldown = 0.2
 
+## Есть ввод для бега по стене: нажата клавиша движения, и это не «назад»
+func _has_run_input(input_dir: Vector2) -> bool:
+	return input_dir.length_squared() > 0.01 and input_dir.y <= 0.5
+
 func process_wallrun_physics(delta: float, input_dir: Vector2):
 	wallrun_timer += delta
 
@@ -133,6 +144,15 @@ func process_wallrun_physics(delta: float, input_dir: Vector2):
 	if input_dir.y > 0.5:
 		end_wallrun()
 		return
+
+	# Клавиши движения отпущены дольше WALLRUN_INPUT_GRACE — бег по стене сам не продолжается
+	if _has_run_input(input_dir):
+		_no_input_timer = 0.0
+	else:
+		_no_input_timer += delta
+		if _no_input_timer > WALLRUN_INPUT_GRACE:
+			end_wallrun()
+			return
 
 	# Проверяем, что стена всё ещё рядом или истекло максимальное время
 	var wall_info = check_wallrun_wall()

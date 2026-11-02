@@ -328,7 +328,7 @@ func _physics_process(delta):
 		footstep_timer = min(footstep_timer, 0.15)
 
 	# Вход в wallrun / выход при дэше или слэме
-	wallrun.update_entry_and_exit()
+	wallrun.update_entry_and_exit(input_dir)
 
 	head.set_visual_inputs(current_horiz_speed, is_on_floor(), is_sliding, skills.is_dashing, input_dir, weapons.is_reloading, wallrun.wallrun_side if wallrun.is_wallrunning else 0.0)
 
