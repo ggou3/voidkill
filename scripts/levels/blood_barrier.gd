@@ -3,8 +3,8 @@ extends Node3D
 
 ## Кровавая перегородка между секторами: полупрозрачная стена стекающей крови, пульсирующая
 ## в такт сердцу игрока (частота — текущий BPM). Блокирует проход игроку и врагам.
-## Когда привязанный сектор зачищен — стена обрушивается (анимация + звук), оставляет лужи
-## крови на пороге (blood_pool.tscn) и становится чекпоинтом.
+## Когда привязанный сектор зачищен — стена обрушивается (анимация + звук) и становится чекпоинтом.
+## Луж на пороге не оставляет (убраны в ноябре 2026: выглядели россыпью пятен у входа в арену).
 ##
 ## Ориентация: локальная -Z смотрит в следующий сектор, +Z — в зачищаемый сектор.
 ## Стена стоит основанием на y = 0 узла. Точка возрождения — дочерний Marker3D "Checkpoint",
@@ -12,17 +12,12 @@ extends Node3D
 
 signal collapsed
 
-const BLOOD_POOL_SCENE = preload("res://blood_pool.tscn")
 const BARRIER_SHADER = preload("res://shaders/blood_barrier.gdshader")
 
 ## Сектор, зачистка которого обрушивает стену
 @export var sector: Sector
 ## Ширина, высота, толщина стены (м)
 @export var size: Vector3 = Vector3(12.0, 8.0, 0.6)
-## Луж в ряду и число рядов (ряды уходят в следующий сектор)
-@export var pools_per_row: int = 3
-@export var pool_rows: int = 2
-@export var pool_row_spacing: float = 3.5
 @export var collapse_duration: float = 0.9
 
 var is_collapsed: bool = false
@@ -86,7 +81,6 @@ func collapse() -> void:
 			child.set_deferred("disabled", true)
 	AudioManager.play_sound("slam_impact")
 	AudioManager.play_sound("flask_splash")
-	_spawn_pools()
 
 	var tween = create_tween().set_parallel(true)
 	# Через set_shader_parameter, а не свойство "shader_parameter/collapse": свойства униформ
@@ -96,27 +90,6 @@ func collapse() -> void:
 	tween.chain().tween_callback(_wall.hide)
 	GameTypes.debug_log(&"enemy", "[BARRIER %s] Collapsed" % name)
 	collapsed.emit()
-
-## Лужи крови на пороге: ряды поперёк прохода, уходящие в следующий сектор, — по ним можно сёрфить
-func _spawn_pools() -> void:
-	var scene_root = get_tree().current_scene if get_tree().current_scene else get_parent()
-	if not scene_root:
-		return
-	var space_state = get_world_3d().direct_space_state
-	for row in range(pool_rows):
-		for i in range(pools_per_row):
-			var across = ((float(i) + 0.5) / float(pools_per_row) - 0.5) * size.x * 0.8
-			var from = to_global(Vector3(across, 1.0, -1.5 - row * pool_row_spacing))
-			var pool_pos = from + Vector3.DOWN * 1.0
-			if space_state:
-				var query = PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 4.0)
-				query.exclude = [_body.get_rid()]
-				var hit = space_state.intersect_ray(query)
-				if not hit.is_empty():
-					pool_pos = hit.position
-			var pool = BLOOD_POOL_SCENE.instantiate()
-			scene_root.add_child(pool)
-			pool.global_position = pool_pos + Vector3(0.0, BloodPool.next_lift(), 0.0)
 
 func get_checkpoint_transform() -> Transform3D:
 	var marker = get_node_or_null("Checkpoint")

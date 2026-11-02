@@ -1128,21 +1128,18 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -124)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector1")
 size = Vector3(20, 16, 1.2)
-pools_per_row = 4
 
 [node name="Barrier2" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -304)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector2")
 size = Vector3(52, 16, 1.2)
-pools_per_row = 10
 
 [node name="Barrier3" type="Node3D" parent="Barriers" node_paths=PackedStringArray("sector")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -444)
 script = ExtResource("3_barrier")
 sector = NodePath("../../Sectors/Sector3")
 size = Vector3(20, 16, 1.2)
-pools_per_row = 4
 
 [node name="LevelExit" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -468)
