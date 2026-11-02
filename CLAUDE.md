@@ -25,7 +25,7 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
 - `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
-Уровни — `levels/*.tscn` (сейчас `levels/demo_level.tscn`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
+Уровни — `levels/*.tscn` (`levels/demo_level.tscn`, `levels/city_level.tscn` — городской, геометрия `@tool`-компонентами `scripts/levels/city_*.gd`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
 (`blood_barrier.gdshader`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
 (`*.gdshader`), ресурсы навмеша (`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`,
 `project.godot` и документы.
@@ -319,6 +319,8 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
   физики — только по выбору…»).
 - Точку тела с `map_get_closest_point` сравнивать по горизонтали (+ отдельно перепад высот): центр тела ~1 м
   над навмешем («Точка навмеша и точка тела сравниваются по горизонтали»).
+- В рукописном `.tscn` базис `Transform3D` — по строкам: поворот на θ вокруг Y — `(cos, 0, sin, 0, 1, 0, -sin, 0, cos, …)`
+  («`Transform3D` в `.tscn` записан по строкам базиса»).
 - `Control` из кода растягивать `set_anchors_and_offsets_preset`, не `set_anchors_preset` — тот оставляет
   узел 0×0 в углу («`Control`, созданный кодом…»).
 

@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://shaders/world_surface.gdshader" id="1_surface"]
+
+[resource]
+shader = ExtResource("1_surface")
+shader_parameter/albedo = Color(0.12, 0.12, 0.13, 1)
+shader_parameter/roughness = 0.45
+shader_parameter/metallic = 0.0
+shader_parameter/pattern = 0
+shader_parameter/tile_size = 6.0
+shader_parameter/groove_width = 0.004
+shader_parameter/grime_strength = 0.4
