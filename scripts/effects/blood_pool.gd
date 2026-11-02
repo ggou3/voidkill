@@ -18,7 +18,20 @@ const POISON_FADE_TIME: float = 0.3
 const FLOOR_RAY_LENGTH: float = 50.0
 const FLOOR_RAY_MAX_SKIPS: int = 8
 const FLOOR_MIN_NORMAL_Y: float = 0.7 # круче — лужа ложится ровно
+## Лужи не ложатся друг на друга (ноябрь 2026; одинаковая высота давала мерцание — z-fighting): новая лужа ближе
+## MERGE_DISTANCE к существующей (по горизонтали, перепад до MERGE_HEIGHT) не создаётся — существующая растёт
+## (feed: ×FEED_GROWTH, не больше FEED_MAX_SCALE от начального размера). Частично перекрытые лужи лежат на
+## разной высоте: подъём над полом FLOOR_OFFSET плюс слой (по кругу LAYER_COUNT) × LAYER_STEP
+const MERGE_DISTANCE: float = 1.6
+const MERGE_HEIGHT: float = 0.4
+const FEED_GROWTH: float = 1.12
+const FEED_MAX_SCALE: float = 1.8
+const FLOOR_OFFSET: float = 0.01
+const LAYER_STEP: float = 0.002
+const LAYER_COUNT: int = 12
+static var _next_layer: int = 0
 var poison_timer: float = 0.0
+var _initial_scale: Vector3 = Vector3.ZERO
 var _poison_tick_timer: float = 0.0
 var _mesh: MeshInstance3D = null
 var _poison_tween: Tween = null
@@ -41,6 +54,10 @@ static func spawn_on_floor(scene: PackedScene, parent: Node, from: Vector3, excl
 		if collider is CharacterBody3D or (collider is Node and (collider.is_in_group("enemy") or collider.is_in_group("player"))):
 			skip.append(hit.rid)
 			continue
+		var existing: BloodPool = _find_pool_near(parent.get_tree(), hit.position)
+		if existing:
+			existing.feed()
+			return existing
 		var pool: BloodPool = scene.instantiate()
 		parent.add_child(pool)
 		# Наклон пола — по нормали; крутая нормаль (луч попал в ребро ступеньки) — лужа ровно, а не боком
@@ -48,12 +65,43 @@ static func spawn_on_floor(scene: PackedScene, parent: Node, from: Vector3, excl
 		if up.y < FLOOR_MIN_NORMAL_Y:
 			up = Vector3.UP
 		var pool_basis: Basis = Basis(Quaternion(Vector3.UP, up)) if up.y < 0.999 else Basis.IDENTITY
-		pool.global_transform = Transform3D(pool_basis, hit.position + up * 0.01)
+		pool.global_transform = Transform3D(pool_basis, hit.position + up * next_lift())
 		return pool
 	return null
 
+## Подъём новой лужи над полом: у каждой следующей — свой слой, перекрытые лужи не спорят за пиксели
+static func next_lift() -> float:
+	var lift: float = FLOOR_OFFSET + LAYER_STEP * float(_next_layer)
+	_next_layer = (_next_layer + 1) % LAYER_COUNT
+	return lift
+
+## Лужа рядом с точкой пола (для слияния вместо новой лужи поверх)
+static func _find_pool_near(tree: SceneTree, floor_pos: Vector3) -> BloodPool:
+	for node in tree.get_nodes_in_group("blood_pool"):
+		if not (node is BloodPool) or node.is_queued_for_deletion():
+			continue
+		var offset: Vector3 = node.global_position - floor_pos
+		if absf(offset.y) <= MERGE_HEIGHT and Vector2(offset.x, offset.z).length() <= MERGE_DISTANCE:
+			return node
+	return null
+
+## Ещё кровь в эту лужу: растёт на FEED_GROWTH (до FEED_MAX_SCALE от начального размера) с всплеском
+func feed() -> void:
+	if _initial_scale == Vector3.ZERO:
+		_initial_scale = scale
+	var current_base: Vector3 = _base_scale if _base_scale != Vector3.ZERO else scale
+	var target: Vector3 = current_base * FEED_GROWTH
+	var cap: Vector3 = _initial_scale * FEED_MAX_SCALE
+	target = Vector3(minf(target.x, cap.x), target.y, minf(target.z, cap.z))
+	if _base_scale != Vector3.ZERO:
+		_base_scale = target # временное расширение слэма вернётся уже к новому размеру
+	if _expand_tween and _expand_tween.is_valid():
+		return
+	create_tween().tween_property(self, "scale", target, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
 func _ready():
 	set_physics_process(false)
+	_initial_scale = scale
 	_mesh = get_node_or_null("MeshInstance3D")
 	add_to_group("blood_pool")
 	if _mesh:

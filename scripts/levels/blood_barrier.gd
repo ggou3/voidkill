@@ -116,7 +116,7 @@ func _spawn_pools() -> void:
 					pool_pos = hit.position
 			var pool = BLOOD_POOL_SCENE.instantiate()
 			scene_root.add_child(pool)
-			pool.global_position = pool_pos + Vector3(0.0, 0.01, 0.0)
+			pool.global_position = pool_pos + Vector3(0.0, BloodPool.next_lift(), 0.0)
 
 func get_checkpoint_transform() -> Transform3D:
 	var marker = get_node_or_null("Checkpoint")
