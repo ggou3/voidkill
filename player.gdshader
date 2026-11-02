@@ -1,7 +1,7 @@
 shader_type canvas_item;
 
 uniform sampler2D SCREEN_TEXTURE: hint_screen_texture, filter_nearest;
-uniform float resolution = 320.0; 
+uniform float resolution = 320.0; // Пикселей по ширине экрана; по высоте — из пропорций экрана (пиксели квадратные)
 uniform float noise_amount = 0.06; // Сила шума (можно менять в Инспекторе)
 uniform float player_speed = 0.0; // Текущая горизонтальная скорость игрока
 uniform float speed_threshold = 14.5; // Порог скорости для начала эффекта (только на действительно высокой скорости)
@@ -26,8 +26,11 @@ void fragment() {
     if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) {
         COLOR = vec4(0.0, 0.0, 0.0, 1.0);
     } else {
-        // Пикселизация
-        vec2 pixelated_uv = floor(uv * resolution) / resolution;
+        // Пикселизация: resolution клеток по ширине, по высоте — столько, чтобы клетка была квадратной
+        // (одинаковое число по обеим осям на широком экране давало прямоугольники, вытянутые по ширине)
+        float screen_aspect = SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x;
+        vec2 cells = vec2(resolution, resolution / screen_aspect);
+        vec2 pixelated_uv = floor(uv * cells) / cells;
         vec4 tex_color = texture(SCREEN_TEXTURE, pixelated_uv);
         
         // Наложение динамического шума
