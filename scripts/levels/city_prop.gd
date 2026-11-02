@@ -20,11 +20,11 @@ enum Kind { CAR, DUMPSTER, JERSEY, RUBBLE, CRATES, BARRELS, TRASH, RAILING, STRE
 		length = value
 		_queue_rebuild()
 ## Фонарь и вывеска: сила и радиус света
-@export var light_energy: float = 2.4:
+@export var light_energy: float = 3.2:
 	set(value):
 		light_energy = value
 		_queue_rebuild()
-@export var light_range: float = 13.0:
+@export var light_range: float = 16.0:
 	set(value):
 		light_range = value
 		_queue_rebuild()

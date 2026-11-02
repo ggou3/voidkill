@@ -4,7 +4,7 @@
 
 [resource]
 shader = ExtResource("1_surface")
-shader_parameter/albedo = Color(0.3, 0.3, 0.31, 1)
+shader_parameter/albedo = Color(0.4, 0.4, 0.41, 1)
 shader_parameter/roughness = 0.9
 shader_parameter/metallic = 0.0
 shader_parameter/pattern = 2
