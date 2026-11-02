@@ -30,7 +30,7 @@ var sound_durations: Dictionary = {
 	"melee_heavy_hit": 0.24,
 	"dash": 0.16,
 	"slam_impact": 0.25,
-	"jump": 0.14,
+	"jump": 0.2,
 	"footstep": 0.045,
 	"enemy_hit": 0.07,
 	"enemy_death": 0.35,
@@ -645,32 +645,35 @@ func _gen_slam_impact() -> PackedVector2Array:
 		
 	return arr
 
-# 7. "jump" — толчок от земли (ноябрь 2026): глухой удар ногами, шорох подошвы и короткий поток воздуха.
-# Без тона: прежний восходящий чирп 220 -> 460 Гц звучал как падающая капля
+# 7. "jump" — шарканье подошвы при толчке (ноябрь 2026): полосовой шум с мягким нарастанием и зернистостью
+# трения, без удара и без тона. Прежние варианты: восходящий чирп 220 -> 460 Гц звучал как капля, удар с шорохом
+# (мгновенная атака) — слишком резко
 func _gen_jump() -> PackedVector2Array:
 	var dur = sound_durations["jump"]
 	var samples = int(dur * MIX_RATE)
 	var arr = PackedVector2Array()
 	arr.resize(samples)
 	var dt = 1.0 / MIX_RATE
-	var phase: float = 0.0
-	var scuff_lp: float = 0.0
-	var air_lp: float = 0.0
+	var lp_high: float = 0.0
+	var lp_low: float = 0.0
+	var grain: float = 1.0
+	var grain_target: float = 1.0
 
 	for i in range(samples):
 		var t = float(i) * dt
 		var n = randf_range(-1.0, 1.0)
-		# Толчок: низкий удар 110 -> 70 Гц с быстрым затуханием
-		var freq = 70.0 + 40.0 * exp(-30.0 * t)
-		phase += TAU * freq * dt
-		var thud = sin(phase) * 0.5 * exp(-38.0 * t)
-		# Шорох подошвы: высокие частоты шума (шум минус его сглаживание), очень коротко
-		scuff_lp = lerp(scuff_lp, n, 0.5)
-		var scuff = (n - scuff_lp) * 0.35 * exp(-70.0 * t)
-		# Поток воздуха: сглаженный шум, нарастает за 15 мс и спадает
-		air_lp = lerp(air_lp, n, 0.12)
-		var air = air_lp * 0.9 * minf(1.0, t / 0.015) * exp(-22.0 * t)
-		var s = clamp(thud + scuff + air, -0.8, 0.8)
+		# Полоса примерно 300–2500 Гц: разность сглаживаний шума — без низкого гула и без шипения
+		lp_high = lerp(lp_high, n, 0.45)
+		lp_low = lerp(lp_low, n, 0.06)
+		var band = lp_high - lp_low
+		# Зернистость трения: громкость неровно «цепляется» каждые несколько миллисекунд
+		if i % 90 == 0:
+			grain_target = randf_range(0.55, 1.0)
+		grain = lerp(grain, grain_target, 0.02)
+		# Огибающая: плавное нарастание за 45 мс и затухание в ноль к концу (без щелчков), между ними мягкий спад
+		var rise = smoothstep(0.0, 0.045, t)
+		var env = rise * exp(-9.0 * maxf(0.0, t - 0.045)) * (1.0 - smoothstep(dur - 0.04, dur, t))
+		var s = clamp(band * 1.1 * grain * env, -0.7, 0.7)
 		arr[i] = Vector2(s, s)
 
 	return arr

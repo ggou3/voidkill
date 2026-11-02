@@ -34,8 +34,9 @@
   Реализованы (25): revolver_shot, shotgun_shot, injector_shot, flask_throw, flask_splash, explosion,
   player_heal, melee_hit, melee_heavy_hit, dash, slam_impact, jump, footstep, enemy_hit, enemy_death,
   reload, slide (зацикленный, тихий), dry_fire, rail_shot, needle_shot, parry_deflect, shield_block,
-  bomber_tick, hunter_awaken, stalker_reveal. Прыжок (`jump`, ноябрь 2026, 0.14 с) — без тона: глухой толчок
-  110 → 70 Гц, шорох подошвы и короткий поток воздуха (прежний восходящий чирп звучал как капля).
+  bomber_tick, hunter_awaken, stalker_reveal. Прыжок (`jump`, ноябрь 2026, 0.2 с) — шарканье подошвы: полосовой шум
+  ~300–2500 Гц с зернистостью трения, плавное нарастание за 45 мс и затухание в ноль, без удара и тона
+  (прежние варианты: восходящий чирп звучал как капля, удар с шорохом — слишком резкая атака).
   Пул из 16 плееров. Частые звуки (выстрелы, попадания, шаги, прыжок, дэш, смерти, взрывы) играют со
   случайной высотой ±3–8% (`PITCH_VARIATION`) против «пулемётного эффекта». Одного звука одновременно
   звучит не больше 4 копий (`MAX_VOICES_PER_SOUND`): сверх лимита перезапускается самая старая копия.
