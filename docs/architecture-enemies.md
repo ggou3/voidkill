@@ -116,6 +116,16 @@
   - Переведена с `res://enemy.gd` на наследование `extends EnemyRanged`.
   - Из `EnemyRanged` выделены виртуальные методы `_get_projectile_spawn_position()` и `_play_attack_flash()`, благодаря чему в `EnemyTurret` полностью удалены дублированный спавн снарядов, расчёт траекторий и звуки выстрела: турель переопределяет точки ствола и вызывает `super.perform_attack()`.
   - Сохранена полная стационарность (`_apply_movement` с `velocity = Vector3.ZERO`), фиксация базы (`base_mount.global_transform.basis = base_fixed_basis`). Защитный локдаун на OVERDRIVE удалён вместе с Fear Chain.
+- **Скелетная модель дальника (ноябрь 2026)** — первый враг на импортированной модели с клипами (описание — [enemy-types.md](enemy-types.md)):
+  - Сцена: `Model` — инстанс `models/enemy_ranged/enemy_ranged.glb` (`Armature/Skeleton3D/Body`, обрез на
+    `BoneAttachment3D` кости `gun`, `AnimationPlayer`); `EyesAttach/Eyes` и `MuzzleAttach/MuzzleFlash` —
+    `BoneAttachment3D` с внешним скелетом (`use_external_skeleton`, `../Model/Armature/Skeleton3D`), чтобы не
+    править узлы внутри инстанса GLB.
+  - `EnemyBase` берёт `body_mesh` и `eyes` по фиксированным путям (`MeshInstance3D`, `Eyes`). `EnemyRanged._setup_model()`
+    до `super._ready()` подменяет их узлами модели и ставит override-материалы (копии импортированных с тоном) —
+    базовый класс не правился. Турель (своя сцена без `Model`) идёт мимо: все узлы модели через `get_node_or_null`.
+  - Импорт GLB: `animation/remove_immutable_tracks=false` в `.import` — иначе неподвижная в клипе кость теряет
+    дорожку и при смене клипа остаётся в позе предыдущего. Зацикливание клипов ставится в коде (`ANIM_LOOPED`).
 - **Интеграция лазерной атаки в EnemyBase**:
   - В `EnemyBase.State` добавлены общие состояния `TELEGRAPH` и `FIRING` вместе с виртуальными методами `_process_telegraph(_delta)` и `_process_firing(_delta)`, что исключило конфликт затенения enum `State` в GDScript и стандартизировало обработку подготовки/стрельбы в общем цикле `_physics_process`.
 

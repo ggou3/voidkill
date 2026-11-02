@@ -26,7 +26,8 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
 Уровни — `levels/*.tscn` (`levels/demo_level.tscn`, `levels/city_level.tscn` — городской, геометрия `@tool`-компонентами `scripts/levels/city_*.gd`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
-(`blood_barrier.gdshader`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
+(`blood_barrier.gdshader`). Импортированные модели — `models/<имя>/` (GLB и извлечённые текстуры; исходник `.blend`
+в `source/` с `.gdignore`; пока только `models/enemy_ranged/`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
 (`*.gdshader`), ресурсы навмеша (`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`,
 `project.godot` и документы.
 Пути в `preload("res://...")` указывают на сцены в корне — при переносе сцен их править.
@@ -314,6 +315,8 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
 - Униформы шейдера твинить через `set_shader_parameter`, не `shader_parameter/…` («Свойства
   `shader_parameter/<имя>`…»).
 - Визуальная проверка — Movie Maker (`--write-movie`), временную сцену после удалить («Movie Maker…»).
+- Скелетная модель в GLB: `remove_immutable_tracks=false` в `.import`, IK запекать до экспорта, узлы на костях —
+  `BoneAttachment3D` с внешним скелетом («Импорт скелетной модели из Blender в GLB»).
 - Интерполяция физики выборочная: корень OFF, ON только у тела игрока, врагов, вражеских снарядов; после
   спавна/телепорта таких узлов — `reset_physics_interpolation()`; камера — `top_level` OFF («Интерполяция
   физики — только по выбору…»).

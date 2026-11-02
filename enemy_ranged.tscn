@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://cx3i5jmxfth3y" path="res://scripts/enemies/enemy_ranged.gd" id="1_ranged"]
+[ext_resource type="PackedScene" uid="uid://cydxqaqsujxo5" path="res://models/enemy_ranged/enemy_ranged.glb" id="2_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_3xd07"]
 radius = 0.36
@@ -9,42 +10,23 @@ height = 1.25
 [sub_resource type="SphereShape3D" id="SphereShape3D_head"]
 radius = 0.45
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_3xd07"]
-radius = 0.36
-height = 1.25
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
-albedo_color = Color(0.015, 0.012, 0.022, 1)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_head"]
-albedo_color = Color(0.035, 0.03, 0.045, 1)
-metallic = 0.25
-roughness = 0.65
-
-[sub_resource type="BoxMesh" id="BoxMesh_3xd07"]
+[sub_resource type="BoxMesh" id="BoxMesh_eyes"]
+size = Vector3(0.13, 0.02, 0.03)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
 emission_enabled = true
 emission = Color(0.85, 0.2, 1, 1)
 emission_energy_multiplier = 3.0
 
-[sub_resource type="BoxMesh" id="BoxMesh_shoulders"]
-size = Vector3(1.08, 0.16, 0.44)
+[sub_resource type="SphereMesh" id="SphereMesh_flash"]
+radius = 0.09
+height = 0.18
+radial_segments = 8
+rings = 4
 
-[sub_resource type="PrismMesh" id="PrismMesh_spike"]
-size = Vector3(0.18, 0.32, 0.36)
-
-[sub_resource type="BoxMesh" id="BoxMesh_chest"]
-size = Vector3(0.46, 0.36, 0.12)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_antenna"]
-top_radius = 0.015
-bottom_radius = 0.035
-height = 0.32
-
-[sub_resource type="SphereMesh" id="SphereMesh_antenna_tip"]
-radius = 0.05
-height = 0.1
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_flash"]
+shading_mode = 0
+albedo_color = Color(1, 0.8, 0.35, 1)
 
 [node name="EnemyRanged" type="CharacterBody3D" groups=["enemy", "enemy_ranged"]]
 script = ExtResource("1_ranged")
@@ -61,52 +43,31 @@ collision_mask = 0
 [node name="CollisionShape3D" type="CollisionShape3D" parent="HeadHitbox"]
 shape = SubResource("SphereShape3D_head")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.375, 0)
-mesh = SubResource("CapsuleMesh_3xd07")
-surface_material_override/0 = SubResource("StandardMaterial3D_body")
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
-[node name="HeadMesh" type="CSGSphere3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0)
-radius = 0.33
-radial_segments = 16
-rings = 8
-material = SubResource("StandardMaterial3D_head")
+[node name="EyesAttach" type="BoneAttachment3D" parent="."]
+bone_name = "eyes"
+use_external_skeleton = true
+external_skeleton = NodePath("../Model/Armature/Skeleton3D")
 
-[node name="Eyes" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.2, 0, 0, 0, 0.09, 0, 0, 0, 0.09, 0, 0.55, -0.31)
-mesh = SubResource("BoxMesh_3xd07")
+[node name="Eyes" type="MeshInstance3D" parent="EyesAttach"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.012, 0)
+cast_shadow = 0
+mesh = SubResource("BoxMesh_eyes")
 surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
 
-[node name="Shoulders" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12, 0)
-mesh = SubResource("BoxMesh_shoulders")
-surface_material_override/0 = SubResource("StandardMaterial3D_head")
+[node name="MuzzleAttach" type="BoneAttachment3D" parent="."]
+bone_name = "muzzle"
+use_external_skeleton = true
+external_skeleton = NodePath("../Model/Armature/Skeleton3D")
 
-[node name="LeftPauldronSpike" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.927, -0.375, 0, 0.375, 0.927, 0, 0, 0, 1, -0.5, 0.22, 0)
-mesh = SubResource("PrismMesh_spike")
-surface_material_override/0 = SubResource("StandardMaterial3D_head")
-
-[node name="RightPauldronSpike" type="MeshInstance3D" parent="."]
-transform = Transform3D(0.927, 0.375, 0, -0.375, 0.927, 0, 0, 0, 1, 0.5, 0.22, 0)
-mesh = SubResource("PrismMesh_spike")
-surface_material_override/0 = SubResource("StandardMaterial3D_head")
-
-[node name="ChestPlate" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, -0.34)
-mesh = SubResource("BoxMesh_chest")
-surface_material_override/0 = SubResource("StandardMaterial3D_head")
-
-[node name="HeadAntenna" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.966, 0.259, 0, -0.259, 0.966, 0, 0.82, -0.04)
-mesh = SubResource("CylinderMesh_antenna")
-surface_material_override/0 = SubResource("StandardMaterial3D_head")
-
-[node name="AntennaTip" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.96, -0.08)
-mesh = SubResource("SphereMesh_antenna_tip")
-surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+[node name="MuzzleFlash" type="MeshInstance3D" parent="MuzzleAttach"]
+transform = Transform3D(1, 0, 0, 0, 2.4, 0, 0, 0, 1, 0, 0.12, 0)
+visible = false
+cast_shadow = 0
+mesh = SubResource("SphereMesh_flash")
+surface_material_override/0 = SubResource("StandardMaterial3D_flash")
 
 [node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
 target_desired_distance = 1.5

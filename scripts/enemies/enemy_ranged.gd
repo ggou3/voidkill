@@ -40,7 +40,35 @@ var telegraph_tween_antenna: Tween = null
 var attack_flash_tween_eyes: Tween = null
 var attack_flash_tween_antenna: Tween = null
 
+## Модель (models/enemy_ranged/enemy_ranged.glb): скелет с клипами, обрез на кости gun, глаза и вспышка —
+## на костях eyes и muzzle (BoneAttachment3D в сцене). У турели (наследник со своей сценой) модели нет —
+## всё, что завязано на модель, молчит
+@onready var model_root: Node3D = get_node_or_null("Model")
+@onready var anim_player: AnimationPlayer = get_node_or_null("Model/AnimationPlayer")
+@onready var muzzle_flash: MeshInstance3D = get_node_or_null("MuzzleAttach/MuzzleFlash")
+## Тон текстур модели: тело — чёрный силуэт, обрез чуть светлее
+const BODY_TINT: Color = Color(0.06, 0.055, 0.07)
+const GUN_TINT: Color = Color(0.2, 0.2, 0.22)
+const MUZZLE_FLASH_TIME: float = 0.06
+## Дуло в прицельной стойке: x — вправо, y — вверх, z — вперёд (было (0, 0.55, 0.4) — точка у лица капсулы)
+const MUZZLE_OFFSET: Vector3 = Vector3(0.11, 0.32, 1.03)
+## Клипы-циклы; остальные (telegraph, fire, hit, death) играют один раз
+const ANIM_LOOPED: Array[StringName] = [&"idle", &"aim", &"run", &"strafe_left", &"strafe_right", &"back"]
+const ANIM_BLEND: float = 0.12
+## Скорость движения, ниже которой враг стоит (клип стойки)
+const ANIM_MOVE_THRESHOLD: float = 0.6
+## Скорость (м/с), при которой цикл бега / шага вбок играет в своём темпе; темп ограничен, на большой
+## скорости ноги проскальзывают
+const ANIM_RUN_SPEED: float = 4.0
+const ANIM_STEP_SPEED: float = 2.5
+const HIT_ANIM_RESTART: float = 0.15
+var _anim_current: StringName = &""
+## Пока играет выстрел или вздрагивание от урона, клип по движению его не перебивает
+var _anim_oneshot_timer: float = 0.0
+var _muzzle_flash_tween: Tween = null
+
 func _ready() -> void:
+	_setup_model()
 	super._ready()
 	detection_range = ranged_detection_range
 	attack_damage = ranged_damage
@@ -60,6 +88,79 @@ func _ready() -> void:
 	if antenna_material:
 		antenna_material.emission = EYES_BASE_COLOR
 
+## Тело и глаза модели вместо узлов по умолчанию (MeshInstance3D, Eyes) — до super._ready: там копируется
+## материал глаз и собираются меши вспышки попадания. Свой материал тела (копия импортированного с тоном)
+## ставится override-ом: иглы и раздутие копируют его через _make_body_override_mat
+func _setup_model() -> void:
+	if not model_root:
+		return
+	var model_eyes := get_node_or_null("EyesAttach/Eyes") as MeshInstance3D
+	if model_eyes:
+		eyes = model_eyes
+	for node in model_root.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		var src_mat := mi.get_active_material(0) as StandardMaterial3D
+		if src_mat:
+			var mat := src_mat.duplicate() as StandardMaterial3D
+			mat.albedo_color = BODY_TINT if mi.name == &"Body" else GUN_TINT
+			mi.set_surface_override_material(0, mat)
+		if mi.name == &"Body":
+			body_mesh = mi
+	if anim_player:
+		for anim_name in ANIM_LOOPED:
+			var anim: Animation = anim_player.get_animation(anim_name)
+			if anim:
+				anim.loop_mode = Animation.LOOP_LINEAR
+		_play_anim(&"idle")
+
+func _play_anim(anim_name: StringName, restart: bool = false) -> void:
+	if anim_name == _anim_current and not restart:
+		return
+	_anim_current = anim_name
+	anim_player.play(anim_name, ANIM_BLEND)
+	if restart:
+		anim_player.seek(0.0, true)
+
+func _play_oneshot_anim(anim_name: StringName) -> void:
+	if not anim_player or current_state == State.DEAD:
+		return
+	var anim: Animation = anim_player.get_animation(anim_name)
+	if not anim:
+		return
+	anim_player.speed_scale = 1.0
+	_play_anim(anim_name, true)
+	_anim_oneshot_timer = anim.length
+
+## Клип по состоянию и скорости: заряд выстрела — telegraph; в ATTACK стрейф/отход/стойка с прицелом по
+## направлению скорости в осях врага (он смотрит на игрока); иначе бег или стойка с опущенным обрезом
+func _update_animation(delta: float) -> void:
+	if not anim_player:
+		return
+	if _anim_oneshot_timer > 0.0:
+		_anim_oneshot_timer -= delta
+		return
+	var flat_vel := Vector3(velocity.x, 0.0, velocity.z)
+	var speed := flat_vel.length()
+	var local_vel: Vector3 = global_transform.basis.inverse() * flat_vel
+	var anim_speed: float = 1.0
+	var anim_name: StringName = &"idle"
+	if is_telegraphing_shot:
+		anim_name = &"telegraph"
+	elif speed > ANIM_MOVE_THRESHOLD:
+		if current_state == State.ATTACK and absf(local_vel.x) > absf(local_vel.z):
+			anim_name = &"strafe_right" if local_vel.x > 0.0 else &"strafe_left"
+			anim_speed = clampf(speed / ANIM_STEP_SPEED, 0.8, 2.0)
+		elif current_state == State.ATTACK and local_vel.z > 0.0:
+			anim_name = &"back"
+			anim_speed = clampf(speed / ANIM_STEP_SPEED, 0.8, 2.0)
+		else:
+			anim_name = &"run"
+			anim_speed = clampf(speed / ANIM_RUN_SPEED, 0.6, 2.2)
+	elif current_state == State.ATTACK:
+		anim_name = &"aim"
+	anim_player.speed_scale = anim_speed
+	_play_anim(anim_name)
+
 func _can_lunge_to_player() -> bool:
 	return false
 
@@ -70,6 +171,8 @@ func _physics_process(delta: float) -> void:
 	if attack_timer > 0.0:
 		attack_timer -= delta
 	super._physics_process(delta)
+	if current_state != State.DEAD:
+		_update_animation(delta)
 
 func set_state(new_state: State) -> void:
 	if new_state == State.DEAD:
@@ -84,6 +187,9 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 		return
 	attack_timer = max(attack_timer, reaction_delay)
 	super.take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
+	# Вздрагивание; дробь бьёт несколькими попаданиями в кадр — клип не перезапускается чаще раза в HIT_ANIM_RESTART
+	if anim_player and (_anim_current != &"hit" or anim_player.current_animation_position >= HIT_ANIM_RESTART):
+		_play_oneshot_anim(&"hit")
 
 func die(death_info: Dictionary = {}) -> void:
 	_reset_ranged_telegraph()
@@ -91,6 +197,8 @@ func die(death_info: Dictionary = {}) -> void:
 		attack_flash_tween_eyes.kill()
 	if attack_flash_tween_antenna and attack_flash_tween_antenna.is_valid():
 		attack_flash_tween_antenna.kill()
+	if _muzzle_flash_tween and _muzzle_flash_tween.is_valid():
+		_muzzle_flash_tween.kill()
 	attack_timer = 999999.0
 	super.die(death_info)
 
@@ -202,10 +310,20 @@ func _get_strafe_velocity(delta: float) -> Vector3:
 				_strafe_edge_timer = STRAFE_EDGE_RECHECK
 	return strafe_dir * (move_speed * STRAFE_SPEED_FACTOR * slow_factor)
 
+## Дуло обреза в прицельной стойке (клипы aim/telegraph): вправо, вверх и вперёд от центра врага.
+## Константа, а не позиция кости: точка выстрела не зависит от того, в какой фазе смешивания клипы
 func _get_projectile_spawn_position() -> Vector3:
-	return global_position + Vector3(0.0, 0.55, 0.0) - transform.basis.z * 0.4
+	return global_position + Vector3(0.0, MUZZLE_OFFSET.y, 0.0) + transform.basis.x * MUZZLE_OFFSET.x - transform.basis.z * MUZZLE_OFFSET.z
 
 func _play_attack_flash() -> void:
+	_play_oneshot_anim(&"fire")
+	if muzzle_flash:
+		muzzle_flash.visible = true
+		if _muzzle_flash_tween and _muzzle_flash_tween.is_valid():
+			_muzzle_flash_tween.kill()
+		_muzzle_flash_tween = create_tween()
+		_muzzle_flash_tween.tween_interval(MUZZLE_FLASH_TIME)
+		_muzzle_flash_tween.tween_callback(muzzle_flash.hide)
 	if eyes_material:
 		if attack_flash_tween_eyes and attack_flash_tween_eyes.is_valid():
 			attack_flash_tween_eyes.kill()
