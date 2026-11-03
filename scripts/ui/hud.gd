@@ -20,9 +20,11 @@ extends CanvasLayer
 @onready var game_over_screen: Control = get_node_or_null("GameOverScreen")
 @onready var restart_button: Button = get_node_or_null("GameOverScreen/VBoxContainer/RestartButton")
 var restart_level_button: Button = null
+var main_menu_button: Button = null
 var enemies_label: Label = null
 var damage_indicator: DamageIndicator = null
 var bpm_hint: BPMHint = null
+var pause_menu: PauseMenu = null
 
 # Ссылки на игровые системы
 var player: Player = null
@@ -92,6 +94,9 @@ func _init_static_elements() -> void:
 	_setup_health_bar()
 	_setup_weapon_hud_container()
 	_setup_feedback_elements()
+	pause_menu = PauseMenu.new()
+	pause_menu.name = "PauseMenu"
+	add_child(pause_menu)
 
 ## Индикатор направления урона и подсказка BPM у прицела — под экранами смерти и конца уровня
 func _setup_feedback_elements() -> void:
@@ -626,6 +631,7 @@ func _on_game_over() -> void:
 		_ensure_restart_level_button().visible = true
 	elif restart_level_button:
 		restart_level_button.visible = false
+	_ensure_main_menu_button()
 
 func _on_player_respawned() -> void:
 	damage_indicator.clear()
@@ -650,6 +656,33 @@ func _ensure_restart_level_button() -> Button:
 	elif game_over_screen:
 		game_over_screen.add_child(restart_level_button)
 	return restart_level_button
+
+## «Главное меню» на экране смерти — последней кнопкой, под перезапусками
+func _ensure_main_menu_button() -> Button:
+	if main_menu_button:
+		main_menu_button.get_parent().move_child(main_menu_button, -1)
+		return main_menu_button
+	main_menu_button = _make_main_menu_button(240.0)
+	if restart_button:
+		restart_button.get_parent().add_child(main_menu_button)
+	elif game_over_screen:
+		game_over_screen.add_child(main_menu_button)
+	return main_menu_button
+
+func _make_main_menu_button(width: float) -> Button:
+	var b = Button.new()
+	b.name = "MainMenuButton"
+	b.text = "Главное меню"
+	b.custom_minimum_size = Vector2(width, 50)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	b.add_theme_font_size_override("font_size", 22)
+	b.pressed.connect(_on_main_menu_pressed)
+	return b
+
+func _on_main_menu_pressed() -> void:
+	var gm = get_node_or_null("/root/GameManager")
+	if gm:
+		gm.go_to_main_menu()
 
 func _on_restart_pressed() -> void:
 	var gm = get_node_or_null("/root/GameManager")
@@ -681,9 +714,9 @@ func _on_level_completed(stats: Dictionary) -> void:
 	var box = VBoxContainer.new()
 	box.set_anchors_preset(Control.PRESET_CENTER)
 	box.offset_left = -260.0
-	box.offset_top = -230.0
+	box.offset_top = -270.0
 	box.offset_right = 260.0
-	box.offset_bottom = 230.0
+	box.offset_bottom = 270.0
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 12)
 	screen.add_child(box)
@@ -704,6 +737,7 @@ func _on_level_completed(stats: Dictionary) -> void:
 	again.add_theme_font_size_override("font_size", 22)
 	again.pressed.connect(_on_restart_level_pressed)
 	box.add_child(again)
+	box.add_child(_make_main_menu_button(260.0))
 
 func _add_end_label(parent: Control, text: String, font_size: int, color: Color) -> void:
 	var label = Label.new()

@@ -166,7 +166,15 @@ func _ready():
 	low_health_player.stream = _gen_low_health_wav()
 	add_child(low_health_player)
 
+	GameManager.pause_changed.connect(_on_pause_changed)
+
 	GameTypes.debug_log(&"audio", "[AudioManager] Ready! Procedural sounds generated: %d, External files: %d" % [sound_buffers.size(), external_sounds.size()])
+
+## Меню паузы: петли (слайд, низкое HP) замирают вместе с игрой и продолжаются после; короткие звуки
+## (менее секунды) доигрывают сами. AudioManager работает с PROCESS_MODE_ALWAYS — сам по себе на паузе не молчит
+func _on_pause_changed(is_paused: bool) -> void:
+	slide_player.stream_paused = is_paused
+	low_health_player.stream_paused = is_paused
 
 func play_sound(sound_name: String):
 	# Обработка зацикленного звука скольжения

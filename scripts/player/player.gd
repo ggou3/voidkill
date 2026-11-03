@@ -168,11 +168,9 @@ func _on_level_completed(_stats: Dictionary) -> void:
 func _input(event):
 	if is_dead:
 		return
-		
-	if event.is_action_pressed("ui_cancel"):
-		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 
-	# Курсор освобождён (Esc): клик по окну во время игры возвращает захват и не стреляет
+	# Esc — меню паузы (PauseMenu, создаёт HUD): дерево на паузе, сюда ввод не доходит.
+	# Курсор освобождён вне паузы (окно потеряло захват): клик по окну во время игры возвращает захват и не стреляет
 	if Input.get_mouse_mode() != Input.MOUSE_MODE_CAPTURED:
 		if event is InputEventMouseButton and event.pressed and GameManager.current_state == GameManager.State.PLAYING:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -217,7 +215,7 @@ func _input(event):
 		if bpm_system is BPMSystem:
 			bpm_system.force_max_bpm()
 
-## Курсор освобождён (Esc) — ввод игрока игнорируется, и опрашиваемый в физическом тике тоже
+## Курсор освобождён (пауза, экраны смерти и конца уровня) — ввод игрока игнорируется, и опрашиваемый в физическом тике тоже
 func _has_input_focus() -> bool:
 	return Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED
 
