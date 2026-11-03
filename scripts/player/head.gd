@@ -1,6 +1,7 @@
 class_name Head
 extends Node3D
 
+## Базовая чувствительность; множитель — Settings.mouse_sensitivity (меню настроек)
 const MOUSE_SENSITIVITY = 0.003
 const BASE_FOV = 90.0
 const MAX_CAM_ROLL = 0.06
@@ -131,8 +132,9 @@ func _disable_viewmodel_shadows(node: Node):
 
 func _input(event):
 	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
-		player.rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		_pitch = clampf(_pitch - event.relative.y * MOUSE_SENSITIVITY, deg_to_rad(-89), deg_to_rad(89))
+		var sensitivity: float = MOUSE_SENSITIVITY * Settings.mouse_sensitivity
+		player.rotate_y(-event.relative.x * sensitivity)
+		_pitch = clampf(_pitch - event.relative.y * sensitivity, deg_to_rad(-89), deg_to_rad(89))
 		# Поворот сразу, позиция — та же, что в последнем кадре
 		global_transform = Transform3D(player.global_transform.basis * Basis(Vector3.RIGHT, _pitch), global_position)
 
