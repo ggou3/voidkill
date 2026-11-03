@@ -46,9 +46,6 @@ var attack_flash_tween_antenna: Tween = null
 @onready var model_root: Node3D = get_node_or_null("Model")
 @onready var anim_player: AnimationPlayer = get_node_or_null("Model/AnimationPlayer")
 @onready var muzzle_flash: MeshInstance3D = get_node_or_null("MuzzleAttach/MuzzleFlash")
-## Тон текстур модели: тело — чёрный силуэт, обрез чуть светлее
-const BODY_TINT: Color = Color(0.06, 0.055, 0.07)
-const GUN_TINT: Color = Color(0.2, 0.2, 0.22)
 const MUZZLE_FLASH_TIME: float = 0.06
 ## Дуло в прицельной стойке модели масштаба 1.25: x — вправо, y — вверх, z — вперёд (было (0, 0.55, 0.4) —
 ## точка у лица капсулы)
@@ -92,23 +89,20 @@ func _ready() -> void:
 		antenna_material.emission = EYES_BASE_COLOR
 
 ## Тело и глаза модели вместо узлов по умолчанию (MeshInstance3D, Eyes) — до super._ready: там копируется
-## материал глаз и собираются меши вспышки попадания. Свой материал тела (копия импортированного с тоном)
-## ставится override-ом: иглы и раздутие копируют его через _make_body_override_mat
+## материал глаз и собираются меши вспышки попадания. Текстуры модели — исходные, из Tripo. Копия материала
+## тела ставится override-ом: иглы и раздутие копируют его через _make_body_override_mat (с текстурой)
 func _setup_model() -> void:
 	if not model_root:
 		return
 	var model_eyes := get_node_or_null("EyesAttach/Eyes") as MeshInstance3D
 	if model_eyes:
 		eyes = model_eyes
-	for node in model_root.find_children("*", "MeshInstance3D", true, false):
-		var mi := node as MeshInstance3D
-		var src_mat := mi.get_active_material(0) as StandardMaterial3D
+	var model_body := model_root.find_child("Body", true, false) as MeshInstance3D
+	if model_body:
+		body_mesh = model_body
+		var src_mat := model_body.get_active_material(0) as StandardMaterial3D
 		if src_mat:
-			var mat := src_mat.duplicate() as StandardMaterial3D
-			mat.albedo_color = BODY_TINT if mi.name == &"Body" else GUN_TINT
-			mi.set_surface_override_material(0, mat)
-		if mi.name == &"Body":
-			body_mesh = mi
+			model_body.set_surface_override_material(0, src_mat.duplicate())
 	if anim_player:
 		for anim_name in ANIM_LOOPED:
 			var anim: Animation = anim_player.get_animation(anim_name)
