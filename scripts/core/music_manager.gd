@@ -8,7 +8,8 @@ extends Node
 ## Без игрока (главное меню) трек играет как на 50 BPM. Пауза дерева (меню паузы, экран конца уровня)
 ## приглушает музыку; на Game Over трек «тонет» — проседает ниже минимума, пока игрок не возродится.
 
-const TRACK: AudioStream = preload("res://music/Combat Loop.mp3")
+## Путь, не preload: константа-ресурс в автозагрузке держится до выхода и даёт утечку (lessons.md)
+const TRACK_PATH: String = "res://music/Combat Loop.mp3"
 
 ## Скорость и тон на 50 BPM (0.8 — на ~4 полутона ниже, темп −20%); на 200 BPM — 1.0
 const MIN_PITCH: float = 0.8
@@ -34,12 +35,22 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_player = AudioStreamPlayer.new()
 	_player.name = "MusicPlayer"
-	_player.stream = TRACK
+	_player.stream = load(TRACK_PATH)
 	_player.bus = &"Music"
 	add_child(_player)
 	_apply()
-	_player.play()
 	_last_usec = Time.get_ticks_usec()
+	# В --headless (проверки агента) звука нет, а играющий на выходе поток аудиодрайвер Dummy не освобождает:
+	# каждый прогон показывал бы утечку трека и прятал настоящие (lessons.md). Сглаживание и кривая работают и так
+	if DisplayServer.get_name() == "headless":
+		return
+	_player.play()
+
+## Выход из игры: играющий поток освобождает аудиопоток движка на следующем микшировании, которого при выходе
+## может уже не быть, — тогда в логе «leaked AudioStreamMP3». Остановка здесь делает это редкостью, но не исключает
+func _exit_tree() -> void:
+	_player.stop()
+	_player.stream = null
 
 func _process(_delta: float) -> void:
 	# delta масштабирована Engine.time_scale — в стоп-кадре она почти нулевая; берём реальное время
