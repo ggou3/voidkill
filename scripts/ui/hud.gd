@@ -2,9 +2,10 @@ class_name HUD
 extends CanvasLayer
 
 ## Единый менеджер пользовательского интерфейса (HUD).
-## Инкапсулирует отображение полосы здоровья, слотов оружия, счётчика дэшей,
+## Инкапсулирует отображение резервуара HP (HealthFlask), карточки оружия в руке (WeaponCard), счётчика дэшей,
 ## индикатора BPM (сердце и ЭКГ, виньетка и дрожь HUD на высоком BPM), боевого моментума,
 ## всплывающих комбо-сообщений, счётчика врагов сектора и экрана Game Over.
+## Панели по углам рисуются в SubViewport и выводятся с выпуклостью экрана (shaders/hud_curve.gdshader).
 ## Подписывается на сигналы игровых систем (Player, WeaponManager, SkillManager, BPMSystem, GameManager).
 
 # Ссылки на дочерние UI-узлы сцены HUD
@@ -13,8 +14,6 @@ extends CanvasLayer
 @onready var dash_label: Label = get_node_or_null("DashLabel")
 @onready var combo_label: Label = get_node_or_null("ComboLabel")
 @onready var momentum_label: Label = get_node_or_null("MomentumLabel")
-@onready var health_bar: ProgressBar = get_node_or_null("HealthBar")
-@onready var hp_text: Label = get_node_or_null("HealthBar/HPText")
 @onready var speed_label: Label = get_node_or_null("SpeedLabel")
 @onready var blood_buff_label: Label = get_node_or_null("BloodBuffLabel")
 @onready var game_over_screen: Control = get_node_or_null("GameOverScreen")
@@ -26,6 +25,8 @@ var damage_indicator: DamageIndicator = null
 var bpm_hint: BPMHint = null
 var heart_monitor: HeartMonitor = null
 var bpm_vignette: BPMVignette = null
+var health_flask: HealthFlask = null
+var weapon_card: WeaponCard = null
 var pause_menu: PauseMenu = null
 
 # Ссылки на игровые системы
@@ -34,26 +35,29 @@ var weapon_manager: WeaponManager = null
 var skill_manager: SkillManager = null
 var bpm_system: BPMSystem = null
 
-# Визуальные стили и твины полосы здоровья
-var _health_bg_style: StyleBoxFlat
-var _health_fill_style: StyleBoxFlat
-var _health_tween: Tween = null
-var _last_displayed_health: int = -1
+# Раскладка панелей по углам: отступ от краёв экрана (по выпуклости рамки углы и так уходят к центру)
+const HUD_MARGIN: Vector2 = Vector2(48.0, 40.0)
+const HEART_SCALE: float = 0.85
+# Попап комбо (вне покачивания): всплывает над моментумом
+const COMBO_Y: float = 500.0
 
 # Параметры анимации комбо-попапов
 var combo_tween: Tween = null
 
 # Параметры анимации боевого моментума
+const MOMENTUM_FONT: int = 22
+const MOMENTUM_FONT_IDLE: int = 19
 var momentum_idle_timer: float = 0.0
 var momentum_display_alpha: float = 1.0
-var momentum_font_size: int = 28
+var momentum_font_size: int = MOMENTUM_FONT
 
-# Управление списком слотов оружия
-var weapon_hud_container: VBoxContainer
-var weapon_ui_slots: Array = []
+# Выпуклость панелей: SubViewport с панелями и прямоугольник на весь экран, выводящий его с искажением
+const CURVE_SHADER: Shader = preload("res://shaders/hud_curve.gdshader")
+var _curve_viewport: SubViewport = null
+var _curve_rect: ColorRect = null
 
 # Покачивание HUD (ноябрь 2026): панели по углам (HP, BPM, моментум, дэш, скорость, оружие, счётчик врагов)
-# лежат в общем узле SwayRoot и смещаются от поворота камеры, движения, прыжков и приземлений, вздрагивают
+# лежат в общем узле SwayRoot (внутри SubViewport выпуклости) и смещаются от поворота камеры, движения, прыжков и приземлений, вздрагивают
 # от отдачи и урона. Прицел, подсказки у прицела, попап комбо, индикатор урона и экраны смерти/конца уровня
 # остаются на месте — стрелять по прицелу покачивание не мешает
 ## Сила покачивания HUD: 0 — выключено, 1 — по умолчанию
@@ -101,8 +105,8 @@ func _init_static_elements() -> void:
 
 	_setup_sway_root()
 	_setup_bpm_indicator()
-	_setup_health_bar()
-	_setup_weapon_hud_container()
+	_setup_health_flask()
+	_setup_weapon_card()
 	_setup_feedback_elements()
 	pause_menu = PauseMenu.new()
 	pause_menu.name = "PauseMenu"
@@ -131,6 +135,7 @@ func _connect_systems() -> void:
 		player.died.connect(_on_player_died)
 		player.damaged.connect(_on_player_damaged)
 		damage_indicator.player = player
+		health_flask.player = player
 		update_health(player.health, player.max_health, false)
 
 	# Подключение к SkillManager
@@ -147,12 +152,13 @@ func _connect_systems() -> void:
 		bpm_system.bpm_event.connect(bpm_hint.on_bpm_event)
 		heart_monitor.bpm_system = bpm_system
 		heart_monitor.player = player
+		weapon_card.bpm_system = bpm_system
 
 	# Подключение к WeaponManager
 	var wm = get_node_or_null("../WeaponManager")
 	if wm is WeaponManager:
 		weapon_manager = wm
-		_rebuild_weapon_slots()
+		weapon_card.weapon_manager = weapon_manager
 
 	# Подключение к GameManager
 	var gm = get_node_or_null("/root/GameManager")
@@ -169,38 +175,92 @@ func _connect_systems() -> void:
 func _process(delta: float) -> void:
 	if skill_manager:
 		_process_skill_hud(delta)
-	if weapon_manager:
-		_process_weapon_hud(delta)
 	_process_level_hud()
 	bpm_vignette.set_state(heart_monitor.ratio, heart_monitor.pulse)
 	_process_sway(delta)
 
 # --- Покачивание HUD ---
 
-## Общий узел панелей, которые покачиваются: на весь экран, под прицелом (индекс 0). Панели переносятся в него
-## без пересчёта якорей — родитель на весь экран, раскладка прежняя
+## Общий узел панелей, которые покачиваются: на весь экран, внутри SubViewport выпуклости. Панели переносятся
+## в него без пересчёта якорей — родитель на весь экран, раскладка прежняя
 func _setup_sway_root() -> void:
+	_setup_curve_viewport()
 	_sway_root = Control.new()
 	_sway_root.name = "SwayRoot"
 	_sway_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_sway_root)
-	move_child(_sway_root, 0)
+	_curve_viewport.add_child(_sway_root)
 	_sway_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for node in [ammo_label, dash_label, momentum_label, health_bar, speed_label, blood_buff_label]:
+	for node in [ammo_label, dash_label, momentum_label, speed_label, blood_buff_label]:
 		if node:
 			node.reparent(_sway_root, false)
 
+## Выпуклый «телевизор»: панели и виньетка рисуются в прозрачный SubViewport в полном разрешении окна (в
+## логических координатах HUD), а прямоугольник под прицелом (индекс 0) выводит его с выпуклостью экрана.
+## Прицел, подсказки у прицела, попап комбо, индикатор урона и экраны смерти/конца уровня — плоские, без
+## искажения: на кнопках экранов совпадает курсор
+func _setup_curve_viewport() -> void:
+	_curve_viewport = SubViewport.new()
+	_curve_viewport.name = "CurvedPanels"
+	_curve_viewport.transparent_bg = true
+	_curve_viewport.disable_3d = true
+	_curve_viewport.size_2d_override_stretch = true
+	add_child(_curve_viewport)
+	_curve_rect = ColorRect.new()
+	_curve_rect.name = "CurvedPanelsScreen"
+	_curve_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat: ShaderMaterial = ShaderMaterial.new()
+	mat.shader = CURVE_SHADER
+	mat.set_shader_parameter("hud_tex", _curve_viewport.get_texture())
+	_curve_rect.material = mat
+	add_child(_curve_rect)
+	move_child(_curve_rect, 0)
+	_curve_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	get_viewport().size_changed.connect(_resize_curve_viewport)
+	_resize_curve_viewport()
+
+func _resize_curve_viewport() -> void:
+	var logical: Vector2 = get_viewport().get_visible_rect().size
+	var physical: Vector2i = get_window().size if get_window() else Vector2i(logical)
+	_curve_viewport.size = Vector2i(maxi(physical.x, 1), maxi(physical.y, 1))
+	_curve_viewport.size_2d_override = Vector2i(logical)
+
 ## Индикатор BPM — в левом верхнем углу среди покачивающихся панелей; виньетка — на весь экран под всеми
-## панелями и прицелом (индекс 0)
+## панелями (первая в SubViewport выпуклости)
 func _setup_bpm_indicator() -> void:
 	heart_monitor = HeartMonitor.new()
 	heart_monitor.name = "HeartMonitor"
-	heart_monitor.position = Vector2(18.0, 10.0)
+	heart_monitor.position = HUD_MARGIN
+	heart_monitor.scale = Vector2.ONE * HEART_SCALE
 	_panels_parent().add_child(heart_monitor)
 	bpm_vignette = BPMVignette.new()
 	bpm_vignette.name = "BPMVignette"
-	add_child(bpm_vignette)
-	move_child(bpm_vignette, 0)
+	_curve_viewport.add_child(bpm_vignette)
+	_curve_viewport.move_child(bpm_vignette, 0)
+
+## Резервуар HP — в левом нижнем углу
+func _setup_health_flask() -> void:
+	health_flask = HealthFlask.new()
+	health_flask.name = "HealthFlask"
+	_panels_parent().add_child(health_flask)
+	_anchor_corner(health_flask, HealthFlask.PANEL_SIZE, false, true)
+
+## Карточка оружия в руке — в правом нижнем углу
+func _setup_weapon_card() -> void:
+	weapon_card = WeaponCard.new()
+	weapon_card.name = "WeaponCard"
+	_panels_parent().add_child(weapon_card)
+	_anchor_corner(weapon_card, WeaponCard.CARD_SIZE, true, true)
+
+## Привязка панели размера panel_size к углу экрана с отступом HUD_MARGIN
+func _anchor_corner(node: Control, panel_size: Vector2, right: bool, bottom: bool) -> void:
+	node.anchor_left = 1.0 if right else 0.0
+	node.anchor_right = node.anchor_left
+	node.anchor_top = 1.0 if bottom else 0.0
+	node.anchor_bottom = node.anchor_top
+	node.offset_left = -HUD_MARGIN.x - panel_size.x if right else HUD_MARGIN.x
+	node.offset_right = node.offset_left + panel_size.x
+	node.offset_top = -HUD_MARGIN.y - panel_size.y if bottom else HUD_MARGIN.y
+	node.offset_bottom = node.offset_top + panel_size.y
 
 ## Куда добавлять панели, созданные кодом (список оружия, счётчик врагов) — в покачивающийся узел
 func _panels_parent() -> Node:
@@ -274,61 +334,8 @@ func _bpm_shake(delta: float) -> Vector2:
 
 # --- Здоровье ---
 
-func _setup_health_bar() -> void:
-	if not health_bar:
-		return
-		
-	_health_bg_style = StyleBoxFlat.new()
-	_health_bg_style.bg_color = Color(0.08, 0.08, 0.09, 0.85)
-	_health_bg_style.border_color = Color(0.35, 0.35, 0.38, 0.9)
-	_health_bg_style.set_border_width_all(2)
-	_health_bg_style.set_corner_radius_all(3)
-	
-	_health_fill_style = StyleBoxFlat.new()
-	_health_fill_style.bg_color = Color(0.2, 0.85, 0.3, 1.0)
-	_health_fill_style.set_corner_radius_all(2)
-	
-	health_bar.add_theme_stylebox_override("background", _health_bg_style)
-	health_bar.add_theme_stylebox_override("fill", _health_fill_style)
-
 func update_health(current_hp: int, max_hp: int, animate: bool = true) -> void:
-	_last_displayed_health = current_hp
-	var display_hp = max(0, current_hp)
-	
-	if hp_text:
-		hp_text.text = "%d / %d" % [display_hp, max_hp]
-		
-	if not health_bar:
-		return
-		
-	health_bar.max_value = max_hp
-	
-	# Пороги здоровья:
-	# > 50%: Зеленый / нейтральный
-	# 25% - 50%: Желтый
-	# < 25%: Красный критический
-	var ratio = float(display_hp) / float(max_hp) if max_hp > 0 else 0.0
-	var target_color: Color
-	if ratio > 0.5:
-		target_color = Color(0.2, 0.85, 0.3, 1.0)
-	elif ratio >= 0.25:
-		target_color = Color(0.95, 0.8, 0.15, 1.0)
-	else:
-		target_color = Color(0.95, 0.2, 0.2, 1.0)
-		
-	if animate and is_inside_tree():
-		if _health_tween and _health_tween.is_valid():
-			_health_tween.kill()
-		_health_tween = create_tween().set_parallel(true)
-		_health_tween.tween_property(health_bar, "value", float(display_hp), 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		if _health_fill_style:
-			_health_tween.tween_property(_health_fill_style, "bg_color", target_color, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	else:
-		if _health_tween and _health_tween.is_valid():
-			_health_tween.kill()
-		health_bar.value = float(display_hp)
-		if _health_fill_style:
-			_health_fill_style.bg_color = target_color
+	health_flask.set_health(current_hp, max_hp, animate)
 
 func _on_player_health_changed(current: int, maximum: int) -> void:
 	update_health(current, maximum, true)
@@ -344,6 +351,7 @@ func _on_enemy_health_bars_toggled(bars_visible: bool) -> void:
 
 func _on_player_damaged(amount: int, from_dir: Vector3) -> void:
 	damage_indicator.add_hit(from_dir, amount)
+	health_flask.on_damage(amount)
 	# HUD вздрагивает в сторону от удара (сбоку — вбок, спереди — вниз)
 	if is_instance_valid(player) and sway_strength > 0.0:
 		var local_dir: Vector3 = player.global_basis.inverse() * from_dir
@@ -388,14 +396,14 @@ func _process_skill_hud(delta: float) -> void:
 		var is_dimmed: bool = (combat_momentum <= 1.001 and momentum_idle_timer >= 2.0)
 		if is_dimmed:
 			momentum_display_alpha = move_toward(momentum_display_alpha, 0.45, 2.0 * delta)
-			if momentum_font_size != 24:
-				momentum_font_size = 24
-				momentum_label.add_theme_font_size_override("font_size", 24)
+			if momentum_font_size != MOMENTUM_FONT_IDLE:
+				momentum_font_size = MOMENTUM_FONT_IDLE
+				momentum_label.add_theme_font_size_override("font_size", MOMENTUM_FONT_IDLE)
 		else:
 			momentum_display_alpha = 1.0
-			if momentum_font_size != 28:
-				momentum_font_size = 28
-				momentum_label.add_theme_font_size_override("font_size", 28)
+			if momentum_font_size != MOMENTUM_FONT:
+				momentum_font_size = MOMENTUM_FONT
+				momentum_label.add_theme_font_size_override("font_size", MOMENTUM_FONT)
 				
 		momentum_label.add_theme_color_override("font_color", active_color)
 		momentum_label.modulate.a = momentum_display_alpha
@@ -428,181 +436,15 @@ func show_popup(text: String) -> void:
 	combo_label.text = text
 	combo_label.visible = true
 	combo_label.modulate.a = 1.0
-	combo_label.position.y = 452.0
+	combo_label.position.y = COMBO_Y
 	
 	combo_tween = create_tween()
 	# Плавное всплытие вверх на 10px за 1.2 секунды
-	combo_tween.tween_property(combo_label, "position:y", 442.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	combo_tween.tween_property(combo_label, "position:y", COMBO_Y - 10.0, 1.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	# Держится на экране 0.7с, затем плавное исчезновение (fade out) 0.5с
 	combo_tween.parallel().tween_property(combo_label, "modulate:a", 1.0, 0.7)
 	combo_tween.chain().tween_property(combo_label, "modulate:a", 0.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	combo_tween.chain().tween_callback(func(): if is_instance_valid(combo_label): combo_label.visible = false)
-
-# --- Оружие (WeaponHUDList) ---
-
-func _setup_weapon_hud_container() -> void:
-	if has_node("WeaponHUDList"):
-		weapon_hud_container = get_node("WeaponHUDList")
-	else:
-		weapon_hud_container = VBoxContainer.new()
-		weapon_hud_container.name = "WeaponHUDList"
-		weapon_hud_container.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-		weapon_hud_container.anchor_left = 1.0
-		weapon_hud_container.anchor_top = 1.0
-		weapon_hud_container.anchor_right = 1.0
-		weapon_hud_container.anchor_bottom = 1.0
-		weapon_hud_container.offset_left = -320.0
-		weapon_hud_container.offset_top = -195.0
-		weapon_hud_container.offset_right = -20.0
-		weapon_hud_container.offset_bottom = -20.0
-		weapon_hud_container.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-		weapon_hud_container.grow_vertical = Control.GROW_DIRECTION_BEGIN
-		weapon_hud_container.add_theme_constant_override("separation", 8)
-		_panels_parent().add_child(weapon_hud_container)
-
-func _rebuild_weapon_slots() -> void:
-	if not weapon_hud_container or not weapon_manager:
-		return
-	for child in weapon_hud_container.get_children():
-		child.queue_free()
-	weapon_ui_slots.clear()
-	
-	for i in range(weapon_manager.weapons.size()):
-		var w = weapon_manager.weapons[i]
-		var w_name = w.data.name if (w and w.data) else ""
-		var w_max_ammo = w.data.max_ammo if (w and w.data) else 0
-		var current_ammo = weapon_manager.ammos[i] if i < weapon_manager.ammos.size() else 0
-		
-		var panel = PanelContainer.new()
-		panel.custom_minimum_size = Vector2(270, 48)
-		
-		var margin = MarginContainer.new()
-		margin.add_theme_constant_override("margin_left", 12)
-		margin.add_theme_constant_override("margin_right", 12)
-		margin.add_theme_constant_override("margin_top", 5)
-		margin.add_theme_constant_override("margin_bottom", 5)
-		panel.add_child(margin)
-		
-		var vbox = VBoxContainer.new()
-		vbox.add_theme_constant_override("separation", 3)
-		margin.add_child(vbox)
-		
-		var hbox = HBoxContainer.new()
-		vbox.add_child(hbox)
-		
-		var name_label = Label.new()
-		name_label.text = "[%d] %s" % [i + 1, w_name]
-		name_label.add_theme_font_size_override("font_size", 15)
-		name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		hbox.add_child(name_label)
-		
-		var ammo_text = Label.new()
-		ammo_text.text = "%d / %d" % [current_ammo, w_max_ammo]
-		ammo_text.add_theme_font_size_override("font_size", 16)
-		ammo_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		hbox.add_child(ammo_text)
-		
-		var pbar = ProgressBar.new()
-		pbar.custom_minimum_size = Vector2(0, 4)
-		pbar.show_percentage = false
-		pbar.max_value = 100.0
-		pbar.value = 100.0
-		
-		var pbar_bg = StyleBoxFlat.new()
-		pbar_bg.bg_color = Color(0.1, 0.12, 0.14, 0.7)
-		pbar_bg.set_corner_radius_all(2)
-		pbar.add_theme_stylebox_override("background", pbar_bg)
-		
-		var pbar_fg = StyleBoxFlat.new()
-		pbar_fg.bg_color = Color(0.2, 0.75, 1.0, 1.0)
-		pbar_fg.set_corner_radius_all(2)
-		pbar.add_theme_stylebox_override("fill", pbar_fg)
-		
-		vbox.add_child(pbar)
-		
-		weapon_hud_container.add_child(panel)
-		
-		weapon_ui_slots.append({
-			"panel": panel,
-			"name_label": name_label,
-			"ammo_text": ammo_text,
-			"pbar": pbar,
-			"pbar_fg": pbar_fg
-		})
-
-func _process_weapon_hud(_delta: float) -> void:
-	if not weapon_hud_container:
-		_setup_weapon_hud_container()
-	if weapon_ui_slots.size() != weapon_manager.weapons.size():
-		_rebuild_weapon_slots()
-		
-	var has_infinite_ammo = bpm_system.has_infinite_ammo() if is_instance_valid(bpm_system) else false
-	
-	for i in range(weapon_manager.weapons.size()):
-		if i >= weapon_ui_slots.size():
-			continue
-		var w = weapon_manager.weapons[i]
-		if not w or not w.data:
-			continue
-		var slot = weapon_ui_slots[i]
-		var is_active = (i == weapon_manager.current_weapon_index)
-		var alt_suffix = w.get_alt_hud_suffix(has_infinite_ammo)
-		
-		var sb = StyleBoxFlat.new()
-		if is_active:
-			# Активное оружие: янтарная плашка слева, яркий текст
-			sb.bg_color = Color(0.12, 0.14, 0.18, 0.9)
-			sb.border_color = Color(0.95, 0.72, 0.20, 1.0)
-			sb.set_border_width_all(1)
-			sb.border_width_left = 5
-			sb.set_corner_radius_all(3)
-			slot["panel"].add_theme_stylebox_override("panel", sb)
-			
-			slot["name_label"].text = "[%d] %s" % [i + 1, w.data.name]
-			slot["name_label"].add_theme_color_override("font_color", Color(1.0, 0.88, 0.35, 1.0))
-			
-			if weapon_manager.is_reloading:
-				var progress = clamp((w.data.reload_time - weapon_manager.active_reload_timer) / max(0.001, w.data.reload_time), 0.0, 1.0)
-				slot["ammo_text"].text = ("RELOAD %d%%" % int(progress * 100.0)) + alt_suffix
-				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.6, 0.1, 1.0))
-				slot["pbar"].visible = true
-				slot["pbar"].value = progress * 100.0
-				slot["pbar_fg"].bg_color = Color(0.95, 0.65, 0.15, 1.0)
-			elif weapon_manager.is_bursting:
-				slot["ammo_text"].text = "%d / %d (BURST)" % [weapon_manager.ammos[i], w.data.max_ammo]
-				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.3, 0.3, 1.0))
-				slot["pbar"].visible = false
-			elif has_infinite_ammo:
-				slot["ammo_text"].text = "INF (OVERDRIVE)" + alt_suffix
-				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 0.2, 0.2, 1.0))
-				slot["pbar"].visible = false
-			else:
-				slot["ammo_text"].text = ("%d / %d" % [weapon_manager.ammos[i], w.data.max_ammo]) + alt_suffix
-				slot["ammo_text"].add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 1.0))
-				slot["pbar"].visible = false
-		else:
-			# Неактивное оружие: приглушенный полупрозрачный слот
-			sb.bg_color = Color(0.06, 0.07, 0.08, 0.55)
-			sb.border_color = Color(0.25, 0.28, 0.32, 0.35)
-			sb.set_border_width_all(1)
-			sb.border_width_left = 2
-			sb.set_corner_radius_all(3)
-			slot["panel"].add_theme_stylebox_override("panel", sb)
-			
-			slot["name_label"].text = "[%d] %s" % [i + 1, w.data.name]
-			slot["name_label"].add_theme_color_override("font_color", Color(0.65, 0.68, 0.72, 0.8))
-			
-			if weapon_manager.ammos[i] < w.data.max_ammo:
-				var p_progress = clamp(weapon_manager.passive_reload_timers[i] / max(0.001, w.data.reload_time), 0.0, 1.0)
-				slot["ammo_text"].text = "%d / %d (%d%%)" % [weapon_manager.ammos[i], w.data.max_ammo, int(p_progress * 100.0)]
-				slot["ammo_text"].add_theme_color_override("font_color", Color(0.3, 0.8, 1.0, 0.9))
-				slot["pbar"].visible = true
-				slot["pbar"].value = p_progress * 100.0
-				slot["pbar_fg"].bg_color = Color(0.2, 0.75, 1.0, 0.9)
-			else:
-				slot["ammo_text"].text = "%d / %d" % [weapon_manager.ammos[i], w.data.max_ammo]
-				slot["ammo_text"].add_theme_color_override("font_color", Color(0.6, 0.6, 0.6, 0.7))
-				slot["pbar"].visible = false
 
 # --- Счётчик врагов сектора ---
 
@@ -630,13 +472,13 @@ func _ensure_enemies_label() -> Label:
 	enemies_label = Label.new()
 	enemies_label.name = "EnemiesLabel"
 	enemies_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	enemies_label.offset_left = -420.0
-	enemies_label.offset_top = 14.0
-	enemies_label.offset_right = -24.0
-	enemies_label.offset_bottom = 58.0
+	enemies_label.offset_left = -HUD_MARGIN.x - 380.0
+	enemies_label.offset_top = HUD_MARGIN.y
+	enemies_label.offset_right = -HUD_MARGIN.x
+	enemies_label.offset_bottom = HUD_MARGIN.y + 36.0
 	enemies_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	enemies_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	enemies_label.add_theme_font_size_override("font_size", 30)
+	enemies_label.add_theme_font_size_override("font_size", 24)
 	enemies_label.add_theme_color_override("font_color", Color(1.0, 0.25, 0.2, 1.0))
 	enemies_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	enemies_label.add_theme_constant_override("outline_size", 6)
@@ -665,6 +507,7 @@ func _on_game_over() -> void:
 	_ensure_main_menu_button()
 
 func _on_player_respawned() -> void:
+	health_flask.clear_cracks()
 	damage_indicator.clear()
 	bpm_hint.clear()
 	if game_over_screen:

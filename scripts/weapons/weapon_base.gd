@@ -35,6 +35,14 @@ func can_fire() -> bool:
 func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	return ""
 
+## Готовность ПКМ для индикатора HUD: 0 — только что использован, 1 — готов
+func get_alt_charge() -> float:
+	return 1.0
+
+## Доступен ли ПКМ сейчас (Калибр-0 — только в OVERDRIVE)
+func is_alt_available() -> bool:
+	return true
+
 ## Попадание hitscan-выстрела: трейсер от дула, вакуумный след (Калибр-0 в OVERDRIVE) и урон (_deal_hit).
 func _apply_hit(collider: Node, hit_pos: Vector3, dir: Vector3, is_alt: bool = false) -> void:
 	var start_pos = _get_muzzle_position()

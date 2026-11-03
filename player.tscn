@@ -629,65 +629,62 @@ theme_override_font_sizes/font_size = 32
 text = "КАЛИБР-0: 4 / 4"
 
 [node name="DashLabel" type="Label" parent="HUD" unique_id=549495631]
-offset_left = 34.0
-offset_top = 576.0
-offset_right = 205.0
-offset_bottom = 621.0
-theme_override_font_sizes/font_size = 32
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 206.0
+offset_top = -72.0
+offset_right = 470.0
+offset_bottom = -40.0
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 22
 text = "DASH: 3/3"
 
 [node name="ComboLabel" type="Label" parent="HUD" unique_id=773412600]
 visible = false
-offset_left = 34.0
-offset_top = 452.0
-offset_right = 350.0
-offset_bottom = 484.0
+offset_left = 206.0
+offset_top = 500.0
+offset_right = 522.0
+offset_bottom = 532.0
 theme_override_colors/font_color = Color(1, 0.82, 0.2, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
 theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "★ VARIETY +2 ★"
 
 [node name="MomentumLabel" type="Label" parent="HUD" unique_id=773412601]
-offset_left = 350.0
-offset_top = 484.0
-offset_right = 660.0
-offset_bottom = 529.0
-theme_override_font_sizes/font_size = 28
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 206.0
+offset_top = -104.0
+offset_right = 470.0
+offset_bottom = -72.0
+grow_vertical = 0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 22
 text = "MOMENTUM: ×1.00"
 
-[node name="HealthBar" type="ProgressBar" parent="HUD" unique_id=773412589]
-offset_left = 34.0
-offset_top = 534.0
-offset_right = 260.0
-offset_bottom = 568.0
-value = 100.0
-show_percentage = false
-
-[node name="HPText" type="Label" parent="HUD/HealthBar" unique_id=773412590]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 18
-text = "100 / 100"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="SpeedLabel" type="Label" parent="HUD" unique_id=867666245]
-offset_left = 485.0
-offset_top = 10.0
-offset_right = 656.0
-offset_bottom = 55.0
-theme_override_font_sizes/font_size = 32
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 40.0
+offset_right = 150.0
+offset_bottom = 72.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.85)
+theme_override_constants/outline_size = 5
+theme_override_font_sizes/font_size = 24
 text = "SPEED: 0"
+horizontal_alignment = 1
 
 [node name="BloodBuffLabel" type="Label" parent="HUD" unique_id=998877661]
 visible = false
@@ -695,15 +692,15 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -200.0
-offset_top = 58.0
+offset_top = 76.0
 offset_right = 200.0
-offset_bottom = 98.0
+offset_bottom = 110.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 0.1, 0.1, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 2
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 20
 text = "★ BLOOD FRENZY ★"
 horizontal_alignment = 1
 

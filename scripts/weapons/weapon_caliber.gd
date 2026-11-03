@@ -231,3 +231,10 @@ func get_alt_hud_suffix(has_infinite_ammo: bool = false) -> String:
 	if has_infinite_ammo and weapon_manager:
 		return " [RMB: %d]" % weapon_manager.ammos[slot_index]
 	return ""
+
+## Своего кулдауна у ПКМ нет — общий fire_timer выстрела
+func get_alt_charge() -> float:
+	return 1.0 - clampf(fire_timer / maxf(data.fire_rate if data else 0.45, 0.001), 0.0, 1.0)
+
+func is_alt_available() -> bool:
+	return _get_player().bpm_system.get_bpm_tier() == GameTypes.BPMTier.OVERDRIVE

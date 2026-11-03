@@ -31,7 +31,7 @@ void fragment() {
 	float smoke = 0.75 + 0.5 * vnoise(UV * vec2(7.0, 4.0) + TIME * 0.08);
 	float base_a = smoothstep(0.5 - pulse * 0.08, 1.4, r) * (0.42 + 0.2 * pulse) * smoke;
 	// Сосуды видны у краёв; на ударе — глубже
-	float reach = smoothstep(0.7 - pulse * 0.22 - intensity * 0.08, 1.2, r);
+	float reach = smoothstep(0.8 - pulse * 0.2 - intensity * 0.05, 1.25, r);
 	float glow = clamp(v.g * 2.2, 0.0, 1.0) * (0.45 + 0.55 * pulse);
 	float core = clamp(v.r, 0.0, 1.0) * (0.6 + 0.4 * pulse);
 	float veins_a = clamp(core + glow * 0.7, 0.0, 1.0) * reach;
@@ -39,5 +39,5 @@ void fragment() {
 	vec3 vein_col = mix(vec3(0.5, 0.01, 0.03), vec3(1.0, 0.3, 0.24), core);
 	float a = max(base_a, veins_a);
 	vec3 col = mix(vec3(0.2, 0.0, 0.01), vein_col, veins_a / max(a, 0.001));
-	COLOR = vec4(col, clamp(a, 0.0, 1.0) * intensity * 0.9);
+	COLOR = vec4(col, clamp(a, 0.0, 1.0) * intensity * 0.8);
 }

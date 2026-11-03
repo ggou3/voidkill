@@ -324,3 +324,6 @@ func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	if recallable > 0:
 		return " (STITCH %d)" % recallable
 	return ""
+
+func get_alt_charge() -> float:
+	return 1.0 - clampf(alt_timer / maxf(data.alt_cooldown, 0.001), 0.0, 1.0)

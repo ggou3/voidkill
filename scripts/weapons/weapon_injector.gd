@@ -108,3 +108,6 @@ func get_alt_hud_suffix(_has_infinite_ammo: bool = false) -> String:
 	if alt_timer > 0.0:
 		return " (RMB %.1fs)" % alt_timer
 	return ""
+
+func get_alt_charge() -> float:
+	return 1.0 - clampf(alt_timer / ALT_COOLDOWN, 0.0, 1.0)
