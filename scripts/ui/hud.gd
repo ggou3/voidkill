@@ -38,6 +38,8 @@ var bpm_system: BPMSystem = null
 # Раскладка панелей по углам: отступ от краёв экрана (по выпуклости рамки углы и так уходят к центру)
 const HUD_MARGIN: Vector2 = Vector2(48.0, 40.0)
 const HEART_SCALE: float = 0.85
+## Сердце с ЭКГ — ближе к углу, чем остальные панели: у квадрата сердца прозрачные поля
+const HEART_MARGIN: Vector2 = Vector2(26.0, 18.0)
 ## Резервуар HP крупнее остальных панелей: 54×120 → 76×168; подписи моментума и дэша в player.tscn — справа от него
 const FLASK_SCALE: float = 1.4
 # Попап комбо (вне покачивания): всплывает над моментумом
@@ -138,6 +140,7 @@ func _connect_systems() -> void:
 		player.damaged.connect(_on_player_damaged)
 		damage_indicator.player = player
 		health_flask.player = player
+		_sync_pixelation()
 		update_health(player.health, player.max_health, false)
 
 	# Подключение к SkillManager
@@ -220,6 +223,16 @@ func _setup_curve_viewport() -> void:
 	get_viewport().size_changed.connect(_resize_curve_viewport)
 	_resize_curve_viewport()
 
+## Пикселизация панелей — как у картинки мира: resolution из материала пост-шейдера игрока (настраивается в
+## Инспекторе узла Player/CanvasLayer/ColorRect), без пост-шейдера — без пикселизации
+func _sync_pixelation() -> void:
+	var resolution: float = 0.0
+	if player.post_process_rect and player.post_process_rect.material is ShaderMaterial:
+		var value = player.post_process_rect.material.get_shader_parameter("resolution")
+		if value != null:
+			resolution = float(value)
+	(_curve_rect.material as ShaderMaterial).set_shader_parameter("resolution", resolution)
+
 func _resize_curve_viewport() -> void:
 	var logical: Vector2 = get_viewport().get_visible_rect().size
 	var physical: Vector2i = get_window().size if get_window() else Vector2i(logical)
@@ -231,7 +244,7 @@ func _resize_curve_viewport() -> void:
 func _setup_bpm_indicator() -> void:
 	heart_monitor = HeartMonitor.new()
 	heart_monitor.name = "HeartMonitor"
-	heart_monitor.position = HUD_MARGIN
+	heart_monitor.position = HEART_MARGIN
 	heart_monitor.scale = Vector2.ONE * HEART_SCALE
 	_panels_parent().add_child(heart_monitor)
 	bpm_vignette = BPMVignette.new()
