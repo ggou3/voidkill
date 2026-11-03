@@ -92,7 +92,7 @@ Master (HardLimiter)
 - BPM-тиры (CALM / PUMPING / SURGING / OVERDRIVE) естественно ложатся на **вертикальные слои**
   `AudioStreamSynchronized`: тир включает слой. Привязка темпа музыки к BPM отклонена в
   `docs/bpm.md` только как ритм-механика, а интенсивность музыки от тира с этим решением не спорит.
-- Звук сердцебиения, учащающийся с BPM, в `docs/bpm.md` отмечен как запланированный.
+- Звук сердцебиения с 140 BPM — процедурный «лаб-даб» в такт сердцу индикатора BPM (ноябрь 2026).
 
 ## Источники
 - [Making the music of DOOM — Mick Gordon, GDC 2017 (GDC Vault)](https://gdcvault.com/play/1024068/-DOOM-Behind-the)
