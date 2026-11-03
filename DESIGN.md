@@ -25,6 +25,8 @@
 - [docs/bpm.md](docs/bpm.md) — BPM-система, тиры, моментум, OVERDRIVE; очки и лидерборд
 - [docs/redline.md](docs/redline.md) — REDLINE, выход за 200 BPM (запланировано)
 - [docs/levels.md](docs/levels.md) — формат игры: линейные уровни из секторов, кровавые перегородки, чекпоинты, рейтинг; каркас уровней и демо-уровень
+- [docs/menus.md](docs/menus.md) — главное меню, выбор уровня, пауза, настройки (`user://settings.cfg`)
+- [docs/music.md](docs/music.md) — музыка: аудиошины, темп и громкость трека от BPM сердца, поведение на паузе и Game Over
 
 **Код**
 - [docs/architecture.md](docs/architecture.md) — автозагрузки, class_name и типизация, debug_log, звук

@@ -11,11 +11,12 @@
 - **Связь**: Player держит прямые ссылки на детей (`$PlayerHealth`, `$PlayerCombat`, `$PlayerWallrun`, `$BPMSystem`) и передаёт себя через `setup(self)` в `_ready()`; компоненты не ищут родителя по путям.
 - **Обратная совместимость**: `health`, `max_health`, `is_dead` на Player — проксирующие свойства к `PlayerHealth`; `take_damage`, `heal` — делегирующие методы (`restart_game` на Player удалён на Шаге 5.4 — рестарт только через GameManager). Сигналы `health_changed`/`died` по-прежнему объявлены на Player и ретранслируются из компонента, поэтому HUD и внешний код (враги, снаряды, `StatusEffectComponent.heal`) не изменены. Сброс состояния движения при смерти выполняет Player в обработчике `died`. Порядок после Шага 5.4: `PlayerHealth.die()` → `health_changed(0)` → `died` → `Player._on_health_died()` эмитит `Player.died` (первым подписан GameManager: `deaths`++, `trigger_game_over()` → `game_over_triggered` → экран Game Over в HUD; затем HUD мгновенно обнуляет HP-бар) → `_reset_movement_state()`. Взаимных зависимостей между шагами нет.
 - **Ввод**: выбор оружия — действия `weapon_1`..`weapon_4` (клавиши 1–4) в InputMap. Esc (`ui_cancel`)
-  освобождает курсор, игра при этом идёт; пока курсор свободен, ввод игрока игнорируется — и события
-  `_input`, и опрос в физическом тике (`_has_input_focus()`, `_get_move_input()`: ходьба, прыжок, присед
-  замирает в текущем состоянии), а клик по
-  окну возвращает захват без выстрела (`WeaponManager.block_autofire_until_release()` не даёт
-  автоогню стрелять, пока ЛКМ не отпущена). Меню паузы нет.
+  открывает меню паузы (`PauseMenu`, создаёт HUD; дерево на паузе — [menus.md](menus.md)); своего обработчика Esc
+  у Player нет (до ноября 2026 Esc только освобождал курсор, игра шла). Пока курсор свободен, ввод игрока
+  игнорируется — и события `_input`, и опрос в физическом тике (`_has_input_focus()`, `_get_move_input()`:
+  ходьба, прыжок, присед замирает в текущем состоянии). Если захват потерян вне паузы, клик по
+  окну возвращает его без выстрела (`WeaponManager.block_autofire_until_release()` не даёт
+  автоогню стрелять, пока ЛКМ не отпущена). Чувствительность мыши — `Head.MOUSE_SENSITIVITY × Settings.mouse_sensitivity`.
 - **Голова и камера при интерполяции физики** (✅ ноябрь 2026, `head.gd`): `Head` — `top_level`, вне
   интерполяции. В `_process` ставится на интерполированный трансформ тела (`get_global_transform_interpolated`)
   + `eye_height` (0.6, присед слайда твинит `eye_height`, а не `position:y`); поворот — рысканье тела

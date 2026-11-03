@@ -6,13 +6,13 @@
 CALM/PUMPING/SURGING/OVERDRIVE). Источник истины по дизайну и архитектуре — `DESIGN.md`
 (концепция и оглавление) и файлы `docs/` по темам: архитектура — `docs/architecture*.md`,
 технические уроки — `docs/lessons.md`, roadmap — `docs/roadmap.md`. Тестовый уровень —
-`test_arena.tscn`, главная сцена — `world.tscn`.
+`test_arena.tscn`, главная сцена — `scenes/main_menu.tscn` (главное меню; меню, пауза, настройки — `docs/menus.md`, музыка — `docs/music.md`).
 
-Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPool`.
+Autoload (project.godot): `GameTypes`, `Settings`, `GameManager`, `AudioManager`, `MusicManager`, `TracerPool`.
 Скриптам-автозагрузкам `class_name` НЕ добавлять (конфликт с именем синглтона).
 
 Раскладка — все скрипты в `scripts/` (перенесены редактором в `5760953`, `0f13848`):
-- `core/` — game_types, tracer_pool (автозагрузки)
+- `core/` — game_types, tracer_pool, settings, music_manager (автозагрузки)
 - `components/` — health_component, status_effect_component, enemy_health_bar
 - `enemies/` — enemy_base, enemy_ground, enemy (ближний), enemy_ranged/bomber/shield/hunter/
   swarm/stalker/turret/flyer
@@ -21,11 +21,11 @@ Autoload (project.godot): `GameTypes`, `GameManager`, `AudioManager`, `TracerPoo
 - `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing, player_projectile,
   projectile_enemy (вражеский снаряд), `data/*.tres`
 - `effects/` — blood_pool, blood_splatter, gib_pool (ошмётки и пятна крови, пул на сцену)
-- `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD)
-- `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней)
+- `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD), pause_menu (создаёт HUD), main_menu, settings_menu, menu_style
+- `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней), level_catalog (список уровней меню)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
-Уровни — `levels/*.tscn` (`levels/demo_level.tscn`, `levels/city_level.tscn` — городской, геометрия `@tool`-компонентами `scripts/levels/city_*.gd`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
+Сцена главного меню — `scenes/main_menu.tscn`, музыка — `music/`. Уровни — `levels/*.tscn` (`levels/demo_level.tscn`, `levels/city_level.tscn` — городской, геометрия `@tool`-компонентами `scripts/levels/city_*.gd`), новые шейдеры — `shaders/` (поверхности уровней — `world_surface.gdshader`)
 (`blood_barrier.gdshader`). Импортированные модели — `models/<имя>/` (GLB и извлечённые текстуры; исходник `.blend`
 в `source/` с `.gdignore`; пока только `models/enemy_ranged/`). В корне `res://` остались старые сцены (`*.tscn`), старые шейдеры
 (`*.gdshader`), ресурсы навмеша (`navmesh.tres`, `test_arena_navmesh.tres`), `audio/`,
@@ -305,7 +305,7 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
   которым владеет класс, — через экземпляр (`actor.State.X`), не через имя класса: иначе цикл
   зависимостей скриптов и утечки при выходе («Состояния enum никогда не сравниваются с числами»).
   `static var` в `EnemyBase` по той же причине даёт утечки — общий ресурс через `const … = preload(...)`.
-  Проверка утечек — строка `leaked` / `resources still in use` в выводе компиляции `-e`.
+  Проверка утечек — строка `leaked` / `resources still in use` в выводе компиляции `-e`. Утечка аудиопотока при выходе (`AudioStream*Playback`, трек) — не ошибка кода («Играющий на выходе звук…»).
 - Параметры навмеша менять только с перезапеканием («Параметры baking navmesh»).
 - Экспорт узла в рукописном `.tscn` — только с `node_paths=PackedStringArray("имя")` в заголовке узла,
   иначе молча `null` («Экспорт узла в рукописном `.tscn` требует `node_paths`»).

@@ -12,6 +12,10 @@
   `trigger_game_over()` переводит в `GAME_OVER`, освобождает курсор и эмитит `game_over_triggered`
   (на него подписан HUD — экран Game Over). Закомментированные заготовки (score, волны, пауза) удалены —
   вернуть при реализации соответствующих фич из roadmap.
+  - **Пауза и смена сцен** (✅ ноябрь 2026, [menus.md](menus.md)): состояние `PAUSED`, `set_paused(value)` и
+    сигнал `pause_changed(is_paused)` (меню паузы по Esc); `start_level(path)` (выбор уровня),
+    `go_to_main_menu()` (`MAIN_MENU_SCENE = "res://scenes/main_menu.tscn"`). `restart_level`, `start_level`,
+    `go_to_main_menu` сбрасывают состояние через общий `_leave_scene()`.
   - **Уровни** (каркас уровней, см. [levels.md](levels.md)): `LevelController` регистрируется через
     `register_level()`. Тогда `restart_game()` (R / «Возродиться») — возрождение на последнем
     чекпоинте (`level.respawn_player`, сигнал `player_respawned`), а `restart_level()` — перезагрузка
@@ -30,7 +34,8 @@
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameManager` — конфликтует с именем автозагрузки.
 - **AudioManager** (`res://scripts/audio_manager.gd`) — процедурная генерация звуков через
   `AudioStreamGenerator` (без внешних аудиофайлов). `AudioManager.play_sound(sound_name: String)`,
-  зацикленный слайд — `set_slide_active(active)`. Все звуки идут в шину `Master`.
+  зацикленный слайд — `set_slide_active(active)`. Все звуки идут в шину `SFX` (с ноября 2026; раньше — `Master`),
+  на паузе петли слайда и низкого HP замирают (`stream_paused`, по `GameManager.pause_changed`).
   Реализованы (25): revolver_shot, shotgun_shot, injector_shot, flask_throw, flask_splash, explosion,
   player_heal, melee_hit, melee_heavy_hit, dash, slam_impact, jump, footstep, enemy_hit, enemy_death,
   reload, slide (зацикленный, тихий), dry_fire, rail_shot, needle_shot, parry_deflect, shield_block,
@@ -54,6 +59,14 @@
     turret_windup, flyer_charge, flyer_laser. Телеграфы — восходящий тон в средней полосе (выстрелы игрока,
     наоборот, падают по высоте), выстрел дальника — мягкий низкий «туп» без щелчка.
   - Остановка плеера по концу буфера — таймер в реальном времени (стоп-кадр звук не замедляет).
+- **Settings** (`res://scripts/core/settings.gd`, ✅ ноябрь 2026) — настройки игрока в `user://settings.cfg` (`ConfigFile`):
+  громкость шин `Master`/`Music`/`SFX`, множитель чувствительности мыши, полный экран, VSync. Загружает и применяет
+  в `_ready` до главного меню; `set_value(key, value)` применяет сразу, `save()` пишет файл. Подробно — [menus.md](menus.md).
+  - ВАЖНО: скрипт НЕ должен иметь `class_name Settings` — конфликтует с именем автозагрузки.
+- **MusicManager** (`res://scripts/core/music_manager.gd`, ✅ ноябрь 2026) — зацикленный боевой трек на шине `Music`;
+  `pitch_scale` и громкость следуют `player.bpm_system.get_bpm_ratio()` (оригинал на 200 BPM), сглаживание по
+  реальным часам, приглушение на паузе дерева, «проседание» на Game Over. Подробно — [music.md](music.md).
+  - ВАЖНО: скрипт НЕ должен иметь `class_name MusicManager` — конфликтует с именем автозагрузки.
 - **GameTypes** (`res://scripts/core/game_types.gd`) — глобальные общие типы данных, enum `BPMTier` (`CALM`, `PUMPING`, `SURGING`, `OVERDRIVE`), функция `tier_to_string(tier)`, именованные битовые маски слоёв 3D-коллизий (`LAYER_WORLD`, `LAYER_PROJECTILE`, `LAYER_PLAYER`, `LAYER_ENEMY`, `LAYER_ENEMY_HITBOX`), методы `resolve_damageable(collider)` и `resolve_enemy(node)` для надёжного и унифицированного разрешения узлов целей с `take_damage` и проверкой принадлежности к врагам (включая дочерние хитбоксы `HeadHitbox` и метаданные `"enemy"`), а также функция централизованного отладочного логирования `debug_log(category, msg)` с флагом `DEBUG_ENABLED = false`. Методы объявлены как обычные методы экземпляра (без `static`), чтобы исключить предупреждения GDScript при вызове через автозагрузку-синглтон `GameTypes`.
   - ВАЖНО: скрипт НЕ должен иметь `class_name GameTypes` — конфликтует с именем автозагрузки.
   - В `project.godot` прописаны имена слоёв `[layer_names]` (3d_physics 1..5: `world`, `projectile`, `player`, `enemy`, `enemy_hitbox`).
@@ -65,14 +78,15 @@
   - Физическая механика вакуумного следа — `WeaponBase._apply_vacuum_wake()` (`scripts/weapons/weapon_base.gd`), независимо от пула.
 
 ### Именование типов (class_name) и типизация
-- **Глобальные имена классов (`class_name`)**: объявлены в PascalCase у всех скриптов, кроме автозагрузок (37 классов):
-  - Игрок и HUD: `Player`, `Head`, `SkillManager`, `BPMSystem`, `PlayerHealth`, `PlayerCombat`, `PlayerWallrun`, `HUD`.
-  - Оружие: `WeaponManager`, `WeaponData`, `WeaponBase`, `WeaponCaliber`, `WeaponAnvil`, `WeaponInjector`, `WeaponSewing`.
+- **Глобальные имена классов (`class_name`)**: объявлены в PascalCase у всех скриптов, кроме автозагрузок (50 классов, ноябрь 2026):
+  - Игрок и HUD: `Player`, `Head`, `SkillManager`, `BPMSystem`, `PlayerHealth`, `PlayerCombat`, `PlayerWallrun`, `HUD`, `DamageIndicator`, `BPMHint`.
+  - Оружие: `WeaponManager`, `WeaponData`, `WeaponBase`, `WeaponCaliber`, `WeaponAnvil`, `WeaponInjector`, `WeaponSewing`, `PlayerProjectile`.
   - Компоненты: `HealthComponent`, `StatusEffectComponent`, `EnemyHealthBar`.
-  - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `EnemySpawnEffect`, `ProjectileEnemy`.
-  - Уровни: `LevelController`, `Sector`, `BloodBarrier`, `LevelExit`.
+  - Эффекты и снаряды: `BloodPool`, `BloodSplatter`, `EnemySpawnEffect`, `ProjectileEnemy`, `GibPool`.
+  - Уровни: `LevelController`, `Sector`, `BloodBarrier`, `LevelExit`, `LevelCatalog` (список уровней меню); `@tool`-геометрия города — `CityBuilding`, `CityMesh`, `CityProp`, `CityWire`.
+  - Меню: `MainMenu`, `PauseMenu`, `SettingsMenu`, `MenuStyle`.
   - Враги: базовые классы `EnemyBase`, `EnemyGround`, базовый ближний враг `Enemy` и специализированные подтипы `EnemyFlyer`, `EnemyRanged`, `EnemyTurret`, `EnemyBomber`, `EnemyShield`, `EnemyHunter`, `EnemySwarm`, `EnemyStalker`.
-  - Autoload-синглтонам (`GameManager`, `AudioManager`, `GameTypes`, `TracerPool`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
+  - Autoload-синглтонам (`GameManager`, `AudioManager`, `MusicManager`, `Settings`, `GameTypes`, `TracerPool`) `class_name` категорически НЕ добавляется, чтобы исключить конфликты затенения глобальных синглтонов ("Class X hides an autoload singleton").
 - **Проверки типов через `is ClassName`**: проверки объектов с однозначно известным конкретным типом переведены с утиной типизации (`has_method(...)`) на строгую проверку типа (`pool is BloodPool`, `skills is SkillManager`, `player_node is Player`, `proj is ProjectileEnemy`). Универсальная утиная типизация сохранена исключительно для полиморфных интерфейсов урона (`has_method("take_damage")`), групп и централизованных резолверов `GameTypes.resolve_damageable()` и `GameTypes.resolve_enemy()`.
 
 ### Централизованное отладочное логирование (GameTypes.debug_log)
