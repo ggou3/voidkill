@@ -21,7 +21,7 @@ Autoload (project.godot): `GameTypes`, `Settings`, `GameManager`, `AudioManager`
 - `weapons/` — weapon_manager, weapon_data, weapon_base, weapon_caliber/anvil/injector/sewing, player_projectile,
   projectile_enemy (вражеский снаряд), `data/*.tres`
 - `effects/` — blood_pool, blood_splatter, gib_pool (ошмётки и пятна крови, пул на сцену)
-- `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD), pause_menu (создаёт HUD), main_menu, settings_menu, menu_style
+- `ui/` — hud, damage_indicator, bpm_hint (индикатор урона и подсказки BPM, создаёт HUD), heart_monitor, ecg_trace, bpm_vignette (индикатор BPM — сердце, ЭКГ, виньетка; создаёт HUD), pause_menu (создаёт HUD), main_menu, settings_menu, menu_style
 - `levels/` — sector, blood_barrier, level_controller, level_exit (каркас уровней), level_catalog (список уровней меню)
 - корень `scripts/` — audio_manager, game_manager (автозагрузки)
 
@@ -314,7 +314,7 @@ cmd.exe /c "godot.windows.opt.tools.64.exe --headless -d --quit-after 600 test_a
 - `overlaps_body` после телепорта устаревает на шаг физики («Перекрытие `Area3D` после телепорта…»).
 - Униформы шейдера твинить через `set_shader_parameter`, не `shader_parameter/…` («Свойства
   `shader_parameter/<имя>`…»).
-- Визуальная проверка — Movie Maker (`--write-movie`), временную сцену после удалить («Movie Maker…»).
+- Визуальная проверка — Movie Maker (`--write-movie`), временную сцену после удалить; новый шейдер — только так, headless шейдеры не компилирует («Movie Maker…»).
 - Скелетная модель в GLB: `remove_immutable_tracks=false` в `.import`, IK запекать до экспорта, узлы на костях —
   `BoneAttachment3D` с внешним скелетом («Импорт скелетной модели из Blender в GLB»).
 - Интерполяция физики выборочная: корень OFF, ON только у тела игрока, врагов, вражеских снарядов; после

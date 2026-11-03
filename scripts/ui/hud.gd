@@ -3,7 +3,8 @@ extends CanvasLayer
 
 ## Единый менеджер пользовательского интерфейса (HUD).
 ## Инкапсулирует отображение полосы здоровья, слотов оружия, счётчика дэшей,
-## BPM, боевого моментума, всплывающих комбо-сообщений, счётчика врагов сектора и экрана Game Over.
+## индикатора BPM (сердце и ЭКГ, виньетка и дрожь HUD на высоком BPM), боевого моментума,
+## всплывающих комбо-сообщений, счётчика врагов сектора и экрана Game Over.
 ## Подписывается на сигналы игровых систем (Player, WeaponManager, SkillManager, BPMSystem, GameManager).
 
 # Ссылки на дочерние UI-узлы сцены HUD
@@ -11,7 +12,6 @@ extends CanvasLayer
 @onready var ammo_label: Label = get_node_or_null("AmmoLabel")
 @onready var dash_label: Label = get_node_or_null("DashLabel")
 @onready var combo_label: Label = get_node_or_null("ComboLabel")
-@onready var bpm_label: Label = get_node_or_null("BPMLabel")
 @onready var momentum_label: Label = get_node_or_null("MomentumLabel")
 @onready var health_bar: ProgressBar = get_node_or_null("HealthBar")
 @onready var hp_text: Label = get_node_or_null("HealthBar/HPText")
@@ -24,6 +24,8 @@ var main_menu_button: Button = null
 var enemies_label: Label = null
 var damage_indicator: DamageIndicator = null
 var bpm_hint: BPMHint = null
+var heart_monitor: HeartMonitor = null
+var bpm_vignette: BPMVignette = null
 var pause_menu: PauseMenu = null
 
 # Ссылки на игровые системы
@@ -76,6 +78,13 @@ var _prev_recoil: float = 0.0
 var _was_on_floor: bool = true
 var _air_min_vy: float = 0.0
 
+# Дрожь HUD на высоком BPM: мелкая вибрация панелей и толчок вниз на каждый удар сердца. Нарастает с начала
+# SURGING до 200 BPM, прицел не трогает (как и покачивание)
+const SHAKE_FROM_RATIO: float = 0.6 # 140 BPM
+const SHAKE_MAX: float = 2.0 # px вибрации на 200 BPM
+const SHAKE_BEAT: float = 2.5 # px толчка на удар на 200 BPM
+var _shake_time: float = 0.0
+
 func _ready() -> void:
 	_init_static_elements()
 	call_deferred("_connect_systems")
@@ -91,6 +100,7 @@ func _init_static_elements() -> void:
 		restart_button.pressed.connect(_on_restart_pressed)
 
 	_setup_sway_root()
+	_setup_bpm_indicator()
 	_setup_health_bar()
 	_setup_weapon_hud_container()
 	_setup_feedback_elements()
@@ -135,6 +145,8 @@ func _connect_systems() -> void:
 		bpm_system = bs
 		bpm_system.hud_popup_requested.connect(show_popup)
 		bpm_system.bpm_event.connect(bpm_hint.on_bpm_event)
+		heart_monitor.bpm_system = bpm_system
+		heart_monitor.player = player
 
 	# Подключение к WeaponManager
 	var wm = get_node_or_null("../WeaponManager")
@@ -160,6 +172,7 @@ func _process(delta: float) -> void:
 	if weapon_manager:
 		_process_weapon_hud(delta)
 	_process_level_hud()
+	bpm_vignette.set_state(heart_monitor.ratio, heart_monitor.pulse)
 	_process_sway(delta)
 
 # --- Покачивание HUD ---
@@ -173,9 +186,21 @@ func _setup_sway_root() -> void:
 	add_child(_sway_root)
 	move_child(_sway_root, 0)
 	_sway_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	for node in [ammo_label, dash_label, bpm_label, momentum_label, health_bar, speed_label, blood_buff_label]:
+	for node in [ammo_label, dash_label, momentum_label, health_bar, speed_label, blood_buff_label]:
 		if node:
 			node.reparent(_sway_root, false)
+
+## Индикатор BPM — в левом верхнем углу среди покачивающихся панелей; виньетка — на весь экран под всеми
+## панелями и прицелом (индекс 0)
+func _setup_bpm_indicator() -> void:
+	heart_monitor = HeartMonitor.new()
+	heart_monitor.name = "HeartMonitor"
+	heart_monitor.position = Vector2(18.0, 10.0)
+	_panels_parent().add_child(heart_monitor)
+	bpm_vignette = BPMVignette.new()
+	bpm_vignette.name = "BPMVignette"
+	add_child(bpm_vignette)
+	move_child(bpm_vignette, 0)
 
 ## Куда добавлять панели, созданные кодом (список оружия, счётчик врагов) — в покачивающийся узел
 func _panels_parent() -> Node:
@@ -197,7 +222,7 @@ func _process_sway(delta: float) -> void:
 	_sway_vel += accel * delta
 	_sway_pos += _sway_vel * delta
 	_sway_pos = _sway_pos.limit_length(SWAY_MAX * 1.5)
-	_sway_root.position = _sway_pos
+	_sway_root.position = _sway_pos + _bpm_shake(delta)
 	_sway_root.pivot_offset = _sway_root.size * 0.5
 	_sway_root.rotation = _sway_pos.x * SWAY_ROLL
 
@@ -235,6 +260,17 @@ func _sway_events() -> void:
 
 func _sway_kick(impulse: Vector2) -> void:
 	_sway_vel += (impulse * sway_strength).limit_length(SWAY_KICK_MAX)
+
+## Дрожь от BPM поверх покачивания: сумма синусов ~11–21 Гц (вибрация без случайного мерцания) и толчок вниз
+## по огибающей удара сердца
+func _bpm_shake(delta: float) -> Vector2:
+	var k: float = smoothstep(SHAKE_FROM_RATIO, 1.0, heart_monitor.ratio) * sway_strength
+	if k <= 0.0:
+		return Vector2.ZERO
+	_shake_time += delta
+	var t: float = _shake_time
+	var jitter: Vector2 = Vector2(sin(t * 71.0) + 0.5 * sin(t * 113.0), sin(t * 89.0 + 1.3) + 0.5 * sin(t * 131.0)) / 1.5
+	return (jitter * SHAKE_MAX + Vector2(0.0, heart_monitor.pulse * SHAKE_BEAT)) * k
 
 # --- Здоровье ---
 
@@ -334,12 +370,7 @@ func _on_blood_surf_changed(active: bool) -> void:
 # --- Скиллы (BPM, Momentum, Dash, Popups) ---
 
 func _process_skill_hud(delta: float) -> void:
-	# 1. BPM
-	if bpm_label and bpm_system:
-		var bpm_val = bpm_system.bpm
-		var tier = bpm_system.get_bpm_tier()
-		bpm_label.text = "BPM: %d (%s)" % [int(round(bpm_val)), GameTypes.tier_to_string(tier)]
-		
+	# 1. BPM — индикатор HeartMonitor обновляется сам
 	# 2. Combat Momentum
 	if momentum_label and bpm_system:
 		var combat_momentum = bpm_system.combat_momentum

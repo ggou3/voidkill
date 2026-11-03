@@ -651,14 +651,6 @@ theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 22
 text = "★ VARIETY +2 ★"
 
-[node name="BPMLabel" type="Label" parent="HUD" unique_id=773412599]
-offset_left = 34.0
-offset_top = 484.0
-offset_right = 350.0
-offset_bottom = 529.0
-theme_override_font_sizes/font_size = 28
-text = "BPM: 50 (CALM)"
-
 [node name="MomentumLabel" type="Label" parent="HUD" unique_id=773412601]
 offset_left = 350.0
 offset_top = 484.0
