@@ -120,6 +120,9 @@ const LOW_HEALTH_FADE_IN_TIME: float = 0.4
 const LOW_HEALTH_FADE_OUT_TIME: float = 0.6
 const LOW_HEALTH_LOOP_TIME: float = 4.0 # два вдоха-выдоха по 2 с
 
+var heartbeat_lub_player: AudioStreamPlayer = null
+var heartbeat_dub_player: AudioStreamPlayer = null
+
 func _ready():
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -165,6 +168,10 @@ func _ready():
 	low_health_player.volume_db = -60.0
 	low_health_player.stream = _gen_low_health_wav()
 	add_child(low_health_player)
+
+	# Стук сердца высокого BPM — свои плееры (первый и второй тон могут перекрываться), звук готов заранее
+	heartbeat_lub_player = _make_heartbeat_player("AudioPlayer_HeartbeatLub", _gen_heartbeat_wav(58.0, 0.24, 1.0))
+	heartbeat_dub_player = _make_heartbeat_player("AudioPlayer_HeartbeatDub", _gen_heartbeat_wav(74.0, 0.17, 0.75))
 
 	GameManager.pause_changed.connect(_on_pause_changed)
 
@@ -267,6 +274,50 @@ func set_low_health_active(active: bool) -> void:
 			if not is_low_health_playing and is_instance_valid(low_health_player):
 				low_health_player.stop()
 		)
+
+## Удар сердца (HeartMonitor на высоком BPM): dub = false — первый тон, ниже и длиннее; true — второй
+func play_heartbeat(dub: bool, volume_db: float) -> void:
+	var p: AudioStreamPlayer = heartbeat_dub_player if dub else heartbeat_lub_player
+	if not is_instance_valid(p):
+		return
+	p.volume_db = volume_db
+	p.play()
+
+func _make_heartbeat_player(player_name: String, stream: AudioStreamWAV) -> AudioStreamPlayer:
+	var p: AudioStreamPlayer = AudioStreamPlayer.new()
+	p.name = player_name
+	p.bus = "SFX"
+	p.stream = stream
+	add_child(p)
+	return p
+
+## Глухой удар сердца: низкий тон с падением высоты (freq × 1.7 → freq за 30 мс), обертоны ×2 и ×3 —
+## слышно и на маленьких динамиках, — мягкий щелчок клапана в начале и насыщение
+func _gen_heartbeat_wav(freq: float, duration: float, amp: float) -> AudioStreamWAV:
+	var samples: int = int(duration * MIX_RATE)
+	var dt: float = 1.0 / MIX_RATE
+	var byte_data := PackedByteArray()
+	byte_data.resize(samples * 4)
+	var phase: float = 0.0
+	var click: float = 0.0
+	for i in range(samples):
+		var t: float = float(i) * dt
+		var f: float = freq * (1.0 + 0.7 * exp(-t / 0.03))
+		phase += TAU * f * dt
+		var env: float = minf(t / 0.004, 1.0) * exp(-t / (duration * 0.28))
+		click = lerpf(click, randf_range(-1.0, 1.0), 0.25)
+		var s: float = sin(phase) + 0.3 * sin(2.0 * phase) + 0.12 * sin(3.0 * phase)
+		s = s * env + click * 0.25 * exp(-t / 0.008)
+		s = tanh(s * 1.6) * 0.85 * amp
+		var val_16: int = clampi(int(s * 32767.0), -32768, 32767)
+		byte_data.encode_s16(i * 4, val_16)
+		byte_data.encode_s16(i * 4 + 2, val_16)
+	var wav := AudioStreamWAV.new()
+	wav.format = AudioStreamWAV.FORMAT_16_BITS
+	wav.mix_rate = int(MIX_RATE)
+	wav.stereo = true
+	wav.data = byte_data
+	return wav
 
 func _setup_slide_stream():
 	if not is_instance_valid(slide_player):

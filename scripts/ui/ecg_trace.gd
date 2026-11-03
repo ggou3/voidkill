@@ -1,15 +1,14 @@
 class_name ECGTrace
 extends Control
 
-## Электрокардиограмма индикатора BPM. Развёртка как у монитора: курсор идёт слева направо и перезаписывает
-## след, перед курсором — зазор, старый след бледнее. Форма — комплекс PQRST; интервалы PR и QT
+## Электрокардиограмма индикатора BPM, без фона — только линия. Развёртка как у монитора: курсор идёт слева
+## направо и перезаписывает след, перед курсором — зазор, старый след бледнее. Форма — комплекс PQRST; интервалы PR и QT
 ## укорачиваются с ростом частоты, как у настоящего сердца. Время ударов и цвет задаёт HeartMonitor.
 
 const SWEEP_SPEED: float = 110.0 # px/с
 const GAP: int = 12 # px пустого места перед курсором
 const AMPLITUDE: float = 0.42 # доля высоты на зубец R
 const BASELINE: float = 0.62 # линия покоя — доля высоты сверху
-const GRID_STEP: float = 13.0 # px
 const NOISE: float = 0.012
 
 var _samples: PackedFloat32Array = PackedFloat32Array()
@@ -61,20 +60,7 @@ static func _gauss(x: float, w: float) -> float:
 	return exp(-x * x / (2.0 * w * w))
 
 func _draw() -> void:
-	var w: float = size.x
 	var h: float = size.y
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.02, 0.03, 0.03, 0.72))
-	var grid: Color = Color(_color, 0.08)
-	var x: float = GRID_STEP
-	while x < w:
-		draw_line(Vector2(x, 0.0), Vector2(x, h), grid)
-		x += GRID_STEP
-	var y: float = GRID_STEP
-	while y < h:
-		draw_line(Vector2(0.0, y), Vector2(w, y), grid)
-		y += GRID_STEP
-	draw_rect(Rect2(Vector2.ZERO, size), Color(_color, 0.35), false, 1.0)
-
 	# След от самой старой колонки (сразу за зазором) к курсору; на стыке края — разрыв линии
 	var n: int = _samples.size()
 	var cur: int = int(_cursor)
@@ -97,8 +83,12 @@ func _sample_y(col: int, h: float) -> float:
 func _draw_trace(pts: PackedVector2Array, cols: PackedColorArray) -> void:
 	if pts.size() < 2:
 		return
+	# Без фона: тёмная подложка под линией — читается на светлой сцене
+	var shade: PackedColorArray = PackedColorArray()
 	var glow: PackedColorArray = PackedColorArray()
 	for c in cols:
-		glow.append(Color(c, c.a * 0.25))
+		shade.append(Color(0.0, 0.0, 0.0, c.a * 0.55))
+		glow.append(Color(c, c.a * 0.3))
+	draw_polyline_colors(pts, shade, 4.5, true)
 	draw_polyline_colors(pts, glow, 4.0, true)
 	draw_polyline_colors(pts, cols, 1.6, true)

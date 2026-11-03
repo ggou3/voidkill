@@ -5,7 +5,8 @@ extends Control
 ## BPM двойным ударом «лаб-даб», справа — число BPM, под сердцем — ЭКГ (ECGTrace). Чем выше BPM, тем сильнее
 ## удар, а с PUMPING из сердца и аорты вылетают капли крови — тем больше, чем выше BPM. Цвет ЭКГ и числа —
 ## от зелёного на малом BPM к красному на большом. После смерти сердце темнеет и останавливается, на ЭКГ —
-## прямая. Огибающую удара (pulse) и сглаженную долю BPM (ratio) читает HUD для виньетки и дрожи.
+## прямая. С 140 BPM слышен стук сердца (AudioManager.play_heartbeat). Огибающую удара (pulse) и сглаженную
+## долю BPM (ratio) читает HUD для виньетки и дрожи.
 
 const HEART_SHADER: Shader = preload("res://shaders/heart.gdshader")
 
@@ -28,8 +29,12 @@ const DROPS_MAX_PER_BEAT: float = 7.0
 const DROP_GRAVITY: float = 900.0 # px/с²
 const MAX_DROPS: int = 64
 ## Концы ветвей дуги аорты и центр сердца — в долях квадрата сердца (как в шейдере)
-const VESSEL_TIPS: Array[Vector2] = [Vector2(0.461, 0.117), Vector2(0.551, 0.109), Vector2(0.633, 0.125)]
+const VESSEL_TIPS: Array[Vector2] = [Vector2(0.462, 0.131), Vector2(0.55, 0.123), Vector2(0.631, 0.138)]
 const HEART_CENTER: Vector2 = Vector2(0.52, 0.6)
+# Стук сердца: слышен с 140 BPM (начало SURGING), громче к 200 BPM
+const SOUND_FROM_RATIO: float = 0.6
+const SOUND_MIN_DB: float = -22.0
+const SOUND_MAX_DB: float = -5.0
 ## Скорость, с которой сглаженная доля BPM (цвет, сила удара, виньетка) догоняет настоящую, 1/с
 const RATIO_RATE: float = 3.0
 const COLOR_CALM: Color = Color(0.25, 1.0, 0.45)
@@ -46,6 +51,7 @@ var ratio: float = 0.0
 
 var _since_beat: float = 0.0
 var _period: float = 1.2
+var _dub_played: bool = true
 var _alive_shown: float = 1.0
 var _heart: ColorRect
 var _heart_material: ShaderMaterial
@@ -115,6 +121,11 @@ func _process(delta: float) -> void:
 		if _since_beat >= _period:
 			_since_beat = fmod(_since_beat, _period)
 			_spawn_drops()
+			_play_beat_sound(false)
+			_dub_played = false
+		if not _dub_played and _since_beat >= _dub_delay():
+			_dub_played = true
+			_play_beat_sound(true)
 		pulse = _envelope(_since_beat)
 	else:
 		pulse = move_toward(pulse, 0.0, delta * 4.0)
@@ -135,10 +146,19 @@ func _process(delta: float) -> void:
 
 ## Огибающая «лаб-даб» через ts секунд после удара
 func _envelope(ts: float) -> float:
-	var dub_at: float = minf(DUB_DELAY, _period * 0.4)
 	var lub: float = _bump(ts, LUB_ATTACK, LUB_DECAY)
-	var dub: float = _bump(ts - dub_at, DUB_ATTACK, DUB_DECAY) * DUB_STRENGTH
+	var dub: float = _bump(ts - _dub_delay(), DUB_ATTACK, DUB_DECAY) * DUB_STRENGTH
 	return maxf(lub, dub)
+
+func _dub_delay() -> float:
+	return minf(DUB_DELAY, _period * 0.4)
+
+## Стук сердца на высоком BPM: первый тон («лаб») и второй («даб») — в такт огибающей
+func _play_beat_sound(dub: bool) -> void:
+	if ratio < SOUND_FROM_RATIO:
+		return
+	var k: float = (ratio - SOUND_FROM_RATIO) / (1.0 - SOUND_FROM_RATIO)
+	AudioManager.play_heartbeat(dub, lerpf(SOUND_MIN_DB, SOUND_MAX_DB, k))
 
 ## Быстрый рост за attack и экспоненциальный спад с постоянной decay
 static func _bump(x: float, attack: float, decay: float) -> float:

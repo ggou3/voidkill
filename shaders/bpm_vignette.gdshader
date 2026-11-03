@@ -1,9 +1,10 @@
 shader_type canvas_item;
 
-// Красная виньетка высокого BPM: края экрана наливаются кровью, от краёв к центру тянется сетка капилляров.
-// На ударе сердца виньетка темнеет, а капилляры вспыхивают и заходят глубже. intensity — 0..1 (от BPM),
-// pulse — огибающая удара 0..1
+// Красная виньетка высокого BPM: края экрана наливаются тёмной кровью, от краёв к центру тянутся ветвящиеся
+// сосуды (текстура BPMVignette: R — яркая сердцевина, G — свечение). На ударе сердца виньетка темнеет,
+// а сосуды вспыхивают и проступают глубже к центру. intensity — 0..1 (от BPM), pulse — огибающая удара 0..1
 
+uniform sampler2D veins_tex : filter_linear;
 uniform float intensity = 0.0;
 uniform float pulse = 0.0;
 
@@ -20,32 +21,23 @@ float vnoise(vec2 p) {
 	return mix(a, b, u.y);
 }
 
-// Хребты шума: 1 на линии уровня 0.5 — извилистые линии сосудов
-float ridge(vec2 p, float sharp) {
-	return pow(1.0 - abs(vnoise(p) * 2.0 - 1.0), sharp);
-}
-
-// Толстые ветви и тонкая сетка; доменное искажение делает их извилистыми
-float capillaries(vec2 p) {
-	vec2 w = p + vec2(vnoise(p * 1.7), vnoise(p * 1.7 + 4.1)) * 1.2;
-	float big = ridge(w * 3.0, 14.0);
-	float mid = ridge(w * 6.0 + 3.0, 18.0) * 0.75;
-	float fine = ridge(w * 12.0 + 7.0, 22.0) * 0.45;
-	return max(big, max(mid, fine));
-}
-
 void fragment() {
-	float aspect = SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x;
 	vec2 c = UV - 0.5;
 	// 1 — середина края экрана, ~1.4 — угол
 	float r = length(c * 2.0);
-	vec2 q = c * vec2(aspect, 1.0) * 2.2;
+	vec4 v = texture(veins_tex, UV);
 
-	float vignette = smoothstep(0.55 - pulse * 0.1, 1.35, r);
-	float reach = smoothstep(0.72 - pulse * 0.2 - intensity * 0.08, 1.25, r);
-	float veins = capillaries(q) * reach;
+	// Тёмная «дымка» крови у краёв
+	float smoke = 0.75 + 0.5 * vnoise(UV * vec2(7.0, 4.0) + TIME * 0.08);
+	float base_a = smoothstep(0.5 - pulse * 0.08, 1.4, r) * (0.42 + 0.2 * pulse) * smoke;
+	// Сосуды видны у краёв; на ударе — глубже
+	float reach = smoothstep(0.7 - pulse * 0.22 - intensity * 0.08, 1.2, r);
+	float glow = clamp(v.g * 2.2, 0.0, 1.0) * (0.45 + 0.55 * pulse);
+	float core = clamp(v.r, 0.0, 1.0) * (0.6 + 0.4 * pulse);
+	float veins_a = clamp(core + glow * 0.7, 0.0, 1.0) * reach;
 
-	float a = max(vignette * (0.4 + 0.25 * pulse), veins * (0.65 + 0.35 * pulse));
-	vec3 col = mix(vec3(0.32, 0.0, 0.02), vec3(0.78, 0.02, 0.05), clamp(veins * 1.4, 0.0, 1.0));
-	COLOR = vec4(col, clamp(a, 0.0, 1.0) * intensity * 0.85);
+	vec3 vein_col = mix(vec3(0.5, 0.01, 0.03), vec3(1.0, 0.3, 0.24), core);
+	float a = max(base_a, veins_a);
+	vec3 col = mix(vec3(0.2, 0.0, 0.01), vein_col, veins_a / max(a, 0.001));
+	COLOR = vec4(col, clamp(a, 0.0, 1.0) * intensity * 0.9);
 }
