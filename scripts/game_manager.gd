@@ -1,7 +1,8 @@
 extends Node
 
 ## Глобальный менеджер состояния игры (Autoload singleton).
-## Отвечает за жизненный цикл игры (PLAYING, GAME_OVER, LEVEL_COMPLETE), реакцию на системные события и перезапуск уровней.
+## Отвечает за жизненный цикл игры (PLAYING, PAUSED, GAME_OVER, LEVEL_COMPLETE), реакцию на системные события,
+## запуск и перезапуск уровней, выход в главное меню.
 ## Игрок регистрируется через register_player(); решение о Game Over принимается здесь по сигналу died игрока.
 ## Уровень (LevelController) регистрируется через register_level(): тогда смерть ведёт к возрождению
 ## на последнем чекпоинте, а перезапуск уровня с начала — отдельное действие restart_level().
@@ -12,12 +13,17 @@ signal player_respawned
 signal level_completed(stats: Dictionary)
 ## Отладочные полоски HP над врагами переключены (клавиша H, действие debug_toggle_hp_bars)
 signal enemy_health_bars_toggled(bars_visible: bool)
+## Меню паузы открыто/закрыто (set_paused; закрытие — и при уходе со сцены из паузы)
+signal pause_changed(is_paused: bool)
 
 enum State {
 	PLAYING,
+	PAUSED,
 	GAME_OVER,
 	LEVEL_COMPLETE
 }
+
+const MAIN_MENU_SCENE: String = "res://scenes/main_menu.tscn"
 
 var current_state: State = State.PLAYING
 var player: Node = null
@@ -220,11 +226,45 @@ func restart_game():
 
 ## Перезапуск уровня (сцены) с самого начала
 func restart_level():
+	_leave_scene()
+	get_tree().reload_current_scene()
+
+## Запуск уровня из меню выбора (список — LevelCatalog)
+func start_level(scene_path: String) -> void:
+	_leave_scene()
+	get_tree().change_scene_to_file(scene_path)
+
+## Выход в главное меню (пауза, экраны смерти и конца уровня)
+func go_to_main_menu() -> void:
+	_leave_scene()
+	player = null
+	# Игрок уходит со сценой и петли звука уже не выключит
+	AudioManager.set_slide_active(false)
+	AudioManager.set_low_health_active(false)
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+
+## Меню паузы (Esc): только во время игры — не на экранах смерти и конца уровня
+func set_paused(value: bool) -> void:
+	if value == (current_state == State.PAUSED):
+		return
+	if value and current_state != State.PLAYING:
+		return
+	_end_hit_stop()
+	current_state = State.PAUSED if value else State.PLAYING
+	get_tree().paused = value
+	Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE if value else Input.MOUSE_MODE_CAPTURED)
+	pause_changed.emit(value)
+
+## Общий сброс перед сменой или перезагрузкой сцены
+func _leave_scene() -> void:
+	var was_paused: bool = current_state == State.PAUSED
 	_end_hit_stop()
 	current_state = State.PLAYING
 	level = null
 	get_tree().paused = false
-	get_tree().reload_current_scene()
+	if was_paused:
+		pause_changed.emit(false)
 
 ## Конец уровня (LevelExit): засчитывается, только если все секторы зачищены.
 ## Ставит игру на паузу и отдаёт статистику с буквой рейтинга экрану конца уровня.
