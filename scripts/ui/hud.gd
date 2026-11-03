@@ -38,6 +38,8 @@ var bpm_system: BPMSystem = null
 # Раскладка панелей по углам: отступ от краёв экрана (по выпуклости рамки углы и так уходят к центру)
 const HUD_MARGIN: Vector2 = Vector2(48.0, 40.0)
 const HEART_SCALE: float = 0.85
+## Резервуар HP крупнее остальных панелей: 54×120 → 76×168; подписи моментума и дэша в player.tscn — справа от него
+const FLASK_SCALE: float = 1.4
 # Попап комбо (вне покачивания): всплывает над моментумом
 const COMBO_Y: float = 500.0
 
@@ -242,7 +244,7 @@ func _setup_health_flask() -> void:
 	health_flask = HealthFlask.new()
 	health_flask.name = "HealthFlask"
 	_panels_parent().add_child(health_flask)
-	_anchor_corner(health_flask, HealthFlask.PANEL_SIZE, false, true)
+	_anchor_corner(health_flask, HealthFlask.PANEL_SIZE, false, true, FLASK_SCALE)
 
 ## Карточка оружия в руке — в правом нижнем углу
 func _setup_weapon_card() -> void:
@@ -251,16 +253,19 @@ func _setup_weapon_card() -> void:
 	_panels_parent().add_child(weapon_card)
 	_anchor_corner(weapon_card, WeaponCard.CARD_SIZE, true, true)
 
-## Привязка панели размера panel_size к углу экрана с отступом HUD_MARGIN
-func _anchor_corner(node: Control, panel_size: Vector2, right: bool, bottom: bool) -> void:
+## Привязка панели размера panel_size к углу экрана с отступом HUD_MARGIN; ui_scale — масштаб панели (от её
+## левого верхнего угла), отступ считается по увеличенному размеру
+func _anchor_corner(node: Control, panel_size: Vector2, right: bool, bottom: bool, ui_scale: float = 1.0) -> void:
+	var visual: Vector2 = panel_size * ui_scale
 	node.anchor_left = 1.0 if right else 0.0
 	node.anchor_right = node.anchor_left
 	node.anchor_top = 1.0 if bottom else 0.0
 	node.anchor_bottom = node.anchor_top
-	node.offset_left = -HUD_MARGIN.x - panel_size.x if right else HUD_MARGIN.x
+	node.offset_left = -HUD_MARGIN.x - visual.x if right else HUD_MARGIN.x
 	node.offset_right = node.offset_left + panel_size.x
-	node.offset_top = -HUD_MARGIN.y - panel_size.y if bottom else HUD_MARGIN.y
+	node.offset_top = -HUD_MARGIN.y - visual.y if bottom else HUD_MARGIN.y
 	node.offset_bottom = node.offset_top + panel_size.y
+	node.scale = Vector2.ONE * ui_scale
 
 ## Куда добавлять панели, созданные кодом (список оружия, счётчик врагов) — в покачивающийся узел
 func _panels_parent() -> Node:

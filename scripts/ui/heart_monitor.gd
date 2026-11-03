@@ -10,8 +10,8 @@ extends Control
 
 const HEART_SHADER: Shader = preload("res://shaders/heart.gdshader")
 
-const HEART_SIZE: float = 128.0
-const ECG_TOP: float = 132.0
+const HEART_SIZE: float = 176.0
+const ECG_TOP: float = HEART_SIZE + 4.0
 const ECG_SIZE: Vector2 = Vector2(260.0, 56.0)
 # Огибающая удара: первый тон — сильный, второй — DUB_STRENGTH через DUB_DELAY (не позже 40% периода)
 const LUB_ATTACK: float = 0.035
@@ -75,10 +75,10 @@ func _ready() -> void:
 	add_child(_heart)
 
 	_bpm_label = _make_label(44)
-	_bpm_label.position = Vector2(HEART_SIZE + 6.0, 30.0)
+	_bpm_label.position = Vector2(HEART_SIZE + 6.0, HEART_SIZE * 0.5 - 36.0)
 	_unit_label = _make_label(16)
 	_unit_label.text = "BPM"
-	_unit_label.position = Vector2(HEART_SIZE + 9.0, 84.0)
+	_unit_label.position = Vector2(HEART_SIZE + 9.0, HEART_SIZE * 0.5 + 18.0)
 
 	_ecg = ECGTrace.new()
 	_ecg.name = "ECG"
