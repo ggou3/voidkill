@@ -127,7 +127,7 @@ func _ready():
 	for i in range(POOL_SIZE):
 		var p = AudioStreamPlayer.new()
 		p.name = "AudioPlayer_" + str(i)
-		p.bus = "Master"
+		p.bus = "SFX"
 		add_child(p)
 		players.append(p)
 		_voice_sound.append("")
@@ -136,7 +136,7 @@ func _ready():
 	for i in range(POOL_SIZE_3D):
 		var p3 = AudioStreamPlayer3D.new()
 		p3.name = "AudioPlayer3D_" + str(i)
-		p3.bus = "Master"
+		p3.bus = "SFX"
 		p3.unit_size = POSITIONAL_UNIT_SIZE
 		p3.max_distance = POSITIONAL_MAX_DISTANCE
 		add_child(p3)
@@ -153,7 +153,7 @@ func _ready():
 	# Отдельный плеер для зацикленного звука скольжения (slide)
 	slide_player = AudioStreamPlayer.new()
 	slide_player.name = "AudioPlayer_SlideLoop"
-	slide_player.bus = "Master"
+	slide_player.bus = "SFX"
 	slide_player.volume_db = -80.0
 	add_child(slide_player)
 	_setup_slide_stream()
@@ -161,7 +161,7 @@ func _ready():
 	# Отдельный плеер для петли низкого HP
 	low_health_player = AudioStreamPlayer.new()
 	low_health_player.name = "AudioPlayer_LowHealthLoop"
-	low_health_player.bus = "Master"
+	low_health_player.bus = "SFX"
 	low_health_player.volume_db = -60.0
 	low_health_player.stream = _gen_low_health_wav()
 	add_child(low_health_player)
