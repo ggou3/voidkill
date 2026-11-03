@@ -6,9 +6,11 @@ extends Node3D
 ## считает один цикл _physics_process (гравитация, луч по шагу, отскок от стен и пола с трением). Кусок,
 ## упавший на пол быстро, оставляет пятно крови. Лежащий кусок луч не пускает; через GIB_LIFETIME кусок
 ## сжимается и пропадает. Больше MAX_GIBS кусков — переиспользуется следующий по кругу (самый старый).
+## Капли крови (spawn_blood_drops) — те же слоты пула: летят без вращения и при первом касании любой поверхности
+## (пол, стена, потолок) оставляют пятно и пропадают.
 
-const MAX_GIBS: int = 200
-const MAX_STAINS: int = 64
+const MAX_GIBS: int = 300
+const MAX_STAINS: int = 160
 const GIB_LIFETIME: float = 4.0 # + до 1 с случайно
 const GIB_FADE_TIME: float = 0.5
 const STAIN_LIFETIME: float = 8.0
@@ -22,7 +24,10 @@ const GIB_RADIUS: float = 0.08 # при масштабе 1
 
 const COLOR_FLESH: Color = Color(0.42, 0.02, 0.02)
 const COLOR_BODY: Color = Color(0.05, 0.045, 0.045)
-const COLOR_STAIN: Color = Color(0.28, 0.0, 0.0)
+## Пятно — шейдер лужи (неровный край и капли вокруг, форма от seed экземпляра; общий материал на все пятна).
+## Клякса занимает ~0.72 половины квада — квад больше заданного размера пятна в STAIN_QUAD_SCALE раз
+const STAIN_SHADER: Shader = preload("res://shaders/blood_pool.gdshader")
+const STAIN_QUAD_SCALE: float = 1.35
 const COLOR_CLOT: Color = Color(0.16, 0.0, 0.01)
 const COLOR_BONE: Color = Color(0.78, 0.72, 0.6)
 ## Вид куска (ноябрь 2026, «более разные фракции»): форма, материал и доля среди кусков разлёта.
@@ -32,8 +37,17 @@ enum GibKind { FLESH, STRIP, FLAP, CLOT, BODY, BONE }
 const GIB_KIND_WEIGHTS: Array[float] = [0.3, 0.16, 0.14, 0.14, 0.18, 0.08]
 ## Мелкая крошка поверх основных кусков: доля от их числа, масштаб и прибавка к скорости
 const CRUMB_SHARE: float = 0.5
-## Общий множитель размера кусков (ноябрь 2026, по плейтесту «ошмётки крупнее» — было 1.0)
-const GIB_SIZE_MULT: float = 1.5
+## Общий множитель размера кусков (ноябрь 2026, по плейтесту «ошмётки крупнее» — было 1.0, потом 1.5)
+const GIB_SIZE_MULT: float = 2.0
+## Капля крови: радиус при масштабе 1, разброс масштаба, цвет; пятно от капли — доля масштаба капли (в метрах);
+## капля, не встретившая поверхность за DROP_LIFETIME, просто пропадает
+const DROP_RADIUS: float = 0.07
+const DROP_SIZE_MIN: float = 0.9
+const DROP_SIZE_MAX: float = 1.6
+const DROP_STAIN_MIN: float = 0.4
+const DROP_STAIN_MAX: float = 0.65
+const DROP_LIFETIME: float = 3.0
+const COLOR_DROP: Color = Color(0.55, 0.01, 0.01)
 const CRUMB_SCALE: float = 0.45
 const CRUMB_SPEED_MULT: float = 1.25
 
@@ -44,6 +58,7 @@ var _life: PackedFloat32Array = PackedFloat32Array()
 var _size: PackedFloat32Array = PackedFloat32Array()
 var _resting: PackedByteArray = PackedByteArray()
 var _stained: PackedByteArray = PackedByteArray()
+var _is_drop: PackedByteArray = PackedByteArray()
 var _gib_cursor: int = -1
 
 var _stains: Array[MeshInstance3D] = []
@@ -55,6 +70,8 @@ var _kind_meshes: Array = [] # по GibKind: Array[Mesh]
 var _kind_materials: Array[StandardMaterial3D] = [] # по GibKind
 var _kind_weight_total: float = 0.0
 var _stain_mesh: PlaneMesh = null
+var _drop_mesh: SphereMesh = null
+var _drop_material: StandardMaterial3D = null
 var _ray: PhysicsRayQueryParameters3D = null
 
 ## Пул текущей сцены (создаётся при первом обращении)
@@ -77,10 +94,15 @@ func _ready() -> void:
 	_setup_gib_kinds()
 	_stain_mesh = PlaneMesh.new()
 	_stain_mesh.size = Vector2(1.0, 1.0)
-	var stain_mat := StandardMaterial3D.new()
-	stain_mat.albedo_color = COLOR_STAIN
-	stain_mat.roughness = 0.2
+	var stain_mat := ShaderMaterial.new()
+	stain_mat.shader = STAIN_SHADER
 	_stain_mesh.material = stain_mat
+	_drop_mesh = SphereMesh.new()
+	_drop_mesh.radius = DROP_RADIUS
+	_drop_mesh.height = DROP_RADIUS * 2.0
+	_drop_mesh.radial_segments = 6
+	_drop_mesh.rings = 3
+	_drop_material = _material(COLOR_DROP, 0.1)
 	_ray = PhysicsRayQueryParameters3D.new()
 	_ray.collide_with_areas = false
 	_ray.collide_with_bodies = true
@@ -158,6 +180,31 @@ func spawn_gibs(origin: Vector3, base_dir: Vector3, count: int, speed: float, si
 		_life[idx] = GIB_LIFETIME + randf()
 		_resting[idx] = 0
 		_stained[idx] = 0
+		_is_drop[idx] = 0
+		g.visible = true
+		g.reset_physics_interpolation()
+
+## Крупные капли крови из origin: направление base_dir (толчок удара, может быть нулевым) плюс разброс и вверх,
+## скорость speed, масштаб size_scale (рой мельче). Капля, коснувшись поверхности, оставляет на ней пятно
+func spawn_blood_drops(origin: Vector3, base_dir: Vector3, count: int, speed: float, size_scale: float) -> void:
+	var flat_dir: Vector3 = Vector3(base_dir.x, 0.0, base_dir.z)
+	flat_dir = flat_dir.normalized() if flat_dir.length_squared() > 0.0001 else Vector3.ZERO
+	for i in range(count):
+		var idx: int = _alloc_gib()
+		var g: MeshInstance3D = _gibs[idx]
+		g.mesh = _drop_mesh
+		g.material_override = _drop_material
+		var s: float = size_scale * randf_range(DROP_SIZE_MIN, DROP_SIZE_MAX)
+		_size[idx] = s
+		var jitter: Vector3 = Vector3(randf_range(-1.0, 1.0), randf_range(-0.2, 1.0), randf_range(-1.0, 1.0))
+		g.global_transform = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * s), origin + jitter * 0.15 * size_scale)
+		var dir: Vector3 = (flat_dir * 1.0 + jitter.normalized() * 0.9 + Vector3.UP * 0.8).normalized()
+		_vel[idx] = dir * speed * randf_range(0.5, 1.1)
+		_spin[idx] = Vector3.ZERO
+		_life[idx] = DROP_LIFETIME
+		_resting[idx] = 0
+		_stained[idx] = 0
+		_is_drop[idx] = 1
 		g.visible = true
 		g.reset_physics_interpolation()
 
@@ -173,6 +220,7 @@ func _alloc_gib() -> int:
 		_size.append(1.0)
 		_resting.append(0)
 		_stained.append(0)
+		_is_drop.append(0)
 		return _gibs.size() - 1
 	_gib_cursor = (_gib_cursor + 1) % MAX_GIBS
 	return _gib_cursor
@@ -195,7 +243,7 @@ func _physics_process(delta: float) -> void:
 		v.y -= GRAVITY * delta
 		var from: Vector3 = g.global_position
 		var step: Vector3 = v * delta
-		var radius: float = GIB_RADIUS * _size[idx]
+		var radius: float = (DROP_RADIUS if _is_drop[idx] == 1 else GIB_RADIUS) * _size[idx]
 		_ray.from = from
 		_ray.to = from + step + step.normalized() * radius if step.length_squared() > 0.0 else from
 		var hit: Dictionary = space.intersect_ray(_ray) if step.length_squared() > 0.0 else {}
@@ -203,11 +251,16 @@ func _physics_process(delta: float) -> void:
 			g.global_position = from + step
 		else:
 			var n: Vector3 = hit.normal
+			if _is_drop[idx] == 1:
+				# Капля: пятно на любой поверхности, сама капля пропадает
+				_spawn_stain(hit.position, n, _size[idx] * randf_range(DROP_STAIN_MIN, DROP_STAIN_MAX))
+				g.visible = false
+				continue
 			var vn: Vector3 = n * v.dot(n)
 			var vt: Vector3 = v - vn
 			if _stained[idx] == 0 and n.y > 0.5 and v.length() > STAIN_MIN_SPEED:
 				_stained[idx] = 1
-				_spawn_stain(hit.position, n, _size[idx])
+				_spawn_stain(hit.position, n, _size[idx] * randf_range(2.5, 4.5) * 0.15)
 			v = vt * (1.0 - FRICTION) - vn * RESTITUTION
 			_spin[idx] *= 0.5
 			g.global_position = hit.position + n * radius
@@ -220,7 +273,8 @@ func _physics_process(delta: float) -> void:
 		_vel[idx] = v
 	_process_stains(delta)
 
-func _spawn_stain(pos: Vector3, normal: Vector3, gib_size: float) -> void:
+## Пятно размером size (м) на поверхности с нормалью normal
+func _spawn_stain(pos: Vector3, normal: Vector3, size: float) -> void:
 	var idx: int
 	if _stains.size() < MAX_STAINS:
 		var new_stain := MeshInstance3D.new()
@@ -239,10 +293,12 @@ func _spawn_stain(pos: Vector3, normal: Vector3, gib_size: float) -> void:
 	var y: Vector3 = normal.normalized()
 	var x: Vector3 = y.cross(Vector3.FORWARD if absf(y.z) < 0.9 else Vector3.RIGHT).normalized()
 	var z: Vector3 = x.cross(y)
-	var size: float = gib_size * randf_range(2.5, 4.5) * 0.15
 	var stain_basis := Basis(x, y, z).rotated(y, randf() * TAU)
-	# Масштаб в локальных осях пятна (по плоскости), как и при затухании через scale
-	st.global_transform = Transform3D(stain_basis * Basis.from_scale(Vector3(size, 1.0, size)), pos + y * 0.012)
+	size *= STAIN_QUAD_SCALE
+	st.set_instance_shader_parameter("seed", randf() * 100.0)
+	# Масштаб в локальных осях пятна (по плоскости), как и при затухании через scale. Высота над поверхностью
+	# чуть разная у каждого пятна: наложенные пятна на одной высоте мерцали бы
+	st.global_transform = Transform3D(stain_basis * Basis.from_scale(Vector3(size, 1.0, size)), pos + y * (0.01 + randf() * 0.006))
 	_stain_life[idx] = STAIN_LIFETIME
 	_stain_size[idx] = size
 	st.visible = true

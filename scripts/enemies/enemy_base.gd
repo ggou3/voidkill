@@ -56,6 +56,13 @@ var blood_splatter_scene = preload("res://blood_splatter.tscn")
 ## Брызги попадания, которое не убило: доля частиц и масштаб (ноябрь 2026, «меньше брызг без убийства»)
 const NONLETHAL_SPLATTER_AMOUNT: float = 0.6
 const NONLETHAL_SPLATTER_SCALE: float = 0.85
+## Крупные капли крови с пятнами там, где упадут (ноябрь 2026): при смерти, при попадании (крит — больше).
+## Попадания одного кадра (дробь) дают капли один раз
+const DEATH_BLOOD_DROPS: int = 8
+const HIT_BLOOD_DROPS: int = 2
+const HIT_BLOOD_DROPS_CRIT: int = 4
+const HIT_BLOOD_DROP_SPEED: float = 6.0
+var _blood_drops_frame: int = -1
 ## Отхил игрока, рядом с которым умер враг (ноябрь 2026): радиус и HP; мелкие враги (gib_scale < 1, рой) — меньше
 const NEAR_KILL_HEAL_RADIUS: float = 5.0
 const NEAR_KILL_HEAL: int = 5
@@ -375,29 +382,31 @@ func take_damage(amount: int, knockback_vector: Vector3, hit_pos: Vector3, is_me
 
 	_ensure_health_component().take_damage(amount, knockback_vector, hit_pos, is_melee, is_execute, is_shockwave, is_headshot, source_chain_depth, weapon_source)
 
-## Ошмётки (GibPool) и радиальный выброс крови при смерти. Кусков 4, +2 за хедшот или добивание, +2 за мощный
-## толчок (от 20 м/с), +3 у раздутого (взрыв); у мелких (gib_scale < 1) на один меньше, не меньше 2.
-## Скорость разлёта 6–18 м/с растёт с толчком, у раздутого — не меньше 14
+## Ошмётки (GibPool), капли крови и радиальный выброс крови при смерти. Кусков 12, +4 за хедшот или добивание,
+## +4 за мощный толчок (от 20 м/с), +7 у раздутого (взрыв); у мелких (gib_scale < 1) на 3 меньше, не меньше 6.
+## Скорость разлёта 6–18 м/с растёт с толчком, у раздутого — не меньше 14. Капель DEATH_BLOOD_DROPS (+4 у раздутого)
 func _spawn_death_gore(death_info: Dictionary) -> void:
 	var pool: GibPool = GibPool.get_pool(get_tree())
 	if not pool:
 		return
 	var knock: Vector3 = death_info.get("knockback", Vector3.ZERO)
 	# Крупные куски; мелкую крошку (ещё половину сверху) добавляет GibPool.spawn_gibs
-	var count: int = 8
+	var count: int = 12
 	if death_info.get("is_headshot", false) or death_info.get("is_execute", false):
-		count += 3
+		count += 4
 	if knock.length() >= 20.0:
-		count += 3
+		count += 4
 	if is_inflated:
-		count += 5
+		count += 7
 	if gib_scale < 1.0:
-		count = maxi(4, count - 2)
+		count = maxi(6, count - 3)
 	var speed: float = clampf(6.0 + knock.length() * 0.3, 6.0, 18.0)
 	if is_inflated:
 		speed = maxf(speed, 14.0)
 	var center: Vector3 = global_position + Vector3.UP * 0.8 * gib_scale
 	pool.spawn_gibs(center, knock, count, speed, gib_scale)
+	var drops: int = DEATH_BLOOD_DROPS + (4 if is_inflated else 0)
+	pool.spawn_blood_drops(center, knock, drops, clampf(speed * 0.8, 5.0, 14.0), gib_scale)
 
 	# Радиальный выброс крови вверх и в стороны (брызги попадания летят только по направлению удара)
 	if blood_splatter_scene:
@@ -482,6 +491,13 @@ func _spawn_hit_blood_splatter(amount: int, hit_pos: Vector3, is_crit: bool, kno
 		var flat_knockback = Vector3(knock_vec.x, 0, knock_vec.z)
 		if flat_knockback != Vector3.ZERO and hit_pos != hit_pos + flat_knockback:
 			splatter.look_at(hit_pos + flat_knockback, Vector3.UP)
+
+	var frame: int = Engine.get_physics_frames()
+	if frame != _blood_drops_frame:
+		_blood_drops_frame = frame
+		var pool: GibPool = GibPool.get_pool(get_tree())
+		if pool:
+			pool.spawn_blood_drops(hit_pos, knock_vec, HIT_BLOOD_DROPS_CRIT if is_crit else HIT_BLOOD_DROPS, HIT_BLOOD_DROP_SPEED, gib_scale)
 
 func _spawn_damage_number(dmg_amount: int, spawn_pos: Vector3, is_crit: bool = false, is_poison: bool = false) -> void:
 	if dmg_amount <= 0:
